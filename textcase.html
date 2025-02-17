@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Case Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        textarea {
+            width: 95%;
+            height: 100px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .case-button {
+            background: #007BFF;
+            color: white;
+        }
+
+        .case-button:hover {
+            background: #0056b3;
+        }
+
+        .copy-button {
+            background: #28a745;
+            color: white;
+        }
+
+        .copy-button:hover {
+            background: #218838;
+        }
+
+        .clear-button {
+            background: #dc3545;
+            color: white;
+        }
+
+        .clear-button:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Text Case Converter</h2>
+        <textarea id="textInput" placeholder="Enter text here..."></textarea>
+        <div class="buttons">
+            <button class="case-button" onclick="convertCase('uppercase')">UPPERCASE</button>
+            <button class="case-button" onclick="convertCase('lowercase')">lowercase</button>
+            <button class="case-button" onclick="convertCase('snake_case')">snake_case</button>
+            <button class="case-button" onclick="convertCase('camelCase')">camelCase</button>
+            <button class="case-button" onclick="convertCase('PascalCase')">PascalCase</button>
+            <button class="case-button" onclick="convertCase('kebab-case')">kebab-case</button>
+            <button class="case-button" onclick="convertCase('reverse')">esrever</button>
+            <button class="case-button" onclick="convertCase('vowelCASE')">vOwEl CaSe</button>
+            <button class="case-button" onclick="convertCase('consonantCASE')">CoNsOnAnT CaSe</button>
+            <button class="case-button" onclick="convertCase('sentenceCase')">Sentence case</button>
+            <button class="case-button" onclick="convertCase('Title Case')">Title Case</button>
+            <button class="case-button" onclick="convertCase('alternatingCase')">aLtErNaTiNg cAsE</button>
+            <button class="case-button" onclick="convertCase('randomCase')">rAnDoM cAsE</button>
+            <button class="case-button" onclick="convertCase('inverseCase')">InVeRsE cAsE</button>
+            <button class="copy-button" onclick="copyText()">Copy</button>
+            <button class="clear-button" onclick="clearText()">Clear Input</button>
+        </div>
+    </div>
+
+    <script>
+        function convertCase(type) {
+            let text = document.getElementById("textInput").value;
+            switch (type) {
+                case 'uppercase': text = text.toUpperCase(); break;
+                case 'lowercase': text = text.toLowerCase(); break;
+                case 'snake_case': text = text.replace(/\s+/g, '_').toLowerCase(); break;
+                case 'camelCase': text = text.replace(/(?:^|\s)([a-z])/g, (m, p1, i) => i === 0 ? p1.toLowerCase() : p1.toUpperCase()).replace(/\s+/g, ''); break;
+                case 'PascalCase': text = text.replace(/(?:^|\s)([a-z])/g, (m, p1) => p1.toUpperCase()).replace(/\s+/g, ''); break;
+                case 'kebab-case': text = text.replace(/\s+/g, '-').toLowerCase(); break;
+                case 'reverse': text = text.split('').reverse().join(''); break;
+                case 'vowelCASE': text = text.replace(/[aeiouAEIOU]/g, c => c.toUpperCase()); break;
+                case 'consonantCASE': text = text.replace(/[^aeiouAEIOU\s]/g, c => c.toUpperCase()); break;
+                case 'sentenceCase': text = text.charAt(0).toUpperCase() + text.slice(1).toLowerCase(); break;
+                case 'Title Case': text = text.replace(/\b\w/g, c => c.toUpperCase()); break;
+                case 'alternatingCase': text = text.split('').map((c, i) => i % 2 === 0 ? c.toLowerCase() : c.toUpperCase()).join(''); break;
+                case 'randomCase': text = text.split('').map(c => Math.random() > 0.5 ? c.toUpperCase() : c.toLowerCase()).join(''); break;
+                case 'inverseCase': text = text.split('').map(c => c === c.toLowerCase() ? c.toUpperCase() : c.toLowerCase()).join(''); break;
+            }
+            document.getElementById("textInput").value = text;
+        }
+        function copyText() {
+            let text = document.getElementById("textInput");
+            text.select();
+            document.execCommand("copy");
+        }
+        function clearText() {
+            document.getElementById("textInput").value = "";
+        }
+    </script>
+</body>
+
+</html>
