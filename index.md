@@ -1,6 +1,7 @@
 # Sam's tiny apps
 
 - [QR code generator](qrcode.html)
+- [Text case converter](textcase.html)
 
 ---
 
