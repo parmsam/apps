@@ -2,9 +2,8 @@
 
 - [QR code generator](qrcode.html)
 - [Text case converter](textcase.html)
+- [Color picker](colorpicker.html)
 
 ---
 
-By [Sam Parmar](https://parmsam.github.io/quarto-site/)
-
-Github repo is [here](https://www.github.com/parmsam/apps)
+By [Sam Parmar](https://parmsam.github.io/quarto-site/) (Github repo is [here](https://www.github.com/parmsam/apps))
