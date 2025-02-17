@@ -1,66 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Code Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qr-code-styling/lib/qr-code-styling.min.js"></script>
 </head>
+
 <body class="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
     <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center">
         <h1 class="text-2xl font-semibold mb-4">QR Code Generator</h1>
-        <input id="text" type="text" placeholder="Enter text or URL" class="w-full p-2 border rounded mb-4">
+        <input id="text" type="text" placeholder="Enter text or URL" class="w-full p-2 border rounded mb-4"
+            oninput="updateURL()">
         <input id="size" type="range" min="100" max="500" value="200" class="w-full mb-4">
-        <button onclick="generateQR()" class="bg-blue-500 text-white px-4 py-2 rounded mb-4 w-full">Generate QR Code</button>
+        <button onclick="generateQR()" class="bg-blue-500 text-white px-4 py-2 rounded mb-4 w-full">Generate QR
+            Code</button>
         <div id="qrcode" class="flex justify-center p-4"></div>
         <button onclick="copyQR()" class="bg-green-500 text-white px-4 py-2 rounded mb-2 w-full">Copy QR Code</button>
-        <button onclick="downloadQR()" class="bg-gray-500 text-white px-4 py-2 rounded w-full">Download QR Code</button>
+        <button onclick="downloadPNG()" class="bg-gray-500 text-white px-4 py-2 rounded w-full">Download PNG</button>
+        <button onclick="downloadSVG()" class="bg-gray-700 text-white px-4 py-2 rounded w-full mt-2">Download
+            SVG</button>
     </div>
-    
+
     <script>
+        let qrCode;
         function generateQR() {
-            let qrDiv = document.getElementById("qrcode");
-            qrDiv.innerHTML = "";
             let text = document.getElementById("text").value;
             let size = document.getElementById("size").value;
+            let qrDiv = document.getElementById("qrcode");
+            qrDiv.innerHTML = "";
+
             if (text.trim() === "") {
                 alert("Please enter text or a URL.");
                 return;
             }
-            new QRCode(qrDiv, {
-                text: text,
+
+            qrCode = new QRCodeStyling({
                 width: parseInt(size),
-                height: parseInt(size)
+                height: parseInt(size),
+                data: text,
+                type: "svg"
+            });
+
+            qrCode.append(qrDiv);
+            updateURL();
+        }
+
+        function copyQR() {
+            if (!qrCode) {
+                alert("Generate a QR code first.");
+                return;
+            }
+            qrCode.getRawData("png").then(blob => {
+                navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+                    .then(() => alert("QR Code copied!"))
+                    .catch(() => alert("Failed to copy QR Code."));
             });
         }
-        
-        function copyQR() {
-            let canvas = document.querySelector("#qrcode img");
-            if (!canvas) {
+
+        function downloadPNG() {
+            if (!qrCode) {
                 alert("Generate a QR code first.");
                 return;
             }
-            fetch(canvas.src)
-                .then(res => res.blob())
-                .then(blob => navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]))
-                .then(() => alert("QR Code copied!"))
-                .catch(() => alert("Failed to copy QR Code."));
+            qrCode.download({ name: "qr_code", extension: "png" });
         }
-        
-        function downloadQR() {
-            let canvas = document.querySelector("#qrcode img");
-            if (!canvas) {
+
+        function downloadSVG() {
+            if (!qrCode) {
                 alert("Generate a QR code first.");
                 return;
             }
-            let link = document.createElement("a");
-            link.href = canvas.src;
-            link.download = "qr_code.png";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            qrCode.download({ name: "qr_code", extension: "svg" });
         }
+
+        function updateURL() {
+            let text = document.getElementById("text").value;
+            if (text.trim() !== "") {
+                let newURL = new URL(window.location);
+                newURL.searchParams.set("data", encodeURIComponent(text));
+                window.history.replaceState({}, "", newURL);
+            }
+        }
+
+        function loadFromURL() {
+            let params = new URLSearchParams(window.location.search);
+            let text = params.get("data");
+            if (text) {
+                document.getElementById("text").value = decodeURIComponent(text);
+                generateQR();
+            }
+        }
+
+        window.onload = loadFromURL;
     </script>
 </body>
+
 </html>
