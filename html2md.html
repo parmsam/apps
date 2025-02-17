@@ -96,12 +96,12 @@
 
         h1 {
             text-align: center;
-            color: #4A90E2;
+            color: #000000;
         }
 
         textarea,
         input {
-            width: 100%;
+            width: 95%;
             padding: 10px;
             margin-top: 10px;
             border: 1px solid #ccc;
@@ -149,7 +149,7 @@
 
         <a href="#markdownOutput">Jump to Markdown</a>
 
-        <label for="urlInput">Enter URL:</label>
+        <h3><label for="urlInput">Enter URL:</label></h3>
         <input type="text" id="urlInput" value="https://example.org/" oninput="updateURLParam('url', this.value)">
         <button onclick="fetchHTML()">Load</button>
 
