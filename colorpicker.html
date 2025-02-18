@@ -18,7 +18,8 @@
 
             function updateURL(color) {
                 const url = new URL(window.location);
-                url.searchParams.set("color", color);
+                const colorWithoutHash = color.replace("#", "");
+                url.searchParams.set("color", colorWithoutHash);
                 window.history.pushState({}, "", url);
             }
 
