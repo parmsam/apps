@@ -4,6 +4,7 @@
 - [Text case converter](textcase.html)
 - [Color picker](colorpicker.html)
 - [Html to markdown converter](html2md.html)
+- [Word counter][wordcounter.html]
 
 ---
 

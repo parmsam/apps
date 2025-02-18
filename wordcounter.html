@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word counter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex justify-center items-center min-h-screen">
+    <div class="bg-white p-6 rounded-2xl shadow-lg max-w-lg w-full">
+        <h1 class="text-2xl font-bold text-center mb-4">Word Counter</h1>
+        <textarea id="textInput" class="w-full p-3 border rounded-lg" rows="6" placeholder="Type or paste your text here..."></textarea>
+        <button id="clearButton" class="mt-3 w-full bg-red-500 text-white p-2 rounded-lg">Clear</button>
+        <div class="mt-4 grid grid-cols-2 gap-4 text-gray-700">
+            <p><strong>Characters:</strong> <span id="charCount">0</span></p>
+            <p><strong>Characters (no spaces):</strong> <span id="charNoSpaceCount">0</span></p>
+            <p><strong>Words:</strong> <span id="wordCount">0</span></p>
+            <p><strong>Spaces:</strong> <span id="spaceCount">0</span></p>
+            <p><strong>Lines:</strong> <span id="lineCount">0</span></p>
+            <p><strong>Sentences:</strong> <span id="sentenceCount">0</span></p>
+            <p><strong>Paragraphs:</strong> <span id="paragraphCount">0</span></p>
+            <p><strong>Reading Time:</strong> <span id="readingTime">0 min</span></p>
+            <p><strong>Speaking Time:</strong> <span id="speakingTime">0 min</span></p>
+            <p><strong>Unique Words:</strong> <span id="uniqueWordCount">0</span></p>
+            <p><strong>Average Word Length:</strong> <span id="avgWordLength">0</span></p>
+            <p><strong>Most Frequent Letter:</strong> <span id="mostFreqLetter">N/A</span></p>
+            <p><strong>Longest Word(s):</strong> <span id="longestWords">N/A</span></p>
+            <p><strong>Syllable Count:</strong> <span id="syllableCount">0</span></p>
+            <p><strong><a class="text-blue-500" href="https://en.wikipedia.org/wiki/Flesch-Kincaid_readability_tests" target="_blank" rel="noopener noreferrer">Flesch-Kincaid Readability Score:</a></strong> <span id="readabilityScore">N/A</span></p>
+        </div>
+        
+        <h2 class="text-xl font-bold mt-6">Keyword Frequency</h2>
+        <div class="mt-4 flex space-x-4">
+            <button class="tab active p-2 border rounded-lg" data-type="1">1-Word</button>
+            <button class="tab p-2 border rounded-lg" data-type="2">2-Word</button>
+            <button class="tab p-2 border rounded-lg" data-type="3">3-Word</button>
+        </div>
+        <table class="w-full mt-3 border rounded-lg">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="p-2">Word</th>
+                    <th class="p-2">Count</th>
+                    <th class="p-2">%</th>
+                </tr>
+            </thead>
+            <tbody id="keywordTable"></tbody>
+        </table>
+    </div>
+    
+    <script>
+        function updateMetrics() {
+            const text = textInput.value;
+            const words = text.match(/\b\w+\b/g) || [];
+            const charCount = text.length;
+            const charNoSpaceCount = text.replace(/\s/g, '').length;
+            const wordCount = words.length;
+            const spaceCount = (text.match(/\s/g) || []).length;
+            const lineCount = (text.match(/\n/g) || []).length + 1;
+            const sentenceCount = (text.match(/[.!?]+/g) || []).length;
+            const paragraphCount = text.split(/\n+/).filter(Boolean).length;
+            const uniqueWords = new Set(words);
+            const avgWordLength = words.length ? words.reduce((acc, word) => acc + word.length, 0) / words.length : 0;
+            const letterCounts = text.replace(/[^a-zA-Z]/g, '').split('').reduce((acc, letter) => {
+                acc[letter] = (acc[letter] || 0) + 1;
+                return acc;
+            }, {});
+            const mostFrequentLetter = Object.entries(letterCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+            const longestWords = words.length ? words.reduce((a, b) => a.length >= b.length ? a : b, '') : 'N/A';
+            const syllableCount = words.reduce((acc, word) => acc + countSyllables(word), 0);
+            const readabilityScore = (206.835 - (1.015 * (wordCount / (sentenceCount || 1))) - (84.6 * (syllableCount / (wordCount || 1)))).toFixed(2);
+
+            document.getElementById('charCount').textContent = charCount;
+            document.getElementById('charNoSpaceCount').textContent = charNoSpaceCount;
+            document.getElementById('wordCount').textContent = wordCount;
+            document.getElementById('spaceCount').textContent = spaceCount;
+            document.getElementById('lineCount').textContent = lineCount;
+            document.getElementById('sentenceCount').textContent = sentenceCount;
+            document.getElementById('paragraphCount').textContent = paragraphCount;
+            document.getElementById('readingTime').textContent = Math.ceil(wordCount / 200) + ' min';
+            document.getElementById('speakingTime').textContent = Math.ceil(wordCount / 130) + ' min';
+            document.getElementById('uniqueWordCount').textContent = uniqueWords.size;
+            document.getElementById('avgWordLength').textContent = avgWordLength.toFixed(2);
+            document.getElementById('mostFreqLetter').textContent = mostFrequentLetter;
+            document.getElementById('longestWords').textContent = longestWords;
+            document.getElementById('syllableCount').textContent = syllableCount;
+            document.getElementById('readabilityScore').textContent = readabilityScore;
+        }
+
+        function countSyllables(word) {
+            word = word.toLowerCase();
+            if (word.length <= 3) { return 1; }
+            word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+            word = word.replace(/^y/, '');
+            const syllableMatch = word.match(/[aeiouy]{1,2}/g);
+            return syllableMatch ? syllableMatch.length : 0;
+        }
+
+        textInput.addEventListener('input', updateMetrics);
+        clearButton.addEventListener('click', () => {
+            textInput.value = '';
+            updateMetrics();
+        });
+
+        const defaultText = `The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.`;
+        textInput.value = defaultText;
+        updateMetrics();
+
+        const keywordTable = document.getElementById('keywordTable');
+        function updateKeywordFrequency(text, n = 1) {
+            const words = text.toLowerCase().match(/\b[a-zA-Z]+\b/g) || [];
+            const freqMap = {};
+            for (let i = 0; i <= words.length - n; i++) {
+                const phrase = words.slice(i, i + n).join(' ');
+                freqMap[phrase] = (freqMap[phrase] || 0) + 1;
+            }
+            const totalWords = words.length || 1;
+            const sortedWords = Object.entries(freqMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            keywordTable.innerHTML = sortedWords.map(([word, count]) => `<tr><td class='p-2 border'>${word}</td><td class='p-2 border'>${count}</td><td class='p-2 border'>${((count / totalWords) * 100).toFixed(2)}%</td></tr>`).join('');
+        }
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                updateKeywordFrequency(textInput.value, parseInt(tab.dataset.type));
+            });
+        });
+        textInput.addEventListener('input', () => updateKeywordFrequency(textInput.value));
+        document.querySelector('.tab').click();
+    </script>
+</body>
+</html>
