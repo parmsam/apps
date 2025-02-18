@@ -76,8 +76,10 @@
             document.getElementById('lineCount').textContent = lineCount;
             document.getElementById('sentenceCount').textContent = sentenceCount;
             document.getElementById('paragraphCount').textContent = paragraphCount;
-            document.getElementById('readingTime').textContent = Math.ceil(wordCount / 200) + ' min';
-            document.getElementById('speakingTime').textContent = Math.ceil(wordCount / 130) + ' min';
+            const readingTime = wordCount / 225;
+            const speakingTime = wordCount / 140;
+            document.getElementById('readingTime').textContent = `${Math.floor(readingTime)} min ${Math.round((readingTime % 1) * 60)} sec`;
+            document.getElementById('speakingTime').textContent = `${Math.floor(speakingTime)} min ${Math.round((speakingTime % 1) * 60)} sec`;
             document.getElementById('uniqueWordCount').textContent = uniqueWords.size;
             document.getElementById('avgWordLength').textContent = avgWordLength.toFixed(2);
             document.getElementById('mostFreqLetter').textContent = mostFrequentLetter;
