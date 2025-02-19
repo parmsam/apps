@@ -65,7 +65,8 @@
                 return acc;
             }, {});
             const mostFrequentLetter = Object.entries(letterCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
-            const longestWords = words.length ? words.reduce((a, b) => a.length >= b.length ? a : b, '') : 'N/A';
+            const maxWordLength = Math.max(...words.map(word => word.length));
+            const longestWords = words.filter(word => word.length === maxWordLength).join(', ');
             const syllableCount = words.reduce((acc, word) => acc + countSyllables(word), 0);
             const readabilityScore = (206.835 - (1.015 * (wordCount / (sentenceCount || 1))) - (84.6 * (syllableCount / (wordCount || 1)))).toFixed(2);
 
