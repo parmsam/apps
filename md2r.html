@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown to R Script Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 flex flex-col items-center p-6">
+    <div class="w-full max-w-2xl bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-xl font-bold mb-4 text-center">Markdown to R Script Converter</h1>
+
+        <textarea id="markdownInput" class="w-full h-40 p-2 border rounded"
+            placeholder="Enter Markdown text..."></textarea>
+
+        <div class="my-4 flex items-center justify-between">
+            <input type="file" id="fileInput" class="border p-2 rounded" accept=".md">
+            <button onclick="convertMarkdown()" class="bg-blue-500 text-white px-4 py-2 rounded">Convert</button>
+        </div>
+
+        <h2 class="text-lg font-semibold mt-4">Converted R Script:</h2>
+        <textarea id="outputRScript" class="w-full h-40 p-2 border rounded" readonly></textarea>
+
+        <div class="mt-4 flex items-center justify-between">
+            <button onclick="copyToClipboard()" class="bg-green-500 text-white px-4 py-2 rounded">Copy</button>
+            <button onclick="downloadRScript()" class="bg-gray-500 text-white px-4 py-2 rounded">Download</button>
+        </div>
+    </div>
+
+    <script>
+        function convertMarkdown() {
+            let markdownText = document.getElementById("markdownInput").value;
+            let convertedText = markdownText.split("\n").map(line => `#' ${line}`).join("\n");
+            document.getElementById("outputRScript").value = convertedText;
+        }
+
+        document.getElementById("fileInput").addEventListener("change", function (event) {
+            let file = event.target.files[0];
+            if (file) {
+                let reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById("markdownInput").value = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function copyToClipboard() {
+            let outputText = document.getElementById("outputRScript");
+            outputText.select();
+            document.execCommand("copy");
+            alert("Copied to clipboard!");
+        }
+
+        function downloadRScript() {
+            let text = document.getElementById("outputRScript").value;
+            let blob = new Blob([text], { type: "text/plain" });
+            let a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "converted_script.R";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+
+</html>
