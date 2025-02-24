@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Preview</title>
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
+    <style>
+        body {
+            background: #f3f4f6;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        /* h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        } */
+
+        .grid {
+            display: flex;
+            gap: 20px;
+        }
+
+        textarea,
+        #output {
+            flex: 1;
+            height: 400px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow: auto;
+        }
+
+        textarea {
+            resize: none;
+        }
+
+        #output {
+            background: #f8f8f8;
+        }
+
+        .buttons {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .copy-btn {
+            background: #007bff;
+            color: white;
+        }
+
+        .clear-btn {
+            background: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Markdown Preview</h1>
+        <div class="grid">
+            <textarea id="markdown-input" placeholder="Enter Markdown here..."></textarea>
+            <div id="output"></div>
+        </div>
+        <input type="file" id="file-upload" accept=".md">
+        <div class="buttons">
+            <button id="copy-btn" class="copy-btn">Copy</button>
+            <button id="clear-btn" class="clear-btn">Clear</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const md = window.markdownit({ breaks: true, html: true });
+
+            function updatePreview() {
+                const inputText = document.getElementById("markdown-input").value;
+                document.getElementById("output").innerHTML = md.render(inputText);
+            }
+
+            document.getElementById("markdown-input").addEventListener("input", updatePreview);
+            document.getElementById("file-upload").addEventListener("change", function (event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        document.getElementById("markdown-input").value = e.target.result;
+                        updatePreview();
+                    };
+                    reader.readAsText(file);
+                }
+            });
+
+            document.getElementById("copy-btn").addEventListener("click", function () {
+                navigator.clipboard.writeText(document.getElementById("markdown-input").value);
+            });
+
+            document.getElementById("clear-btn").addEventListener("click", function () {
+                document.getElementById("markdown-input").value = "";
+                document.getElementById("output").innerHTML = "";
+            });
+
+            // Improved scroll synchronization
+            const inputArea = document.getElementById("markdown-input");
+            const outputArea = document.getElementById("output");
+
+            function syncScroll() {
+                if (inputArea.scrollHeight > inputArea.clientHeight) {
+                    const ratio = inputArea.scrollTop / (inputArea.scrollHeight - inputArea.clientHeight);
+                    outputArea.scrollTop = ratio * (outputArea.scrollHeight - outputArea.clientHeight);
+                }
+            }
+
+            inputArea.addEventListener("scroll", syncScroll);
+        });
+
+        
+    </script>
+</body>
+
+</html>
