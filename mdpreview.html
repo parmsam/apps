@@ -161,6 +161,15 @@
                 updatePreview();
                 document.getElementById("use-local-storage").checked = true;
             }
+
+            // Clear local storage if checkbox is unchecked
+            document.getElementById("use-local-storage").addEventListener("change", function () {
+                if (!this.checked) {
+                    localStorage.removeItem("markdownInput");
+                } else {
+                    localStorage.setItem("markdownInput", document.getElementById("markdown-input").value);
+                }
+            });
         });
     </script>
 </body>
