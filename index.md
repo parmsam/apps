@@ -6,6 +6,7 @@
 - [Html to markdown converter](html2md.html)
 - [Word counter](wordcounter.html)
 - [Markdown to R script](md2r.html)
+- [Markdown preview](mdpreview.html)
 
 ---
 
