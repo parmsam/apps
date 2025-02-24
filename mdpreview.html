@@ -73,6 +73,11 @@
             background: #dc3545;
             color: white;
         }
+
+        .copy-output-btn {
+            background: #28a745;
+            color: white;
+        }
     </style>
 </head>
 
@@ -87,6 +92,9 @@
         <div class="buttons">
             <button id="copy-btn" class="copy-btn">Copy</button>
             <button id="clear-btn" class="clear-btn">Clear</button>
+        </div>
+        <div class="buttons">
+            <button id="copy-output-btn" class="copy-output-btn">Copy Rendered Output</button>
         </div>
     </div>
 
@@ -119,6 +127,16 @@
             document.getElementById("clear-btn").addEventListener("click", function () {
                 document.getElementById("markdown-input").value = "";
                 document.getElementById("output").innerHTML = "";
+            });
+
+            document.getElementById("copy-output-btn").addEventListener("click", function () {
+                const range = document.createRange();
+                const selection = window.getSelection();
+                range.selectNodeContents(document.getElementById("output"));
+                selection.removeAllRanges();
+                selection.addRange(range);
+                document.execCommand("copy");
+                selection.removeAllRanges();
             });
 
             // Improved scroll synchronization
