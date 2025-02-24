@@ -7,6 +7,7 @@
 - [Word counter](wordcounter.html)
 - [Markdown to R script](md2r.html)
 - [Markdown preview](mdpreview.html)
+- [Clipboard format viewer](clipboardinfo.html) - taken from [Simonw](https://github.com/simonw/tools/blob/main/clipboard-viewer.html) and slighly modified
 
 ---
 
