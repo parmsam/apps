@@ -22,12 +22,6 @@
             border-radius: 10px;
         }
 
-        /* h1 {
-            text-align: center;
-            font-size: 24px;
-            margin-bottom: 20px;
-        } */
-
         .grid {
             display: flex;
             gap: 20px;
@@ -96,6 +90,11 @@
         <div class="buttons">
             <button id="copy-output-btn" class="copy-output-btn">Copy Rendered Output</button>
         </div>
+        <div class="buttons">
+            <label>
+                <input type="checkbox" id="use-local-storage"> Save to Local Storage
+            </label>
+        </div>
     </div>
 
     <script>
@@ -105,6 +104,9 @@
             function updatePreview() {
                 const inputText = document.getElementById("markdown-input").value;
                 document.getElementById("output").innerHTML = md.render(inputText);
+                if (document.getElementById("use-local-storage").checked) {
+                    localStorage.setItem("markdownInput", inputText);
+                }
             }
 
             document.getElementById("markdown-input").addEventListener("input", updatePreview);
@@ -127,6 +129,7 @@
             document.getElementById("clear-btn").addEventListener("click", function () {
                 document.getElementById("markdown-input").value = "";
                 document.getElementById("output").innerHTML = "";
+                localStorage.removeItem("markdownInput");
             });
 
             document.getElementById("copy-output-btn").addEventListener("click", function () {
@@ -151,9 +154,14 @@
             }
 
             inputArea.addEventListener("scroll", syncScroll);
-        });
 
-        
+            // Load from local storage if checkbox is checked
+            if (localStorage.getItem("markdownInput")) {
+                document.getElementById("markdown-input").value = localStorage.getItem("markdownInput");
+                updatePreview();
+                document.getElementById("use-local-storage").checked = true;
+            }
+        });
     </script>
 </body>
 
