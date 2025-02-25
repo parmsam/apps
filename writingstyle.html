@@ -89,6 +89,18 @@
         .clear-button:hover {
             background-color: #0056b3;
         }
+
+        .jump-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 20px;
+            /* background-color: #28a745; */
+            color: #ff8c00;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+        }
     </style>
 </head>
 
@@ -98,9 +110,9 @@
         <p>
             Taken from Simon Willison's 
             <a href="https://tools.simonwillison.net/writing-style">
-                writing style analyzer and slighly modified.
-            </a>
-            Simmony originally it adapted from <a
+                writing style analyzer
+            </a> and slighly modified. 
+            Simmon originally it adapted from <a
                 href="https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/">these
                 shell scripts</a> published by Matt Might.
         </p>
@@ -111,6 +123,7 @@ A very close match was observed between the two models, and a completely new app
 
 Many researchers are not aware that the the system automatically filters redundant data.</textarea>
         <button class="clear-button" id="clear-button">Clear</button>
+        <a href="#results" class="jump-link">Jump to Results</a>
         <div id="results" class="results"></div>
     </div>
 
