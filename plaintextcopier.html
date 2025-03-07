@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plain Text Copier</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        button {
+            font-size: 18px;
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #output {
+            font-size: 16px;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            word-wrap: break-word;
+        }
+
+        #description {
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 400px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="description">This app removes formatting from copied text and ensures only plain text is copied to the
+        clipboard.</div>
+    <button onclick="cleanClipboard()">Copy Plain Text</button>
+    <div id="output">Clipboard content will appear here</div>
+    <script>
+        async function cleanClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                const cleanedText = text.trim();
+                await navigator.clipboard.writeText(cleanedText);
+                document.getElementById("output").textContent = "Copied: " + cleanedText;
+            } catch (err) {
+                alert("Failed to access clipboard: " + err);
+            }
+        }
+    </script>
+</body>
+
+</html>

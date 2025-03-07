@@ -9,7 +9,7 @@
 - [Markdown preview](mdpreview.html)
 - [Clipboard format viewer](clipboardinfo.html) - taken from [Simonw](https://github.com/simonw/tools/blob/main/clipboard-viewer.html) and slighly modified
 - [Writing style analyzer](writingstyle.html) - taken from [Simonw](https://github.com/simonw/tools/blob/main/writing-style.html) and slighly modified
-
+- [Plain text copier](plaintextcopier.html)
 ---
 
 By [Sam Parmar](https://parmsam.github.io/quarto-site/) (Github repo is [here](https://www.github.com/parmsam/apps))
