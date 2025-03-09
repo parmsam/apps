@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time HTML Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background: #282c34;
+            color: white;
+        }
+
+        .editor-container,
+        .preview-container {
+            width: 50%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .editor-container {
+            background: #1e1e1e;
+            border-right: 2px solid #333;
+        }
+
+        .preview-container {
+            background: #fff;
+            border-left: 2px solid #333;
+        }
+
+        .CodeMirror {
+            flex-grow: 1;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        iframe {
+            flex-grow: 1;
+            border: none;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px;
+            background: #61dafb;
+            color: #1e1e1e;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #4fa3d1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="editor-container">
+        <textarea id="editor"></textarea>
+        <button onclick="prettifyCode()">Prettify Code</button>
+    </div>
+    <div class="preview-container">
+        <iframe id="preview"></iframe>
+    </div>
+    <script>
+        const editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+            mode: "xml",
+            theme: "material-darker",
+            lineNumbers: true,
+            autoCloseTags: true,
+        });
+
+        function updatePreview() {
+            const previewFrame = document.getElementById("preview");
+            const preview = previewFrame.contentDocument || previewFrame.contentWindow.document;
+            preview.open();
+            preview.write(editor.getValue());
+            preview.close();
+        }
+
+        function prettifyCode() {
+            const prettyHTML = html_beautify(editor.getValue(), { indent_size: 2, wrap_line_length: 80 });
+            editor.setValue(prettyHTML);
+        }
+
+        editor.on("change", updatePreview);
+        editor.setValue("<h1>Hello, World!</h1>\n<p>Edit the HTML code above to see changes in real time.</p>");
+        updatePreview();
+    </script>
+</body>
+
+</html>

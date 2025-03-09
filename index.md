@@ -12,7 +12,7 @@
 - [Plain text copier](plaintextcopier.html)
 - [EXIF data viewer](exifviewer.html)
 - [Rich text extractor](richtextextractor.html)
-
+- [Real time HTML editor](realtimehtml.html)
 
 ---
 
