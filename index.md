@@ -14,6 +14,7 @@
 - [Rich text extractor](richtextextractor.html)
 - [Real time HTML editor](realtimehtml.html)
 - [Encrypt message](encryptmessage.html) - inspired by [Simonw](https://simonwillison.net/)'s blog post where he built a [similar tool](https://tools.simonwillison.net/encrypt)
+- [JSON viewer](jsonviewer.html)
 
 ---
 
