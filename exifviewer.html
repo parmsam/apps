@@ -31,20 +31,35 @@
             padding: 10px;
             border-radius: 5px;
         }
+
+        .nav-links {
+            margin-bottom: 15px;
+        }
+
+        .nav-links a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: blue;
+            font-weight: bold;
+        }
     </style>
 </head>
 
 <body>
     <h2>EXIF Data Viewer</h2>
+    <div class="nav-links">
+        <a href="#exifData">Jump to EXIF Data</a>
+        <a href="#gpsData">Jump to GPS Data</a>
+    </div>
     <input type="file" id="fileInput" accept="image/*,.heic"><br>
     <input type="text" id="imageUrl" placeholder="Paste image URL here"
         value="https://photographylife.com/wp-content/uploads/2016/04/Death-Valley-NP-5.jpg">
     <button onclick="loadImageFromUrl()">Load Image</button>
     <img id="preview" style="display: none;">
-    <h3>EXIF Data</h3>
-    <pre id="exifData">No file uploaded.</pre>
-    <h3>GPS Data</h3>
-    <pre id="gpsData">No GPS data available.</pre>
+    <h3 id="exifData">EXIF Data</h3>
+    <pre>No file uploaded.</pre>
+    <h3 id="gpsData">GPS Data</h3>
+    <pre>No GPS data available.</pre>
 
     <script>
         document.getElementById('fileInput').addEventListener('change', function (event) {
@@ -73,7 +88,7 @@
 
             EXIF.getData(file, function () {
                 let exifData = EXIF.getAllTags(this);
-                document.getElementById('exifData').textContent = JSON.stringify(exifData, null, 2);
+                document.getElementById('exifData').nextElementSibling.textContent = JSON.stringify(exifData, null, 2);
                 displayGPSData(exifData);
             });
         });
@@ -90,7 +105,7 @@
                 .then(response => response.blob())
                 .then(blob => EXIF.getData(blob, function () {
                     let exifData = EXIF.getAllTags(this);
-                    document.getElementById('exifData').textContent = JSON.stringify(exifData, null, 2);
+                    document.getElementById('exifData').nextElementSibling.textContent = JSON.stringify(exifData, null, 2);
                     displayGPSData(exifData);
                 }))
                 .catch(error => console.error("Error loading image from URL: ", error));
@@ -106,9 +121,9 @@
             if (exifData.GPSLatitude && exifData.GPSLongitude) {
                 const lat = convertDMSToDD(exifData.GPSLatitude, exifData.GPSLatitudeRef);
                 const lon = convertDMSToDD(exifData.GPSLongitude, exifData.GPSLongitudeRef);
-                document.getElementById('gpsData').textContent = `Latitude: ${lat}, Longitude: ${lon}`;
+                document.getElementById('gpsData').nextElementSibling.textContent = `Latitude: ${lat}, Longitude: ${lon}`;
             } else {
-                document.getElementById('gpsData').textContent = "No GPS data available.";
+                document.getElementById('gpsData').nextElementSibling.textContent = "No GPS data available.";
             }
         }
 
