@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EXIF Data Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heic2any/dist/heic2any.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: auto;
+            text-align: center;
+        }
+
+        input,
+        button {
+            margin: 10px 0;
+        }
+
+        img {
+            max-width: 100%;
+            margin-top: 10px;
+        }
+
+        pre {
+            text-align: left;
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>EXIF Data Viewer</h2>
+    <input type="file" id="fileInput" accept="image/*,.heic"><br>
+    <input type="text" id="imageUrl" placeholder="Paste image URL here"
+        value="https://photographylife.com/wp-content/uploads/2016/04/Death-Valley-NP-5.jpg">
+    <button onclick="loadImageFromUrl()">Load Image</button>
+    <img id="preview" style="display: none;">
+    <h3>EXIF Data</h3>
+    <pre id="exifData">No file uploaded.</pre>
+    <h3>GPS Data</h3>
+    <pre id="gpsData">No GPS data available.</pre>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.type === "image/heic" || file.name.endsWith(".heic")) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    heic2any({ blob: file, toType: "image/jpeg" }).then(function (convertedBlob) {
+                        const convertedFileReader = new FileReader();
+                        convertedFileReader.onload = function (ev) {
+                            displayImage(ev.target.result);
+                        };
+                        convertedFileReader.readAsDataURL(convertedBlob);
+                    }).catch(error => console.error("HEIC conversion error: ", error));
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    displayImage(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            EXIF.getData(file, function () {
+                let exifData = EXIF.getAllTags(this);
+                document.getElementById('exifData').textContent = JSON.stringify(exifData, null, 2);
+                displayGPSData(exifData);
+            });
+        });
+
+        function loadImageFromUrl() {
+            const url = document.getElementById('imageUrl').value;
+            if (!url) return;
+
+            const img = document.getElementById('preview');
+            img.src = url;
+            img.style.display = 'block';
+
+            fetch(url)
+                .then(response => response.blob())
+                .then(blob => EXIF.getData(blob, function () {
+                    let exifData = EXIF.getAllTags(this);
+                    document.getElementById('exifData').textContent = JSON.stringify(exifData, null, 2);
+                    displayGPSData(exifData);
+                }))
+                .catch(error => console.error("Error loading image from URL: ", error));
+        }
+
+        function displayImage(src) {
+            const img = document.getElementById('preview');
+            img.src = src;
+            img.style.display = 'block';
+        }
+
+        function displayGPSData(exifData) {
+            if (exifData.GPSLatitude && exifData.GPSLongitude) {
+                const lat = convertDMSToDD(exifData.GPSLatitude, exifData.GPSLatitudeRef);
+                const lon = convertDMSToDD(exifData.GPSLongitude, exifData.GPSLongitudeRef);
+                document.getElementById('gpsData').textContent = `Latitude: ${lat}, Longitude: ${lon}`;
+            } else {
+                document.getElementById('gpsData').textContent = "No GPS data available.";
+            }
+        }
+
+        function convertDMSToDD(dms, direction) {
+            let degrees = dms[0];
+            let minutes = dms[1] / 60;
+            let seconds = dms[2] / 3600;
+            let decimal = degrees + minutes + seconds;
+            return (direction === "S" || direction === "W") ? -decimal : decimal;
+        }
+    </script>
+</body>
+
+</html>
