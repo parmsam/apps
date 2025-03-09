@@ -11,6 +11,7 @@
 - [Writing style analyzer](writingstyle.html) - taken from [Simonw](https://github.com/simonw/tools/blob/main/writing-style.html) and slighly modified
 - [Plain text copier](plaintextcopier.html)
 - [EXIF data viewer](exifviewer.html)
+- [Rich text extractor](richtextextractor.html)
 
 
 ---

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rich Text HTML Extractor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-top: 10px;
+            font-family: monospace;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .copy-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .clear-btn {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .toggle-btn {
+            background-color: #008CBA;
+            color: white;
+        }
+
+        .preview {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+            background: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Rich Text HTML Extractor</h2>
+        <p>Paste formatted text below using <strong>Ctrl+V</strong> or <strong>⌘+V</strong>:</p>
+        <div contenteditable="true" id="paste-area" class="preview"
+            style="height: 100px; overflow-y: auto; border: 1px solid #ccc;"></div>
+
+        <button class="toggle-btn" onclick="toggleMode('html')">HTML</button>
+        <button class="toggle-btn" onclick="toggleMode('markdown')">Markdown</button>
+        <button class="toggle-btn" onclick="toggleMode('plaintext')">Plaintext</button>
+
+        <textarea id="output" readonly></textarea>
+        <button class="copy-btn" onclick="copyOutput()">Copy</button>
+        <button class="clear-btn" onclick="clearAll()">Clear</button>
+
+        <h3>Rendered Output:</h3>
+        <div id="rendered-output" class="preview"></div>
+    </div>
+
+    <script>
+        let mode = 'html';
+        document.getElementById("paste-area").addEventListener("paste", (event) => {
+            event.preventDefault();
+            const clipboardData = event.clipboardData || window.clipboardData;
+            const htmlData = clipboardData.getData("text/html");
+            const textData = clipboardData.getData("text/plain");
+
+            if (htmlData) {
+                document.getElementById("paste-area").innerHTML = htmlData;
+                updateOutput(htmlData);
+            } else {
+                document.getElementById("paste-area").innerText = textData;
+                updateOutput(textData);
+            }
+        });
+
+        function toggleMode(newMode) {
+            mode = newMode;
+            updateOutput(document.getElementById("paste-area").innerHTML);
+        }
+
+        function updateOutput(content) {
+            let outputArea = document.getElementById("output");
+            let renderedOutput = document.getElementById("rendered-output");
+
+            if (mode === 'html') {
+                outputArea.value = content;
+                renderedOutput.innerHTML = content;
+            } else if (mode === 'markdown') {
+                let converter = new showdown.Converter({
+                    tables: true,
+                    simplifiedAutoLink: true,
+                    strikethrough: true,
+                    ghCodeBlocks: true,
+                    omitExtraWLInCodeBlocks: true
+                });
+
+                let tempDiv = document.createElement("div");
+                tempDiv.innerHTML = content;
+
+                // Remove unsupported and redundant HTML tags before conversion
+                tempDiv.querySelectorAll("meta, style, script, link, span, div, header, footer, nav, aside, section, article").forEach(el => el.remove());
+
+                let markdown = converter.makeMarkdown(tempDiv.innerHTML, document);
+                outputArea.value = markdown;
+                renderedOutput.innerHTML = converter.makeHtml(markdown);
+            } else if (mode === 'plaintext') {
+                let tempDiv = document.createElement("div");
+                tempDiv.innerHTML = content;
+                outputArea.value = tempDiv.innerText;
+                renderedOutput.innerText = tempDiv.innerText;
+            }
+        }
+
+        function copyOutput() {
+            let outputArea = document.getElementById("output");
+            outputArea.select();
+            document.execCommand("copy");
+        }
+
+        function clearAll() {
+            document.getElementById("paste-area").innerHTML = "";
+            document.getElementById("output").value = "";
+            document.getElementById("rendered-output").innerHTML = "";
+        }
+    </script>
+</body>
+
+</html>
