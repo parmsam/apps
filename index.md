@@ -3,7 +3,7 @@
 - [QR code generator](qrcode.html)
 - [Text case converter](textcase.html)
 - [Color picker](colorpicker.html)
-- [Html to markdown converter](html2md.html)
+- [Html to markdown converter](html2md.html) - inspired by [Jeremy Howard](https://github.com/jph00)'s [web2md](https://github.com/AnswerDotAI/web2md) tool and recreated
 - [Word counter](wordcounter.html)
 - [Markdown to R script](md2r.html)
 - [Markdown preview](mdpreview.html)
@@ -13,7 +13,7 @@
 - [EXIF data viewer](exifviewer.html)
 - [Rich text extractor](richtextextractor.html)
 - [Real time HTML editor](realtimehtml.html)
-- [Encrypt message](encryptmessage.html) - inspired by [Simonw](https://simonwillison.net/)'s blog post where he built a [similar tool](https://tools.simonwillison.net/encrypt)
+- [Encrypt message](encryptmessage.html) - inspired by [Simon Willison](https://simonwillison.net/)'s blog post where he built a [similar tool](https://tools.simonwillison.net/encrypt) and recreated
 - [JSON viewer](jsonviewer.html)
 
 ---
