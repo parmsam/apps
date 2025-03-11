@@ -11,6 +11,7 @@
 <body class="bg-gray-100 text-gray-900">
     <div class="max-w-3xl mx-auto p-6 mt-10 bg-white shadow-lg rounded-lg">
         <h1 class="text-2xl font-bold mb-4 text-center">Browser Fingerprint Viewer</h1>
+        <button onclick="downloadJSON()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded">Download JSON</button>
         <div id="fingerprint" class="space-y-2"></div>
     </div>
 
@@ -28,17 +29,77 @@
                 'Hardware Concurrency': navigator.hardwareConcurrency,
                 'Device Memory': navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'N/A',
                 'Touch Support': ('ontouchstart' in window) ? 'Yes' : 'No',
-                'Online Status': navigator.onLine ? 'Online' : 'Offline'
+                'Online Status': navigator.onLine ? 'Online' : 'Offline',
+                'Local Storage': typeof localStorage !== 'undefined' ? 'Available' : 'Not Available',
+                'Session Storage': typeof sessionStorage !== 'undefined' ? 'Available' : 'Not Available'
             };
             return fingerprint;
         }
 
-        function displayFingerprint() {
+        function getCanvasFingerprint() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('Canvas Fingerprinting Test', 10, 10);
+            return canvas.toDataURL();
+        }
+
+        function getWebRTCIp() {
+            return new Promise((resolve) => {
+                const rtc = new RTCPeerConnection({ iceServers: [] });
+                rtc.createDataChannel('');
+                rtc.createOffer().then(o => rtc.setLocalDescription(o));
+                rtc.onicecandidate = (event) => {
+                    if (event && event.candidate) {
+                        const ip = /([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/.exec(event.candidate.candidate);
+                        resolve(ip ? ip[1] : 'N/A');
+                    }
+                };
+            });
+        }
+
+        function getBatteryStatus() {
+            if (navigator.getBattery) {
+                return navigator.getBattery().then(battery => `Level: ${Math.round(battery.level * 100)}%, Charging: ${battery.charging ? 'Yes' : 'No'}`);
+            }
+            return Promise.resolve('N/A');
+        }
+
+        function getGeolocation() {
+            return new Promise((resolve) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(position => {
+                        resolve(`Lat: ${position.coords.latitude}, Lon: ${position.coords.longitude}`);
+                    }, () => resolve('Denied'));
+                } else {
+                    resolve('Not Supported');
+                }
+            });
+        }
+
+        async function displayFingerprint() {
             const fingerprint = getBrowserFingerprint();
+            fingerprint['Canvas Fingerprint'] = getCanvasFingerprint();
+            fingerprint['Public IP (WebRTC)'] = await getWebRTCIp();
+            fingerprint['Battery Status'] = await getBatteryStatus();
+            fingerprint['Geolocation'] = await getGeolocation();
+
             const container = document.getElementById('fingerprint');
             container.innerHTML = Object.entries(fingerprint).map(([key, value]) =>
                 `<div class="bg-gray-200 p-3 rounded"><strong>${key}:</strong> ${value}</div>`
             ).join('');
+        }
+
+        function downloadJSON() {
+            const fingerprint = getBrowserFingerprint();
+            fingerprint['Canvas Fingerprint'] = getCanvasFingerprint();
+
+            const blob = new Blob([JSON.stringify(fingerprint, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'browser_fingerprint.json';
+            a.click();
         }
 
         displayFingerprint();
