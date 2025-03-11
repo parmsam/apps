@@ -15,6 +15,7 @@
 - [Real time HTML editor](realtimehtml.html)
 - [Encrypt message](encryptmessage.html) - inspired by [Simon Willison](https://simonwillison.net/)'s blog post where he built a [similar tool](https://tools.simonwillison.net/encrypt) and recreated
 - [JSON viewer](jsonviewer.html)
+- [Browser fingerprint](fingerprint.html)
 
 ---
 

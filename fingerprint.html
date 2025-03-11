@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Fingerprint Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 text-gray-900">
+    <div class="max-w-3xl mx-auto p-6 mt-10 bg-white shadow-lg rounded-lg">
+        <h1 class="text-2xl font-bold mb-4 text-center">Browser Fingerprint Viewer</h1>
+        <div id="fingerprint" class="space-y-2"></div>
+    </div>
+
+    <script>
+        function getBrowserFingerprint() {
+            const fingerprint = {
+                'User Agent': navigator.userAgent,
+                'Platform': navigator.platform,
+                'Language': navigator.language,
+                'Screen Size': `${screen.width} x ${screen.height}`,
+                'Color Depth': screen.colorDepth,
+                'Time Zone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+                'Cookies Enabled': navigator.cookieEnabled,
+                'Do Not Track': navigator.doNotTrack,
+                'Hardware Concurrency': navigator.hardwareConcurrency,
+                'Device Memory': navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'N/A',
+                'Touch Support': ('ontouchstart' in window) ? 'Yes' : 'No',
+                'Online Status': navigator.onLine ? 'Online' : 'Offline'
+            };
+            return fingerprint;
+        }
+
+        function displayFingerprint() {
+            const fingerprint = getBrowserFingerprint();
+            const container = document.getElementById('fingerprint');
+            container.innerHTML = Object.entries(fingerprint).map(([key, value]) =>
+                `<div class="bg-gray-200 p-3 rounded"><strong>${key}:</strong> ${value}</div>`
+            ).join('');
+        }
+
+        displayFingerprint();
+    </script>
+</body>
+
+</html>
