@@ -11,7 +11,10 @@
 <body class="bg-gray-100 text-gray-900">
     <div class="max-w-3xl mx-auto p-6 mt-10 bg-white shadow-lg rounded-lg">
         <h1 class="text-2xl font-bold mb-4 text-center">Browser Fingerprint Viewer</h1>
-        <button onclick="downloadJSON()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded">Download JSON</button>
+        <div class="flex space-x-4">
+            <button onclick="downloadJSON()" class="mt-4 mb-4 bg-blue-500 text-white px-4 py-2 rounded">Download JSON</button>
+            <button onclick="copyJSON()" class="mt-4 mb-4 bg-green-500 text-white px-4 py-2 rounded">Copy JSON</button>
+        </div>
         <div id="fingerprint" class="space-y-2"></div>
     </div>
 
@@ -78,28 +81,33 @@
             });
         }
 
+        let fingerprint = '';
+
         async function displayFingerprint() {
-            const fingerprint = getBrowserFingerprint();
+            fingerprint = getBrowserFingerprint();
+            fingerprint['Public IP (WebRTC)'] = await getWebRTCIp();;
+            fingerprint['Battery Status'] = await getGeolocation();
+            fingerprint['Geolocation'] = await getBatteryStatus();
             fingerprint['Canvas Fingerprint'] = getCanvasFingerprint();
-            fingerprint['Public IP (WebRTC)'] = await getWebRTCIp();
-            fingerprint['Battery Status'] = await getBatteryStatus();
-            fingerprint['Geolocation'] = await getGeolocation();
 
             const container = document.getElementById('fingerprint');
             container.innerHTML = Object.entries(fingerprint).map(([key, value]) =>
-                `<div class="bg-gray-200 p-3 rounded"><strong>${key}:</strong> ${value}</div>`
+                `<div class="bg-gray-200 p-3 rounded break-words"><strong>${key}:</strong> ${value}</div>`
             ).join('');
         }
 
         function downloadJSON() {
-            const fingerprint = getBrowserFingerprint();
-            fingerprint['Canvas Fingerprint'] = getCanvasFingerprint();
-
             const blob = new Blob([JSON.stringify(fingerprint, null, 2)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = 'browser_fingerprint.json';
             a.click();
+        }
+
+        function copyJSON() {
+            navigator.clipboard.writeText(JSON.stringify(fingerprint, null, 2)).then(() => {
+                alert("JSON copied to clipboard!");
+            });
         }
 
         displayFingerprint();
