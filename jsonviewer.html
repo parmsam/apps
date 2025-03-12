@@ -108,7 +108,9 @@
         function generateURL() {
             const jsonBlob = new Blob([editor.getValue()], { type: "application/json" });
             const objectURL = URL.createObjectURL(jsonBlob);
-            navigator.clipboard.writeText(objectURL).then(() => {
+            const encodedURL = encodeURIComponent(objectURL);
+            const url = `${window.location.origin}${window.location.pathname}?data=${encodedURL}`;
+            navigator.clipboard.writeText(url).then(() => {
                 alert("Sharable URL copied to clipboard!");
             });
         }
@@ -152,14 +154,20 @@
         function loadFromURL() {
             const params = new URLSearchParams(window.location.search);
             if (params.has("data")) {
-                try {
-                    const jsonData = decodeURIComponent(params.get("data"));
-                    editor.setValue(jsonData, -1);
-                } catch (e) {
-                    console.error("Invalid URL data");
-                }
+                const encodedURL = params.get("data");
+                const objectURL = decodeURIComponent(encodedURL);
+                fetch(objectURL)
+                    .then(response => response.text())
+                    .then(jsonData => {
+                        editor.setValue(jsonData, -1);
+                        updateTreeView();
+                    })
+                    .catch(error => {
+                        console.error("Failed to load JSON from Blob URL:", error);
+                    });
+            } else {
+                updateTreeView();
             }
-            updateTreeView();
         }
 
         function uploadJSONFile(event) {
