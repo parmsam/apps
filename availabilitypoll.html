@@ -12,8 +12,10 @@
 <body class="bg-gray-100 p-6">
     <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-md">
         <h2 class="text-2xl font-bold mb-4">Enter Availability</h2>
-        <textarea id="availabilityInput" class="w-full p-2 border rounded-md mb-4" rows="5"
-            placeholder="e.g., March 20, 2025, 3-5 PM\nMarch 21, 2025, 10-12 AM\nMarch 22, 2025, 2-4 PM"></textarea>
+        <textarea id="availabilityInput" class="w-full p-2 border rounded-md mb-4" rows="5">
+March 20, 2025, 3-5 PM
+March 21, 2025, 10-12 AM
+March 22, 2025, 2-4 PM</textarea>
         <div class="flex justify-between mb-4">
             <button onclick="updateCalendar()" class="bg-blue-500 text-white px-4 py-2 rounded-md">Update
                 Calendar</button>
@@ -97,6 +99,7 @@
             currentEventIndex = (currentEventIndex + direction + eventList.length) % eventList.length;
             let event = eventList[currentEventIndex];
             window.calendar.gotoDate(event.start);
+            document.getElementById("calendar").scrollIntoView({ behavior: "smooth", block: "center" });
         }
 
         function loadFromUrl() {
