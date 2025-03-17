@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Poll</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.js"></script>
+</head>
+
+<body class="bg-gray-100 p-6">
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-md">
+        <h2 class="text-2xl font-bold mb-4">Enter Availability</h2>
+        <textarea id="availabilityInput" class="w-full p-2 border rounded-md mb-4" rows="5"
+            placeholder="e.g., March 20, 2025, 3-5 PM\nMarch 21, 2025, 10-12 AM\nMarch 22, 2025, 2-4 PM"></textarea>
+        <div class="flex justify-between mb-4">
+            <button onclick="updateCalendar()" class="bg-blue-500 text-white px-4 py-2 rounded-md">Update
+                Calendar</button>
+            <button onclick="toggleView()" class="bg-gray-500 text-white px-4 py-2 rounded-md">Toggle View</button>
+            <button onclick="copyLink()" class="bg-green-500 text-white px-4 py-2 rounded-md">Copy Link</button>
+        </div>
+        <div id="calendar" class="mt-6"></div>
+        <div class="flex justify-center mt-4">
+            <button onclick="navigateEvents(-1)" class="bg-gray-500 text-white px-4 py-2 rounded-md mr-2">&larr;
+                Prev</button>
+            <button onclick="navigateEvents(1)" class="bg-gray-500 text-white px-4 py-2 rounded-md">Next &rarr;</button>
+        </div>
+    </div>
+
+    <script>
+        let eventList = [];
+        let currentEventIndex = 0;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            window.calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+                initialView: 'timeGridWeek',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek'
+                }
+            });
+            window.calendar.render();
+        });
+
+        function updateCalendar() {
+            let inputText = document.getElementById('availabilityInput').value;
+            let dateRegex = /(\w+ \d+, \d{4}), (\d+)-(\d+) (AM|PM)/g;
+            let matches;
+            window.calendar.removeAllEvents();
+            eventList = [];
+            let availabilitySet = [];
+
+            while ((matches = dateRegex.exec(inputText)) !== null) {
+                let [_, date, startHour, endHour, period] = matches;
+                let eventDate = new Date(date);
+                let startTime = convertTo24Hour(startHour, period);
+                let endTime = convertTo24Hour(endHour, period);
+
+                let event = {
+                    title: `Available: ${startHour}-${endHour} ${period}`,
+                    start: new Date(eventDate.setHours(startTime)),
+                    end: new Date(eventDate.setHours(endTime)),
+                    allDay: false
+                };
+                window.calendar.addEvent(event);
+                eventList.push(event);
+                availabilitySet.push(`${date}, ${startHour}-${endHour} ${period}`);
+            }
+            document.getElementById('availabilityInput').value = availabilitySet.join('\n');
+        }
+
+        function convertTo24Hour(hour, period) {
+            hour = parseInt(hour);
+            if (period === 'PM' && hour !== 12) hour += 12;
+            if (period === 'AM' && hour === 12) hour = 0;
+            return hour;
+        }
+
+        function toggleView() {
+            let currentView = window.calendar.view.type;
+            let newView = currentView === 'dayGridMonth' ? 'timeGridWeek' : 'dayGridMonth';
+            window.calendar.changeView(newView);
+        }
+
+        function copyLink() {
+            let url = new URL(window.location.href);
+            url.searchParams.set("availability", encodeURIComponent(document.getElementById("availabilityInput").value));
+            navigator.clipboard.writeText(url.toString()).then(() => {
+                alert("Link copied to clipboard!");
+            });
+        }
+
+        function navigateEvents(direction) {
+            if (eventList.length === 0) return;
+            currentEventIndex = (currentEventIndex + direction + eventList.length) % eventList.length;
+            let event = eventList[currentEventIndex];
+            window.calendar.gotoDate(event.start);
+        }
+
+        function loadFromUrl() {
+            let params = new URLSearchParams(window.location.search);
+            let availability = params.get("availability");
+            if (availability) {
+                document.getElementById("availabilityInput").value = decodeURIComponent(availability);
+                updateCalendar();
+            }
+        }
+
+        window.onload = loadFromUrl;
+    </script>
+</body>
+
+</html>
