@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Schedule Poll</title>
+    <title>Scheduling tool</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.js"></script>
 </head>
@@ -13,9 +13,9 @@
     <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-md">
         <h2 class="text-2xl font-bold mb-4">Enter Availability</h2>
         <textarea id="availabilityInput" class="w-full p-2 border rounded-md mb-4" rows="5">
-March 20, 2025, 3-5 PM
-March 21, 2025, 10-12 AM
-March 22, 2025, 2-4 PM</textarea>
+March 20, 2025, 3-5 PM, Bob
+March 21, 2025, 10-12 AM, Alice
+March 22, 2025, 2-4 PM, Alice</textarea>
         <div class="flex justify-between mb-4">
             <button onclick="updateCalendar()" class="bg-blue-500 text-white px-4 py-2 rounded-md">Update
                 Calendar</button>
@@ -33,6 +33,8 @@ March 22, 2025, 2-4 PM</textarea>
     <script>
         let eventList = [];
         let currentEventIndex = 0;
+        const colors = ['#FF5733', '#33FF57', '#3357FF', '#FF33A1', '#A133FF', '#33FFA1'];
+        let userColors = {};
 
         document.addEventListener('DOMContentLoaded', function () {
             window.calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
@@ -48,27 +50,33 @@ March 22, 2025, 2-4 PM</textarea>
 
         function updateCalendar() {
             let inputText = document.getElementById('availabilityInput').value;
-            let dateRegex = /(\w+ \d+, \d{4}), (\d+)-(\d+) (AM|PM)/g;
+            let dateRegex = /(\w+ \d+, \d{4}), (\d+)-(\d+) (AM|PM),?\s*(\w+)?/g;
             let matches;
             window.calendar.removeAllEvents();
             eventList = [];
             let availabilitySet = [];
 
             while ((matches = dateRegex.exec(inputText)) !== null) {
-                let [_, date, startHour, endHour, period] = matches;
+                let [_, date, startHour, endHour, period, user] = matches;
                 let eventDate = new Date(date);
                 let startTime = convertTo24Hour(startHour, period);
                 let endTime = convertTo24Hour(endHour, period);
 
+                if (user && !userColors[user]) {
+                    userColors[user] = colors[Object.keys(userColors).length % colors.length];
+                }
+
                 let event = {
-                    title: `Available: ${startHour}-${endHour} ${period}`,
+                    title: `Available: ${startHour}-${endHour} ${period}${user ? ` (${user})` : ''}`,
                     start: new Date(eventDate.setHours(startTime)),
                     end: new Date(eventDate.setHours(endTime)),
-                    allDay: false
+                    allDay: false,
+                    backgroundColor: user ? userColors[user] : '#3788d8',
+                    borderColor: user ? userColors[user] : '#3788d8'
                 };
                 window.calendar.addEvent(event);
                 eventList.push(event);
-                availabilitySet.push(`${date}, ${startHour}-${endHour} ${period}`);
+                availabilitySet.push(`${date}, ${startHour}-${endHour} ${period}${user ? `, ${user}` : ''}`);
             }
             document.getElementById('availabilityInput').value = availabilitySet.join('\n');
         }
