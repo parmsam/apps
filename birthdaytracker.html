@@ -28,6 +28,7 @@
         function parseBirthdays(text) {
             const lines = text.split('\n');
             const today = new Date();
+            today.setHours(0, 0, 0, 0); // Set the time to midnight to compare dates only
             return lines.map(line => {
                 const [dateStr, name] = line.split(',').map(s => s.trim());
                 if (!dateStr || !name) return null;
