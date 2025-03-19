@@ -10,7 +10,7 @@
 </head>
 
 <body class="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
-    <h2 class="text-2xl font-semibold mb-4">Paste Image(s) from Clipboard</h2>
+    <h2 class="text-2xl font-semibold mb-4">Paste an Image from Clipboard</h2>
     <div id="pasteArea"
         class="w-full max-w-md h-64 border-2 border-dashed border-gray-400 bg-white flex items-center justify-center cursor-pointer rounded-lg shadow-md text-gray-500">
         Click here and press Ctrl+V (Cmd+V on Mac) to paste
@@ -22,8 +22,8 @@
         <select id="formatSelect" class="p-2 border rounded-lg bg-white shadow">
             <option value="image/png">PNG (Lossless)</option>
             <option value="image/bmp">BMP (Lossless)</option>
+            <option value="image/webp">WEBP (Lossless)</option>
             <option value="image/jpeg">JPEG (Lossy)</option>
-            <option value="image/webp">WEBP</option>
         </select>
         <button id="saveAllButton"
             class="hidden px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600">Save All as ZIP</button>
@@ -77,31 +77,35 @@
             }
         });
 
-        saveAllButton.addEventListener("click", () => {
+        saveAllButton.addEventListener("click", async () => {
             const zip = new JSZip();
             const selectedFormat = formatSelect.value;
             const promises = images.map((imageObj, index) => {
                 return new Promise(resolve => {
                     const canvas = document.createElement("canvas");
                     const ctx = canvas.getContext("2d");
-                    canvas.width = imageObj.img.width;
-                    canvas.height = imageObj.img.height;
-                    ctx.drawImage(imageObj.img, 0, 0);
+                    const img = new Image();
 
-                    canvas.toBlob(blob => {
-                        zip.file(`image${index + 1}` + getFileExtension(selectedFormat), blob);
-                        resolve();
-                    }, selectedFormat);
+                    img.onload = function () {
+                        canvas.width = img.naturalWidth;
+                        canvas.height = img.naturalHeight;
+                        ctx.drawImage(img, 0, 0);
+
+                        canvas.toBlob(blob => {
+                            zip.file(`image${index + 1}` + getFileExtension(selectedFormat), blob, { binary: true });
+                            resolve();
+                        }, selectedFormat, 1.0); // Ensure full quality
+                    };
+                    img.src = imageObj.img.src;
                 });
             });
 
-            Promise.all(promises).then(() => {
-                zip.generateAsync({ type: "blob" }).then(content => {
-                    const link = document.createElement("a");
-                    link.href = URL.createObjectURL(content);
-                    link.download = "images.zip";
-                    link.click();
-                });
+            await Promise.all(promises);
+            zip.generateAsync({ type: "blob" }).then(content => {
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(content);
+                link.download = "images.zip";
+                link.click();
             });
         });
 
