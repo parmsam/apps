@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clipboard Image Saver</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
+    <h2 class="text-2xl font-semibold mb-4">Paste an Image from Clipboard</h2>
+    <div id="pasteArea"
+        class="w-full max-w-md h-64 border-2 border-dashed border-gray-400 bg-white flex items-center justify-center cursor-pointer rounded-lg shadow-md text-gray-500">
+        Click here and press Ctrl+V (Cmd+V on Mac) to paste
+    </div>
+    <canvas id="imageCanvas" class="hidden"></canvas>
+    <img id="previewImage" class="hidden max-w-md max-h-96 mt-4 rounded-lg shadow-md" alt="Pasted Image" />
+
+    <div class="mt-4 flex flex-col items-center space-y-2">
+        <select id="formatSelect" class="p-2 border rounded-lg bg-white shadow">
+            <option value="image/png">PNG (Lossless)</option>
+            <option value="image/bmp">BMP (Lossless)</option>
+            <option value="image/jpeg">JPEG (Lossy)</option>
+            <option value="image/webp">WEBP</option>
+        </select>
+        <button id="saveButton" class="hidden px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600">Save
+            Image</button>
+    </div>
+
+    <script>
+        const pasteArea = document.getElementById("pasteArea");
+        const canvas = document.getElementById("imageCanvas");
+        const ctx = canvas.getContext("2d");
+        const saveButton = document.getElementById("saveButton");
+        const formatSelect = document.getElementById("formatSelect");
+        const previewImage = document.getElementById("previewImage");
+        let currentImageType = "image/png";
+
+        pasteArea.addEventListener("click", () => {
+            pasteArea.focus();
+        });
+
+        document.addEventListener("paste", (event) => {
+            const items = event.clipboardData.items;
+            for (let item of items) {
+                if (item.type.startsWith("image/")) {
+                    currentImageType = item.type;
+                    const blob = item.getAsFile();
+                    const img = new Image();
+                    const reader = new FileReader();
+
+                    reader.onload = function (e) {
+                        img.src = e.target.result;
+                        previewImage.src = e.target.result;
+                        previewImage.classList.remove("hidden");
+                    };
+
+                    img.onload = function () {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        saveButton.classList.remove("hidden");
+                    };
+
+                    reader.readAsDataURL(blob);
+                    break;
+                }
+            }
+        });
+
+        saveButton.addEventListener("click", () => {
+            const selectedFormat = formatSelect.value;
+            const link = document.createElement("a");
+            link.href = canvas.toDataURL(selectedFormat);
+            link.download = "pasted-image" + getFileExtension(selectedFormat);
+            link.click();
+        });
+
+        function getFileExtension(mimeType) {
+            switch (mimeType) {
+                case "image/png": return ".png";
+                case "image/bmp": return ".bmp";
+                case "image/jpeg": return ".jpg";
+                case "image/webp": return ".webp";
+                default: return "";
+            }
+        }
+    </script>
+</body>
+
+</html>
