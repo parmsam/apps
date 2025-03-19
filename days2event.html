@@ -49,10 +49,11 @@
             container.innerHTML = data.map(entry => {
                 const highlight = entry.daysUntil === 0 ? 'bg-yellow-300' : entry.past ? 'bg-gray-300 opacity-50' : 'bg-gray-200';
                 const progress = entry.past || entry.daysUntil === 0 ? 100 : ((365 - entry.daysUntil) / 365) * 100;
+                const dayLabel = Math.abs(entry.daysUntil) === 1 ? 'day' : 'days';
                 return `
                     <div class="${highlight} p-2 my-2 rounded-md">
                         <p class="font-semibold">${entry.eventName}</p>
-                        <p>${entry.daysUntil === 0 ? "🎉 It's today!" : entry.past ? `${entry.daysUntil} days ago` : `${entry.daysUntil} days until event`}</p>
+                        <p>${entry.daysUntil === 0 ? "🎉 It's today!" : entry.past ? `${entry.daysUntil} ${dayLabel} ago` : `${entry.daysUntil} ${dayLabel} until event`}</p>
                         <div class="w-full bg-gray-300 h-2 rounded-md mt-1">
                             <div class="bg-blue-500 h-2 rounded-md" style="width: ${progress}%"></div>
                         </div>
