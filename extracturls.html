@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extract URLs from Pasted Content</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="max-w-2xl w-full bg-white shadow-lg rounded-lg p-6">
+        <h1 class="text-xl font-bold text-gray-800 text-center mb-4">Extract URLs from Pasted Content</h1>
+
+        <div id="pasteArea" class="w-full h-40 p-3 border border-gray-300 rounded-lg bg-white overflow-auto" contenteditable="true" onpaste="handlePaste(event)">
+            <p class="text-gray-400">Paste copied content here...</p>
+        </div>
+
+        <div class="flex flex-col space-y-2 mt-4">
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" id="includeText" class="form-checkbox h-5 w-5 text-blue-600">
+                <span class="text-gray-700">Include link text</span>
+            </label>
+
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" id="clickableLinks" class="form-checkbox h-5 w-5 text-blue-600" checked>
+                <span class="text-gray-700">Make links clickable</span>
+            </label>
+
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" id="onlyText" class="form-checkbox h-5 w-5 text-blue-600">
+                <span class="text-gray-700">Only include link text</span>
+            </label>
+        </div>
+
+        <button id="extractBtn" class="mt-4 w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700">Extract URLs</button>
+
+        <div class="mt-4">
+            <h2 class="text-lg font-semibold text-gray-800">Extracted Output</h2>
+            <div id="outputContent" class="w-full h-40 p-3 border border-gray-300 rounded-lg mt-2 bg-gray-50 overflow-auto"></div>
+        </div>
+
+        <button id="copyBtn" class="mt-4 w-full bg-green-600 text-white font-semibold py-2 rounded-lg hover:bg-green-700">Copy Output</button>
+    </div>
+
+    <script>
+        function handlePaste(event) {
+            event.preventDefault();
+            let clipboardData = event.clipboardData || window.clipboardData;
+            let html = clipboardData.getData("text/html");
+
+            if (html) {
+                document.getElementById("pasteArea").innerHTML = html;
+            } else {
+                document.getElementById("pasteArea").innerText = clipboardData.getData("text/plain");
+            }
+        }
+
+        document.getElementById("extractBtn").addEventListener("click", function () {
+            let pasteArea = document.getElementById("pasteArea");
+            let includeText = document.getElementById("includeText").checked;
+            let clickableLinks = document.getElementById("clickableLinks").checked;
+            let onlyText = document.getElementById("onlyText").checked;
+
+            let links = pasteArea.querySelectorAll("a");
+            let extractedLinks = [];
+            let plainTextOutput = [];
+
+            links.forEach(link => {
+                let url = link.href;
+                
+                // Ensure all text (even inside nested elements) is captured
+                let text = link.textContent.trim();
+                if (!text) {
+                    text = link.getAttribute("aria-label") || link.getAttribute("title") || "Untitled Link";
+                }
+
+                let formattedLink = text; // Default to just text if 'Only Include Link Text' is checked
+
+                if (!onlyText) {
+                    formattedLink = includeText ? `${text}, ${url}` : url;
+                }
+
+                if (clickableLinks && !onlyText) {
+                    formattedLink = `<a href="${url}" target="_blank" class="text-blue-600 underline">${formattedLink}</a>`;
+                }
+
+                extractedLinks.push(formattedLink);
+                plainTextOutput.push(formattedLink.replace(/<[^>]+>/g, '')); // Remove HTML for copy
+            });
+
+            document.getElementById("outputContent").innerHTML = extractedLinks.join("<br>");
+            document.getElementById("copyBtn").dataset.links = plainTextOutput.join("\n");
+        });
+
+        document.getElementById("copyBtn").addEventListener("click", function () {
+            let plainLinks = document.getElementById("copyBtn").dataset.links;
+            navigator.clipboard.writeText(plainLinks).then(() => {
+                alert("Copied to clipboard!");
+            });
+        });
+
+    </script>
+
+</body>
+</html>
