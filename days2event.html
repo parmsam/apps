@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-4">
+    <div class="max-w-2xl mx-auto bg-white shadow-md rounded-lg p-6">
+        <h1 class="text-2xl font-bold text-center mb-4">Event Tracker</h1>
+        <textarea id="input" class="w-full p-2 border rounded-md" rows="5">2025-12-25, Christmas
+2025-07-04, Independence Day
+2025-11-28, Thanksgiving</textarea>
+        <button id="parse" class="mt-2 w-full bg-blue-500 text-white py-2 rounded-md">Parse Events</button>
+        <button id="sort" class="mt-2 w-full bg-purple-500 text-white py-2 rounded-md">Sort by Upcoming</button>
+        <button id="clear" class="mt-2 w-full bg-red-500 text-white py-2 rounded-md">Clear Events</button>
+        <div id="output" class="mt-4"></div>
+        <button id="share" class="mt-2 w-full bg-green-500 text-white py-2 rounded-md">Copy Shareable URL</button>
+    </div>
+
+    <script>
+        let ascendingSort = true;
+
+        function parseEvents(text) {
+            const lines = text.split('\n');
+            const today = new Date();
+            return lines.map(line => {
+                const [dateStr, eventName] = line.split(',').map(s => s.trim());
+                if (!dateStr || !eventName) return null;
+                const eventDate = new Date(dateStr);
+                const daysUntil = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
+                return { eventName, daysUntil, eventDate };
+            }).filter(entry => entry);
+        }
+
+        function renderOutput(data) {
+            const container = document.getElementById('output');
+            container.innerHTML = data.map(entry => {
+                const highlight = entry.daysUntil === 0 ? 'bg-yellow-300' : 'bg-gray-200';
+                const progress = ((365 - entry.daysUntil) / 365) * 100;
+                return `
+                    <div class="${highlight} p-2 my-2 rounded-md">
+                        <p class="font-semibold">${entry.eventName}</p>
+                        <p>${entry.daysUntil === 0 ? "🎉 It's today!" : `${entry.daysUntil} days until event`}</p>
+                        <div class="w-full bg-gray-300 h-2 rounded-md mt-1">
+                            <div class="bg-blue-500 h-2 rounded-md" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateURL() {
+            const input = document.getElementById('input').value;
+            const encoded = encodeURIComponent(input);
+            const url = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
+            navigator.clipboard.writeText(url);
+            alert('URL copied to clipboard!');
+        }
+
+        function clearEvents() {
+            document.getElementById('input').value = '';
+            document.getElementById('output').innerHTML = '';
+        }
+
+        document.getElementById('parse').addEventListener('click', () => {
+            const text = document.getElementById('input').value;
+            const data = parseEvents(text);
+            renderOutput(data);
+        });
+
+        document.getElementById('sort').addEventListener('click', () => {
+            const text = document.getElementById('input').value;
+            let data = parseEvents(text);
+            data = data.sort((a, b) => ascendingSort ? a.daysUntil - b.daysUntil : b.daysUntil - a.daysUntil);
+            ascendingSort = !ascendingSort;
+            renderOutput(data);
+        });
+
+        document.getElementById('share').addEventListener('click', updateURL);
+        document.getElementById('clear').addEventListener('click', clearEvents);
+
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            const data = params.get('data');
+            if (data) {
+                document.getElementById('input').value = decodeURIComponent(data);
+                document.getElementById('parse').click();
+            }
+        };
+    </script>
+</body>
+
+</html>

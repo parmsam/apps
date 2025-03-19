@@ -18,6 +18,7 @@
 - [Browser fingerprint](fingerprint.html)
 - [Scheduling tool](availabilitypoll.html)
 - [Birthay tracker](birthdaytracker.html)
+- [Days to event tracker](days2event.html)
 
 ---
 
