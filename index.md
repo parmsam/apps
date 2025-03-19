@@ -17,7 +17,7 @@
 - [JSON viewer](jsonviewer.html)
 - [Browser fingerprint](fingerprint.html)
 - [Scheduling tool](availabilitypoll.html)
-- [Days to birthay tracker](birthdaytracker.html)
+- [Days to birthday tracker](birthdaytracker.html)
 - [Days to event tracker](days2event.html)
 
 ---
