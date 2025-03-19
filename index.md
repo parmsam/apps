@@ -17,6 +17,7 @@
 - [JSON viewer](jsonviewer.html)
 - [Browser fingerprint](fingerprint.html)
 - [Scheduling tool](availabilitypoll.html)
+- [Birthay tracker](birthdaytracker.html)
 
 ---
 

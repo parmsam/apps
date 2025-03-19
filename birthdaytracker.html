@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-4">
+    <div class="max-w-2xl mx-auto bg-white shadow-md rounded-lg p-6">
+        <h1 class="text-2xl font-bold text-center mb-4">Birthday Tracker</h1>
+        <textarea id="input" class="w-full p-2 border rounded-md" rows="5">1990-05-15, John Doe
+1985-08-22, Jane Smith
+2000-12-10, Alex Johnson</textarea>
+        <button id="parse" class="mt-2 w-full bg-blue-500 text-white py-2 rounded-md">Parse Birthdays</button>
+        <button id="clear" class="mt-2 w-full bg-red-500 text-white py-2 rounded-md">Clear Birthdays</button>
+        <div id="output" class="mt-4"></div>
+        <button id="share" class="mt-2 w-full bg-green-500 text-white py-2 rounded-md">Generate Shareable URL</button>
+    </div>
+
+    <script>
+        function parseBirthdays(text) {
+            const lines = text.split('\n');
+            const today = new Date();
+            const data = lines.map(line => {
+                const [dateStr, name] = line.split(',').map(s => s.trim());
+                if (!dateStr || !name) return null;
+                const birthDate = new Date(dateStr);
+                const age = today.getFullYear() - birthDate.getFullYear();
+                let nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+                if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
+                const daysUntil = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+                return { name, age, daysUntil, birthDate };
+            }).filter(entry => entry);
+
+            return data;
+        }
+
+        function renderOutput(data) {
+            const container = document.getElementById('output');
+            container.innerHTML = data.map(entry => `
+                <div class="bg-gray-200 p-2 my-2 rounded-md">
+                    <p class="font-semibold">${entry.name} (Age: ${entry.age})</p>
+                    <p>${entry.daysUntil} days until birthday</p>
+                </div>
+            `).join('');
+        }
+
+        function updateURL() {
+            const input = document.getElementById('input').value;
+            const encoded = encodeURIComponent(input);
+            const url = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
+            window.history.pushState({}, '', url);
+            alert('URL updated! You can share this link.');
+        }
+
+        function clearBirthdays() {
+            document.getElementById('input').value = '';
+            document.getElementById('output').innerHTML = '';
+        }
+
+        document.getElementById('parse').addEventListener('click', () => {
+            const text = document.getElementById('input').value;
+            const data = parseBirthdays(text);
+            renderOutput(data);
+        });
+
+        document.getElementById('share').addEventListener('click', updateURL);
+        document.getElementById('clear').addEventListener('click', clearBirthdays);
+
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            const data = params.get('data');
+            if (data) {
+                document.getElementById('input').value = decodeURIComponent(data);
+                document.getElementById('parse').click();
+            }
+        };
+    </script>
+</body>
+
+</html>
