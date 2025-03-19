@@ -1,5 +1,11 @@
 # Sam's tiny apps
 
+Inspired by similar tiny apps from [Jeremy Howard](https://github.com/jph00/apps) and [Simon Willison](https://simonwillison.net/2024/Oct/21/claude-artifacts/), I've created a few tiny HTML/JS-based apps that I find useful. I hope you find them useful too!
+
+---
+
+## tiny apps
+
 - [QR code generator](qrcode.html) - Generate QR codes from text or URLs.
 - [Text case converter](textcase.html) - Convert text to various cases like uppercase, lowercase, camelCase, etc.
 - [Color picker](colorpicker.html) - Pick and display colors in different formats (Hex, RGB, HSL).
