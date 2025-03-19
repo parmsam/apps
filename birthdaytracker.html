@@ -12,19 +12,23 @@
     <div class="max-w-2xl mx-auto bg-white shadow-md rounded-lg p-6">
         <h1 class="text-2xl font-bold text-center mb-4">Birthday Tracker</h1>
         <textarea id="input" class="w-full p-2 border rounded-md" rows="5">1990-05-15, John Doe
+1995-11-30, Alice Johnson
 1985-08-22, Jane Smith
 2000-12-10, Alex Johnson</textarea>
         <button id="parse" class="mt-2 w-full bg-blue-500 text-white py-2 rounded-md">Parse Birthdays</button>
+        <button id="sort" class="mt-2 w-full bg-purple-500 text-white py-2 rounded-md">Sort by Upcoming</button>
         <button id="clear" class="mt-2 w-full bg-red-500 text-white py-2 rounded-md">Clear Birthdays</button>
         <div id="output" class="mt-4"></div>
-        <button id="share" class="mt-2 w-full bg-green-500 text-white py-2 rounded-md">Generate Shareable URL</button>
+        <button id="share" class="mt-2 w-full bg-green-500 text-white py-2 rounded-md">Copy Shareable URL</button>
     </div>
 
     <script>
+        let ascendingSort = true;
+
         function parseBirthdays(text) {
             const lines = text.split('\n');
             const today = new Date();
-            const data = lines.map(line => {
+            return lines.map(line => {
                 const [dateStr, name] = line.split(',').map(s => s.trim());
                 if (!dateStr || !name) return null;
                 const birthDate = new Date(dateStr);
@@ -34,26 +38,31 @@
                 const daysUntil = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
                 return { name, age, daysUntil, birthDate };
             }).filter(entry => entry);
-
-            return data;
         }
 
         function renderOutput(data) {
             const container = document.getElementById('output');
-            container.innerHTML = data.map(entry => `
-                <div class="bg-gray-200 p-2 my-2 rounded-md">
-                    <p class="font-semibold">${entry.name} (Age: ${entry.age})</p>
-                    <p>${entry.daysUntil} days until birthday</p>
-                </div>
-            `).join('');
+            container.innerHTML = data.map(entry => {
+                const highlight = entry.daysUntil === 0 ? 'bg-yellow-300' : 'bg-gray-200';
+                const progress = ((365 - entry.daysUntil) / 365) * 100;
+                return `
+                    <div class="${highlight} p-2 my-2 rounded-md">
+                        <p class="font-semibold">${entry.name} (Age: ${entry.age})</p>
+                        <p>${entry.daysUntil === 0 ? "🎉 It's their birthday today!" : `${entry.daysUntil} days until birthday`}</p>
+                        <div class="w-full bg-gray-300 h-2 rounded-md mt-1">
+                            <div class="bg-blue-500 h-2 rounded-md" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function updateURL() {
             const input = document.getElementById('input').value;
             const encoded = encodeURIComponent(input);
             const url = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
-            window.history.pushState({}, '', url);
-            alert('URL updated! You can share this link.');
+            navigator.clipboard.writeText(url);
+            alert('URL copied to clipboard!');
         }
 
         function clearBirthdays() {
@@ -64,6 +73,14 @@
         document.getElementById('parse').addEventListener('click', () => {
             const text = document.getElementById('input').value;
             const data = parseBirthdays(text);
+            renderOutput(data);
+        });
+
+        document.getElementById('sort').addEventListener('click', () => {
+            const text = document.getElementById('input').value;
+            let data = parseBirthdays(text);
+            data = data.sort((a, b) => ascendingSort ? a.daysUntil - b.daysUntil : b.daysUntil - a.daysUntil);
+            ascendingSort = !ascendingSort;
             renderOutput(data);
         });
 
