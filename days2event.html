@@ -27,24 +27,32 @@
         function parseEvents(text) {
             const lines = text.split('\n');
             const today = new Date();
+            today.setHours(0, 0, 0, 0); // Set the time to midnight to compare dates only
             return lines.map(line => {
                 const [dateStr, eventName] = line.split(',').map(s => s.trim());
                 if (!dateStr || !eventName) return null;
                 const eventDate = new Date(dateStr);
-                const daysUntil = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
-                return { eventName, daysUntil, eventDate };
+                let daysUntil = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
+                let past = false;
+
+                if (daysUntil < 0) {
+                    past = true;
+                    daysUntil = Math.abs(daysUntil);
+                }
+
+                return { eventName, daysUntil, eventDate, past };
             }).filter(entry => entry);
         }
 
         function renderOutput(data) {
             const container = document.getElementById('output');
             container.innerHTML = data.map(entry => {
-                const highlight = entry.daysUntil === 0 ? 'bg-yellow-300' : 'bg-gray-200';
-                const progress = ((365 - entry.daysUntil) / 365) * 100;
+                const highlight = entry.daysUntil === 0 ? 'bg-yellow-300' : entry.past ? 'bg-gray-300 opacity-50' : 'bg-gray-200';
+                const progress = entry.past || entry.daysUntil === 0 ? 100 : ((365 - entry.daysUntil) / 365) * 100;
                 return `
                     <div class="${highlight} p-2 my-2 rounded-md">
                         <p class="font-semibold">${entry.eventName}</p>
-                        <p>${entry.daysUntil === 0 ? "🎉 It's today!" : `${entry.daysUntil} days until event`}</p>
+                        <p>${entry.daysUntil === 0 ? "🎉 It's today!" : entry.past ? `${entry.daysUntil} days ago` : `${entry.daysUntil} days until event`}</p>
                         <div class="w-full bg-gray-300 h-2 rounded-md mt-1">
                             <div class="bg-blue-500 h-2 rounded-md" style="width: ${progress}%"></div>
                         </div>
