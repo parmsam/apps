@@ -12,8 +12,8 @@
     <div class="max-w-2xl mx-auto bg-white shadow-md rounded-lg p-6">
         <h1 class="text-2xl font-bold text-center mb-4">Days to Birthday Tracker</h1>
         <textarea id="input" class="w-full p-2 border rounded-md" rows="5">1990-05-15, John Doe
-1995-11-30, Alice Johnson
-1985-08-22, Jane Smith
+1995-05-18, Alice Johnson
+1993-03-18, Jane Smith
 2000-12-10, Alex Johnson</textarea>
         <button id="parse" class="mt-2 w-full bg-blue-500 text-white py-2 rounded-md">Parse Birthdays</button>
         <button id="sort" class="mt-2 w-full bg-purple-500 text-white py-2 rounded-md">Sort by Upcoming</button>
@@ -28,15 +28,23 @@
         function parseBirthdays(text) {
             const lines = text.split('\n');
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Set the time to midnight to compare dates only
+            today.setHours(0, 0, 0, 0); // Normalize time
+
             return lines.map(line => {
                 const [dateStr, name] = line.split(',').map(s => s.trim());
                 if (!dateStr || !name) return null;
-                const birthDate = new Date(dateStr);
+                // Safely parse date components
+                const [year, month, day] = dateStr.split('-').map(Number);
+                const birthDate = new Date(year, month - 1, day);
+                birthDate.setHours(0, 0, 0, 0);
                 const age = today.getFullYear() - birthDate.getFullYear();
+                const isBirthdayToday = birthDate.getMonth() === today.getMonth() && birthDate.getDate() === today.getDate();
                 let nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-                if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
-                const daysUntil = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+                nextBirthday.setHours(0, 0, 0, 0);
+                if (!isBirthdayToday && nextBirthday < today) {
+                    nextBirthday.setFullYear(today.getFullYear() + 1);
+                }
+                const daysUntil = isBirthdayToday ? 0 : Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
                 return { name, age, daysUntil, birthDate };
             }).filter(entry => entry);
         }
