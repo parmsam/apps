@@ -6,16 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clipboard Image Saver</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://stuk.github.io/jszip/dist/jszip.min.js"></script>
 </head>
 
 <body class="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
-    <h2 class="text-2xl font-semibold mb-4">Paste an Image from Clipboard</h2>
+    <h2 class="text-2xl font-semibold mb-4">Paste Image(s) from Clipboard</h2>
     <div id="pasteArea"
         class="w-full max-w-md h-64 border-2 border-dashed border-gray-400 bg-white flex items-center justify-center cursor-pointer rounded-lg shadow-md text-gray-500">
         Click here and press Ctrl+V (Cmd+V on Mac) to paste
     </div>
-    <canvas id="imageCanvas" class="hidden"></canvas>
-    <img id="previewImage" class="hidden max-w-md max-h-96 mt-4 rounded-lg shadow-md" alt="Pasted Image" />
+
+    <div id="imageContainer" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4"></div>
 
     <div class="mt-4 flex flex-col items-center space-y-2">
         <select id="formatSelect" class="p-2 border rounded-lg bg-white shadow">
@@ -24,18 +25,16 @@
             <option value="image/jpeg">JPEG (Lossy)</option>
             <option value="image/webp">WEBP</option>
         </select>
-        <button id="saveButton" class="hidden px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600">Save
-            Image</button>
+        <button id="saveAllButton"
+            class="hidden px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600">Save All as ZIP</button>
     </div>
 
     <script>
         const pasteArea = document.getElementById("pasteArea");
-        const canvas = document.getElementById("imageCanvas");
-        const ctx = canvas.getContext("2d");
-        const saveButton = document.getElementById("saveButton");
+        const saveAllButton = document.getElementById("saveAllButton");
         const formatSelect = document.getElementById("formatSelect");
-        const previewImage = document.getElementById("previewImage");
-        let currentImageType = "image/png";
+        const imageContainer = document.getElementById("imageContainer");
+        let images = [];
 
         pasteArea.addEventListener("click", () => {
             pasteArea.focus();
@@ -45,36 +44,65 @@
             const items = event.clipboardData.items;
             for (let item of items) {
                 if (item.type.startsWith("image/")) {
-                    currentImageType = item.type;
                     const blob = item.getAsFile();
                     const img = new Image();
                     const reader = new FileReader();
 
                     reader.onload = function (e) {
                         img.src = e.target.result;
-                        previewImage.src = e.target.result;
-                        previewImage.classList.remove("hidden");
-                    };
+                        img.classList.add("max-w-full", "max-h-64", "rounded-lg", "shadow-md");
 
-                    img.onload = function () {
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        ctx.drawImage(img, 0, 0);
-                        saveButton.classList.remove("hidden");
+                        const imgWrapper = document.createElement("div");
+                        imgWrapper.classList.add("relative");
+
+                        const deleteButton = document.createElement("button");
+                        deleteButton.textContent = "✖";
+                        deleteButton.classList.add("absolute", "top-2", "right-2", "bg-red-500", "text-white", "rounded-full", "px-2", "py-1", "text-sm", "shadow-md", "hover:bg-red-700");
+                        deleteButton.addEventListener("click", () => {
+                            imageContainer.removeChild(imgWrapper);
+                            images = images.filter(imageObj => imageObj.img !== img);
+                            if (images.length === 0) saveAllButton.classList.add("hidden");
+                        });
+
+                        imgWrapper.appendChild(img);
+                        imgWrapper.appendChild(deleteButton);
+                        imageContainer.appendChild(imgWrapper);
+
+                        images.push({ img, blob });
+                        saveAllButton.classList.remove("hidden");
                     };
 
                     reader.readAsDataURL(blob);
-                    break;
                 }
             }
         });
 
-        saveButton.addEventListener("click", () => {
+        saveAllButton.addEventListener("click", () => {
+            const zip = new JSZip();
             const selectedFormat = formatSelect.value;
-            const link = document.createElement("a");
-            link.href = canvas.toDataURL(selectedFormat);
-            link.download = "pasted-image" + getFileExtension(selectedFormat);
-            link.click();
+            const promises = images.map((imageObj, index) => {
+                return new Promise(resolve => {
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+                    canvas.width = imageObj.img.width;
+                    canvas.height = imageObj.img.height;
+                    ctx.drawImage(imageObj.img, 0, 0);
+
+                    canvas.toBlob(blob => {
+                        zip.file(`image${index + 1}` + getFileExtension(selectedFormat), blob);
+                        resolve();
+                    }, selectedFormat);
+                });
+            });
+
+            Promise.all(promises).then(() => {
+                zip.generateAsync({ type: "blob" }).then(content => {
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(content);
+                    link.download = "images.zip";
+                    link.click();
+                });
+            });
         });
 
         function getFileExtension(mimeType) {
