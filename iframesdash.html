@@ -293,19 +293,19 @@
                 box.setAttribute('data-y', 0);
                 if (type === 'side-by-side') {
                     box.style.left = `${i % 2 === 0 ? 0 : 50}%`;
-                    box.style.top = `${Math.floor(i / 2) * 300}px`;
+                    box.style.top = `${Math.floor(i / 2) * 100}vh`;
                     box.style.width = '50%';
-                    box.style.height = '300px';
+                    box.style.height = '100vh';
                 } else if (type === 'top-bottom') {
                     box.style.left = '0px';
-                    box.style.top = `${i * 300}px`;
+                    box.style.top = `${i * 50}vh`;
                     box.style.width = '100%';
-                    box.style.height = '300px';
+                    box.style.height = '50vh';
                 } else if (type === 'grid') {
                     box.style.left = `${(i % 3) * 33.3}%`;
-                    box.style.top = `${Math.floor(i / 3) * 300}px`;
+                    box.style.top = `${Math.floor(i / 3) * 50}vh`;
                     box.style.width = '33.3%';
-                    box.style.height = '300px';
+                    box.style.height = '50vh';
                 }
             });
         }
