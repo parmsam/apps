@@ -96,6 +96,10 @@
                             <option value="0 0 1 1 *">January 1st each year</option>
                         </select>
                     </div>
+                    <div class="mt-4 text-sm text-gray-500">
+                        <em>Note: Cron expression behavior may vary depending on your system setup. Some environments interpret schedules in local time,
+                    while others (like containers or cloud services) use UTC. Always confirm how your system handles timezones.</em>
+                    </div>
                 </div>
             </div>
 
@@ -194,6 +198,12 @@
 
             <div class="col-span-1 md:col-span-2 bg-white p-6 rounded-lg shadow-md">
                 <h2 class="text-lg font-semibold text-gray-800 mb-3">Execution Schedule Preview</h2>
+                <div class="flex items-center space-x-2">
+                    <label for="timezoneToggle" class="block text-sm font-medium text-gray-700">Use Local Time Zone</label>
+                    <br>
+                    <input type="checkbox" id="timezoneToggle" class="toggle-checkbox" "">
+                </div>
+                <!-- <br> -->
                 <div id="schedulePreview" class="space-y-2">
                     <div class="p-3 bg-gray-50 rounded-md text-gray-500 italic">
                         Enter a valid cron expression to see upcoming execution times
@@ -228,6 +238,7 @@
             const schedulePreview = document.getElementById('schedulePreview');
             const commonExpressions = document.getElementById('commonExpressions');
             const validationMessage = document.getElementById('validationMessage');
+            const timezoneToggle = document.getElementById('timezoneToggle');
             const hints = {
                 minute: document.getElementById('minuteHint'),
                 hour: document.getElementById('hourHint'),
@@ -274,6 +285,15 @@
                 cronInput.value = this.value;
                 updateCronDescription();
                 this.selectedIndex = 0; // Reset dropdown after selection
+            });
+
+            timezoneToggle.addEventListener('change', function () {
+                if (this.checked) {
+                    later.date.localTime();
+                } else {
+                    later.date.UTC();
+                }
+                updateCronDescription();
             });
 
             Object.keys(hints).forEach((key, index) => {
