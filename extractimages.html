@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rich Text Image Extractor</title>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.7.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-6">
+    <h1 class="text-2xl font-bold mb-4">Rich Text Image Extractor</h1>
+
+    <div id="pasteArea" contenteditable="true"
+        class="border-2 border-dashed border-gray-400 bg-white p-4 h-60 overflow-y-auto mb-4">
+        Paste your rich text here...
+    </div>
+
+    <h2 class="text-xl font-semibold mb-2">Extracted Images</h2>
+    <div id="imageGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4"></div>
+
+    <div class="flex items-center gap-2">
+        <label for="fileType" class="font-medium">Choose image type:</label>
+        <select id="fileType" class="border rounded p-1">
+            <option value="jpg">JPG</option>
+            <option value="png">PNG</option>
+            <option value="webp">WEBP</option>
+            <option value="bmp">BMP</option>
+        </select>
+        <button id="downloadZip" class="bg-blue-500 text-white px-4 py-2 rounded">Download Zip</button>
+    </div>
+
+    <script>
+        const pasteArea = document.getElementById('pasteArea');
+        const imageGrid = document.getElementById('imageGrid');
+        const downloadBtn = document.getElementById('downloadZip');
+        const fileTypeSelector = document.getElementById('fileType');
+        let imageElements = [];
+
+        pasteArea.addEventListener('paste', (e) => {
+            setTimeout(() => {
+                const imgs = pasteArea.querySelectorAll('img');
+                imgs.forEach((img) => addImage(img.src));
+            }, 100);
+        });
+
+        function addImage(src) {
+            if (imageElements.some(el => el.src === src)) return;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'relative';
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'w-full h-auto rounded shadow';
+
+            const btn = document.createElement('button');
+            btn.textContent = '×';
+            btn.className = 'absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 text-center font-bold';
+            btn.onclick = () => {
+                imageGrid.removeChild(wrapper);
+                imageElements = imageElements.filter(el => el.src !== src);
+            };
+
+            wrapper.appendChild(img);
+            wrapper.appendChild(btn);
+            imageGrid.appendChild(wrapper);
+            imageElements.push(img);
+        }
+
+        downloadBtn.addEventListener('click', async () => {
+            const type = fileTypeSelector.value;
+            const zip = new JSZip();
+            let count = 0;
+            for (const img of imageElements) {
+                const response = await fetch(img.src);
+                const blob = await response.blob();
+                if (blob.type.includes(type)) {
+                    zip.file(`image_${++count}.${type}`, blob);
+                }
+            }
+            if (count === 0) {
+                alert(`No images of type .${type} found.`);
+                return;
+            }
+            zip.generateAsync({ type: 'blob' }).then((content) => {
+                saveAs(content, `images_${type}.zip`);
+            });
+        });
+    </script>
+</body>
+
+</html>
