@@ -73,14 +73,22 @@
             const zip = new JSZip();
             let count = 0;
             for (const img of imageElements) {
-                const response = await fetch(img.src);
-                const blob = await response.blob();
-                if (blob.type.includes(type)) {
-                    zip.file(`image_${++count}.${type}`, blob);
+                if (!img.src.startsWith('data:') && !img.src.startsWith('blob:')) {
+                    console.warn(`Skipping image due to CORS: ${img.src}`);
+                    continue;
+                }
+                try {
+                    const response = await fetch(img.src);
+                    const blob = await response.blob();
+                    if (blob.type.includes(type)) {
+                        zip.file(`image_${++count}.${type}`, blob);
+                    }
+                } catch (err) {
+                    console.warn(`Could not fetch ${img.src}:`, err);
                 }
             }
             if (count === 0) {
-                alert(`No images of type .${type} found.`);
+                alert(`No downloadable images of type .${type} found.`);
                 return;
             }
             zip.generateAsync({ type: 'blob' }).then((content) => {
