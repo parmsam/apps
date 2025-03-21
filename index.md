@@ -27,7 +27,7 @@ Inspired by similar tiny apps from [Jeremy Howard](https://github.com/jph00/apps
 - [Days to event tracker](days2event.html) - Track days until upcoming events.
 - [Extract URLs](extracturls.html) - Extract URLs from pasted content - inspired by [Simon Willison](https://simonwillison.net/) who built a [similar tool](https://tools.simonwillison.net/extract-urls) and recreated
 - [Image saver](imagesaver.html) - Save one or more images from clipboard to your device.
-
+- [Cron expression generator](crongen.html) - Create cron schedule expressions.
 ---
 
 By [Sam Parmar](https://parmsam.github.io/quarto-site/) (Github repo is [here](https://www.github.com/parmsam/apps))
