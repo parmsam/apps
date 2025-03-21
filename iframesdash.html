@@ -4,17 +4,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Multi-URL iframes Dashboard</title>
+    <title>Multi-URL Iframe Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <style>
-        .resizable {
-            resize: both;
-            overflow: hidden;
-            min-width: 200px;
-            min-height: 200px;
-        }
-
         .drag-handle {
             cursor: grab;
             background-color: #e5e7eb;
@@ -33,28 +27,30 @@
             width: 100%;
             height: 100%;
         }
+
+        .snap-preview {
+            position: absolute;
+            border: 2px dashed #3b82f6;
+            background-color: rgba(59, 130, 246, 0.1);
+            z-index: 50;
+            pointer-events: none;
+        }
     </style>
 </head>
 
-<body class="bg-gray-100 min-h-screen p-4">
+<body class="bg-gray-100 min-h-screen p-4 relative">
     <div class="max-w-6xl mx-auto">
-        <h1 class="text-2xl font-bold mb-4">Multi-URL iframes dashboard</h1>
-
+        <h1 class="text-2xl font-bold mb-4">Multi-URL Iframe Dashboard</h1>
         <div id="inputArea">
             <textarea id="urlInput" placeholder="Paste URLs here, one per line"
                 class="w-full p-2 mb-4 border border-gray-300 rounded" rows="5"></textarea>
-
             <button onclick="renderIframes(true)"
-                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mr-2">
-                Load URLs
-            </button>
+                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mr-2">Load URLs</button>
         </div>
-
         <div id="iframeArea" class="hidden">
             <div class="flex justify-between items-center mb-4">
-                <button onclick="toggleInput(true)" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
-                    Back to URL Input
-                </button>
+                <button onclick="toggleInput(true)"
+                    class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">Back to URL Input</button>
                 <div class="flex gap-2">
                     <button onclick="applyLayout('side-by-side')"
                         class="px-3 py-1 bg-indigo-500 text-white rounded">Side by Side</button>
@@ -64,7 +60,7 @@
                         class="px-3 py-1 bg-indigo-500 text-white rounded">Grid</button>
                 </div>
             </div>
-            <div id="iframeContainer" class="flex flex-wrap gap-4"></div>
+            <div id="iframeContainer" class="relative flex flex-wrap gap-4"></div>
         </div>
     </div>
 
@@ -74,13 +70,15 @@
             const container = document.getElementById("iframeContainer");
             container.innerHTML = "";
 
-            urls.forEach((url) => {
+            urls.forEach((url, i) => {
                 const wrapper = document.createElement("div");
-                wrapper.className = "iframe-box resizable border border-gray-300 rounded shadow bg-white w-[45%] h-[300px] flex flex-col";
+                wrapper.className = `iframe-box border border-gray-300 rounded shadow bg-white w-[45%] h-[300px] flex flex-col absolute p-1`;
+                wrapper.style.left = `${20 + (i * 30)}px`;
+                wrapper.style.top = `${20 + (i * 30)}px`;
 
                 const handle = document.createElement("div");
                 handle.className = "drag-handle";
-                handle.textContent = "⇅ Drag to Reorder";
+                handle.textContent = "⇅ Drag to Move";
 
                 const controls = document.createElement("div");
                 controls.className = "flex flex-wrap justify-end gap-1 p-1 text-sm";
@@ -121,20 +119,51 @@
                 zoomOutIframeBtn.onclick = () => zoomIframe(iframe, 0.8);
 
                 iframeWrapper.appendChild(iframe);
-
                 wrapper.appendChild(handle);
                 wrapper.appendChild(controls);
                 wrapper.appendChild(iframeWrapper);
                 container.appendChild(wrapper);
+
+                interact(wrapper)
+                    .draggable({
+                        allowFrom: ".drag-handle",
+                        listeners: {
+                            move(event) {
+                                const target = event.target;
+                                const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                                const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                                target.style.transform = `translate(${x}px, ${y}px)`;
+                                target.setAttribute('data-x', x);
+                                target.setAttribute('data-y', y);
+                            }
+                        }
+                    })
+                    .resizable({
+                        edges: { left: true, right: true, bottom: true, top: true },
+                        listeners: {
+                            move(event) {
+                                let { x, y } = event.target.dataset;
+                                x = parseFloat(x) || 0;
+                                y = parseFloat(y) || 0;
+
+                                Object.assign(event.target.style, {
+                                    width: `${event.rect.width}px`,
+                                    height: `${event.rect.height}px`,
+                                    transform: `translate(${x + event.deltaRect.left}px, ${y + event.deltaRect.top}px)`
+                                });
+
+                                event.target.dataset.x = x + event.deltaRect.left;
+                                event.target.dataset.y = y + event.deltaRect.top;
+                            }
+                        },
+                        modifiers: [
+                            interact.modifiers.restrictSize({ min: { width: 200, height: 200 } })
+                        ]
+                    });
             });
 
             toggleInput(false);
-
-            Sortable.create(container, {
-                handle: ".drag-handle",
-                animation: 150
-            });
-
             if (saveToURL) {
                 const param = encodeURIComponent(urls.join(","));
                 const newUrl = `${window.location.pathname}?urls=${param}`;
@@ -163,21 +192,29 @@
 
         function applyLayout(type) {
             const boxes = document.querySelectorAll(".iframe-box");
-            boxes.forEach((box) => {
+            boxes.forEach((box, i) => {
+                box.style.transform = "";
+                box.setAttribute('data-x', 0);
+                box.setAttribute('data-y', 0);
                 if (type === 'side-by-side') {
-                    box.style.width = '48%';
-                    box.style.height = '400px';
+                    box.style.left = `${i % 2 === 0 ? 0 : 50}%`;
+                    box.style.top = `${Math.floor(i / 2) * 300}px`;
+                    box.style.width = '50%';
+                    box.style.height = '300px';
                 } else if (type === 'top-bottom') {
+                    box.style.left = '0px';
+                    box.style.top = `${i * 300}px`;
                     box.style.width = '100%';
                     box.style.height = '300px';
                 } else if (type === 'grid') {
-                    box.style.width = '32%';
+                    box.style.left = `${(i % 3) * 33.3}%`;
+                    box.style.top = `${Math.floor(i / 3) * 300}px`;
+                    box.style.width = '33.3%';
                     box.style.height = '300px';
                 }
             });
         }
 
-        // Auto-load from URL params on page load
         window.addEventListener("DOMContentLoaded", () => {
             const params = new URLSearchParams(window.location.search);
             const urlList = params.get("urls");
