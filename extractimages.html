@@ -12,17 +12,16 @@
 
 <body class="bg-gray-100 p-6">
     <h1 class="text-2xl font-bold mb-4">Rich Text Image Extractor</h1>
-
+    <p>Paste formatted text below using <strong>Ctrl+V</strong> or <strong>⌘+V</strong>, after clicking in the text box:</p>
     <div id="pasteArea" contenteditable="true"
         class="border-2 border-dashed border-gray-400 bg-white p-4 h-60 overflow-y-auto mb-4">
-        Paste your rich text here...
     </div>
 
     <h2 class="text-xl font-semibold mb-2">Extracted Images</h2>
     <p class="text-sm text-gray-600 mb-4">Right-click on a single image to save it. If the download zip button doesn't work, you can still save the images manually.</p>
     <div id="imageGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4"></div>
 
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2 mb-4">
         <label for="fileType" class="font-medium">Choose image type:</label>
         <select id="fileType" class="border rounded p-1">
             <option value="jpg">JPG</option>
@@ -31,6 +30,17 @@
             <option value="bmp">BMP</option>
         </select>
         <button id="downloadZip" class="bg-blue-500 text-white px-4 py-2 rounded">Download Zip</button>
+        <button id="copyHtml" class="bg-gray-700 text-white px-3 py-2 rounded">Copy code</button>
+
+        <label class="ml-4 flex items-center gap-2">
+            <input type="checkbox" id="toggleHtmlMode" class="form-checkbox">
+            Show only URLs
+        </label>
+    </div>
+
+    <div class="bg-white p-4 border rounded shadow mb-4">
+        <h2 class="text-lg font-semibold mb-2">Image HTML or URLs</h2>
+        <textarea id="imageHtmlOutput" class="w-full h-48 p-2 border rounded font-mono text-sm" readonly></textarea>
     </div>
 
     <script>
@@ -38,6 +48,9 @@
         const imageGrid = document.getElementById('imageGrid');
         const downloadBtn = document.getElementById('downloadZip');
         const fileTypeSelector = document.getElementById('fileType');
+        const htmlOutput = document.getElementById('imageHtmlOutput');
+        const toggleHtmlMode = document.getElementById('toggleHtmlMode');
+        const copyHtmlBtn = document.getElementById('copyHtml');
         let imageElements = [];
 
         pasteArea.addEventListener('paste', (e) => {
@@ -46,6 +59,23 @@
                 imgs.forEach((img) => addImage(img.src));
             }, 100);
         });
+
+        toggleHtmlMode.addEventListener('change', updateImageHtmlOutput);
+
+        copyHtmlBtn.addEventListener('click', () => {
+            htmlOutput.select();
+            document.execCommand('copy');
+        });
+
+        function updateImageHtmlOutput() {
+            const mode = toggleHtmlMode.checked ? 'urls' : 'html';
+            const lines = imageElements.map(img => {
+                return mode === 'urls'
+                    ? img.src
+                    : `<img src=\"${img.src}\" alt=\"Extracted Image\">`;
+            });
+            htmlOutput.value = lines.join('\n');
+        }
 
         function addImage(src) {
             if (imageElements.some(el => el.src === src)) return;
@@ -63,12 +93,14 @@
             btn.onclick = () => {
                 imageGrid.removeChild(wrapper);
                 imageElements = imageElements.filter(el => el.src !== src);
+                updateImageHtmlOutput();
             };
 
             wrapper.appendChild(img);
             wrapper.appendChild(btn);
             imageGrid.appendChild(wrapper);
             imageElements.push(img);
+            updateImageHtmlOutput();
         }
 
         downloadBtn.addEventListener('click', async () => {
