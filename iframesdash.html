@@ -44,7 +44,8 @@
             <textarea id="urlInput" placeholder="Paste URLs here, one per line"
                 class="w-full p-2 mb-4 border border-gray-300 rounded" rows="5"></textarea>
 
-            <button onclick="renderIframes()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mr-2">
+            <button onclick="renderIframes(true)"
+                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mr-2">
                 Load URLs
             </button>
         </div>
@@ -68,14 +69,12 @@
     </div>
 
     <script>
-        function renderIframes() {
-            const urls = document.getElementById("urlInput").value.trim().split("\n");
+        function renderIframes(saveToURL = false) {
+            const urls = document.getElementById("urlInput").value.trim().split("\n").filter(u => u);
             const container = document.getElementById("iframeContainer");
             container.innerHTML = "";
 
             urls.forEach((url) => {
-                if (!url) return;
-
                 const wrapper = document.createElement("div");
                 wrapper.className = "iframe-box resizable border border-gray-300 rounded shadow bg-white w-[45%] h-[300px] flex flex-col";
 
@@ -135,6 +134,12 @@
                 handle: ".drag-handle",
                 animation: 150
             });
+
+            if (saveToURL) {
+                const param = encodeURIComponent(urls.join(","));
+                const newUrl = `${window.location.pathname}?urls=${param}`;
+                window.history.pushState({}, '', newUrl);
+            }
         }
 
         function toggleInput(showInput) {
@@ -171,6 +176,17 @@
                 }
             });
         }
+
+        // Auto-load from URL params on page load
+        window.addEventListener("DOMContentLoaded", () => {
+            const params = new URLSearchParams(window.location.search);
+            const urlList = params.get("urls");
+            if (urlList) {
+                const urls = decodeURIComponent(urlList).split(",");
+                document.getElementById("urlInput").value = urls.join("\n");
+                renderIframes(false);
+            }
+        });
     </script>
 </body>
 
