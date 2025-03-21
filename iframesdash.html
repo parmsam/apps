@@ -59,6 +59,11 @@
                         Bottom</button>
                     <button onclick="applyLayout('grid')"
                         class="px-3 py-1 bg-indigo-500 text-white rounded">Grid</button>
+                    <button onclick="applyLayout('cascade')" class="px-3 py-1 bg-indigo-500 text-white rounded">Cascade</button>
+                    <button onclick="applyLayout('focus-thumbnails')" class="px-3 py-1 bg-indigo-500 text-white rounded">Focus +
+                        Thumbs</button>
+                    <button onclick="applyLayout('floating')" class="px-3 py-1 bg-indigo-500 text-white rounded">Floating</button>
+                    <button onclick="applyLayout('columns')" class="px-3 py-1 bg-indigo-500 text-white rounded">Columns</button>
                 </div>
             </div>
             <div id="iframeContainer" class="relative flex flex-wrap gap-4 min-h-[600px]"></div>
@@ -220,6 +225,49 @@
                     height: "50%",
                     display: "block"
                 });
+            } else if (type === 'cascade') {
+                boxes.forEach((box, i) => {
+                    const offset = i * 30;
+                    box.style.left = `${offset}px`;
+                    box.style.top = `${offset}px`;
+                    box.style.width = '50%';
+                    box.style.height = '400px';
+                });
+            } else if (type === 'focus-thumbnails') {
+                boxes.forEach((box, i) => {
+                    if (i === 0) {
+                        // Focused iframe
+                        box.style.left = '20%';
+                        box.style.top = '0';
+                        box.style.width = '80%';
+                        box.style.height = '100vh';
+                    } else {
+                        // Thumbnail strip on the left
+                        box.style.left = '0';
+                        box.style.top = `${(i - 1) * 30}vh`;
+                        box.style.width = '20%';
+                        box.style.height = '30vh';
+                    }
+                });
+            } else if (type === 'floating') {
+                boxes.forEach((box, i) => {
+                    const randX = Math.floor(Math.random() * 400);
+                    const randY = Math.floor(Math.random() * 300);
+                    box.style.left = `${randX}px`;
+                    box.style.top = `${randY}px`;
+                    box.style.width = '40%';
+                    box.style.height = '300px';
+                });
+            } else if (type === 'columns') {
+                const cols = 3;
+                boxes.forEach((box, i) => {
+                    const col = i % cols;
+                    const row = Math.floor(i / cols);
+                    box.style.left = `${(col * 100) / cols}%`;
+                    box.style.top = `${row * 50}vh`;
+                    box.style.width = `${100 / cols}%`;
+                    box.style.height = '50vh';
+                });
             } else {
                 preview.style.display = "none";
             }
@@ -291,24 +339,73 @@
                 box.style.transform = "";
                 box.setAttribute('data-x', 0);
                 box.setAttribute('data-y', 0);
-                if (type === 'side-by-side') {
+            });
+
+            if (type === 'side-by-side') {
+                boxes.forEach((box, i) => {
                     box.style.left = `${i % 2 === 0 ? 0 : 50}%`;
                     box.style.top = `${Math.floor(i / 2) * 100}vh`;
                     box.style.width = '50%';
                     box.style.height = '100vh';
-                } else if (type === 'top-bottom') {
+                });
+            } else if (type === 'top-bottom') {
+                boxes.forEach((box, i) => {
                     box.style.left = '0px';
                     box.style.top = `${i * 50}vh`;
                     box.style.width = '100%';
                     box.style.height = '50vh';
-                } else if (type === 'grid') {
+                });
+            } else if (type === 'grid') {
+                boxes.forEach((box, i) => {
                     box.style.left = `${(i % 3) * 33.3}%`;
                     box.style.top = `${Math.floor(i / 3) * 50}vh`;
                     box.style.width = '33.3%';
                     box.style.height = '50vh';
-                }
-            });
+                });
+            } else if (type === 'cascade') {
+                boxes.forEach((box, i) => {
+                    const offset = i * 30;
+                    box.style.left = `${offset}px`;
+                    box.style.top = `${offset}px`;
+                    box.style.width = '50%';
+                    box.style.height = '400px';
+                });
+            } else if (type === 'focus-thumbnails') {
+                boxes.forEach((box, i) => {
+                    if (i === 0) {
+                        box.style.left = '20%';
+                        box.style.top = '0';
+                        box.style.width = '80%';
+                        box.style.height = '100vh';
+                    } else {
+                        box.style.left = '0';
+                        box.style.top = `${(i - 1) * 30}vh`;
+                        box.style.width = '20%';
+                        box.style.height = '30vh';
+                    }
+                });
+            } else if (type === 'floating') {
+                boxes.forEach((box, i) => {
+                    const randX = Math.floor(Math.random() * 400);
+                    const randY = Math.floor(Math.random() * 300);
+                    box.style.left = `${randX}px`;
+                    box.style.top = `${randY}px`;
+                    box.style.width = '40%';
+                    box.style.height = '300px';
+                });
+            } else if (type === 'columns') {
+                const cols = 3;
+                boxes.forEach((box, i) => {
+                    const col = i % cols;
+                    const row = Math.floor(i / cols);
+                    box.style.left = `${(col * 100) / cols}%`;
+                    box.style.top = `${row * 50}vh`;
+                    box.style.width = `${100 / cols}%`;
+                    box.style.height = '50vh';
+                });
+            }
         }
+
 
         window.addEventListener("DOMContentLoaded", () => {
             const params = new URLSearchParams(window.location.search);
