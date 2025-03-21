@@ -19,6 +19,7 @@
     </div>
 
     <h2 class="text-xl font-semibold mb-2">Extracted Images</h2>
+    <p class="text-sm text-gray-600 mb-4">Right-click on a single image to save it. If the download zip button doesn't work, you can still save the images manually.</p>
     <div id="imageGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4"></div>
 
     <div class="flex items-center gap-2">
@@ -53,6 +54,8 @@
             const img = document.createElement('img');
             img.src = src;
             img.className = 'w-full h-auto rounded shadow';
+            img.title = 'Right-click to save';
+            img.style.cursor = 'context-menu';
 
             const btn = document.createElement('button');
             btn.textContent = '×';
@@ -88,7 +91,7 @@
                 }
             }
             if (count === 0) {
-                alert(`No downloadable images of type .${type} found.`);
+                alert(`No downloadable images of type .${type} found. This could be due to CORS restrictions.`);
                 return;
             }
             zip.generateAsync({ type: 'blob' }).then((content) => {
