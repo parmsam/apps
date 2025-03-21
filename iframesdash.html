@@ -28,12 +28,13 @@
             height: 100%;
         }
 
-        .snap-preview {
+        .snap-preview-box {
             position: absolute;
             border: 2px dashed #3b82f6;
             background-color: rgba(59, 130, 246, 0.1);
-            z-index: 50;
+            z-index: 40;
             pointer-events: none;
+            display: none;
         }
     </style>
 </head>
@@ -60,9 +61,11 @@
                         class="px-3 py-1 bg-indigo-500 text-white rounded">Grid</button>
                 </div>
             </div>
-            <div id="iframeContainer" class="relative flex flex-wrap gap-4"></div>
+            <div id="iframeContainer" class="relative flex flex-wrap gap-4 min-h-[600px]"></div>
         </div>
     </div>
+
+    <div id="snapPreview" class="snap-preview-box"></div>
 
     <script>
         function renderIframes(saveToURL = false) {
@@ -132,10 +135,15 @@
                                 const target = event.target;
                                 const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
                                 const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-
                                 target.style.transform = `translate(${x}px, ${y}px)`;
                                 target.setAttribute('data-x', x);
                                 target.setAttribute('data-y', y);
+
+                                handleSnapPreview(target, x, y);
+                            },
+                            end(event) {
+                                applySnap(event.target);
+                                document.getElementById("snapPreview").style.display = "none";
                             }
                         }
                     })
@@ -146,13 +154,11 @@
                                 let { x, y } = event.target.dataset;
                                 x = parseFloat(x) || 0;
                                 y = parseFloat(y) || 0;
-
                                 Object.assign(event.target.style, {
                                     width: `${event.rect.width}px`,
                                     height: `${event.rect.height}px`,
                                     transform: `translate(${x + event.deltaRect.left}px, ${y + event.deltaRect.top}px)`
                                 });
-
                                 event.target.dataset.x = x + event.deltaRect.left;
                                 event.target.dataset.y = y + event.deltaRect.top;
                             }
@@ -168,6 +174,95 @@
                 const param = encodeURIComponent(urls.join(","));
                 const newUrl = `${window.location.pathname}?urls=${param}`;
                 window.history.pushState({}, '', newUrl);
+            }
+        }
+
+        function handleSnapPreview(target, x, y) {
+            const preview = document.getElementById("snapPreview");
+            const container = document.getElementById("iframeContainer");
+            const threshold = 40;
+            const snap = {
+                left: x < threshold,
+                right: x + target.offsetWidth > container.offsetWidth - threshold,
+                top: y < threshold,
+                bottom: y + target.offsetHeight > container.offsetHeight - threshold
+            };
+
+            if (snap.left) {
+                Object.assign(preview.style, {
+                    left: "0",
+                    top: "0",
+                    width: "50%",
+                    height: "100%",
+                    display: "block"
+                });
+            } else if (snap.right) {
+                Object.assign(preview.style, {
+                    left: "50%",
+                    top: "0",
+                    width: "50%",
+                    height: "100%",
+                    display: "block"
+                });
+            } else if (snap.top) {
+                Object.assign(preview.style, {
+                    left: "0",
+                    top: "0",
+                    width: "100%",
+                    height: "50%",
+                    display: "block"
+                });
+            } else if (snap.bottom) {
+                Object.assign(preview.style, {
+                    left: "0",
+                    top: "50%",
+                    width: "100%",
+                    height: "50%",
+                    display: "block"
+                });
+            } else {
+                preview.style.display = "none";
+            }
+        }
+
+        function applySnap(target) {
+            const x = parseFloat(target.getAttribute('data-x')) || 0;
+            const y = parseFloat(target.getAttribute('data-y')) || 0;
+            const container = document.getElementById("iframeContainer");
+            const threshold = 40;
+
+            if (x < threshold) {
+                target.style.left = "0";
+                target.style.top = "0";
+                target.style.width = "50%";
+                target.style.height = "100%";
+                target.setAttribute("data-x", 0);
+                target.setAttribute("data-y", 0);
+                target.style.transform = "translate(0, 0)";
+            } else if (x + target.offsetWidth > container.offsetWidth - threshold) {
+                target.style.left = "50%";
+                target.style.top = "0";
+                target.style.width = "50%";
+                target.style.height = "100%";
+                target.setAttribute("data-x", 0);
+                target.setAttribute("data-y", 0);
+                target.style.transform = "translate(0, 0)";
+            } else if (y < threshold) {
+                target.style.left = "0";
+                target.style.top = "0";
+                target.style.width = "100%";
+                target.style.height = "50%";
+                target.setAttribute("data-x", 0);
+                target.setAttribute("data-y", 0);
+                target.style.transform = "translate(0, 0)";
+            } else if (y + target.offsetHeight > container.offsetHeight - threshold) {
+                target.style.left = "0";
+                target.style.top = "50%";
+                target.style.width = "100%";
+                target.style.height = "50%";
+                target.setAttribute("data-x", 0);
+                target.setAttribute("data-y", 0);
+                target.style.transform = "translate(0, 0)";
             }
         }
 
