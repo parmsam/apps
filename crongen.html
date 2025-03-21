@@ -351,7 +351,7 @@
 
             function formatDateTime(date) {
                 try {
-                    return luxon.DateTime.fromJSDate(date).toFormat('EEE, MMM d, yyyy h:mm a');
+                    return luxon.DateTime.fromJSDate(date).toFormat('EEE, MMM d, yyyy h:mm a ZZZZ');
                 } catch (error) {
                     console.error("Error formatting date:", error);
                     return "Invalid date";
