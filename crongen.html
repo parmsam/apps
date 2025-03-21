@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cron Expression Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/3.4.3/luxon.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cronstrue/2.31.0/cronstrue.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/later/1.2.0/later.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        .tooltip {
+            visibility: hidden;
+            position: absolute;
+            z-index: 10;
+        }
+
+        .has-tooltip:hover .tooltip {
+            visibility: visible;
+        }
+
+        .error-highlight {
+            border-color: #EF4444;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">Cron Expression Editor</h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">A simple tool to edit and understand cron schedule expressions
+            </p>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-3 bg-white p-6 rounded-lg shadow-md">
+                <div class="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
+                    <div class="flex-grow">
+                        <label for="cronExpression" class="block text-sm font-medium text-gray-700 mb-1">Cron
+                            Expression</label>
+                        <div class="relative">
+                            <input id="cronExpression" type="text" placeholder="* * * * *"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <div id="validationMessage" class="text-sm text-red-500 mt-1 hidden">Invalid cron expression
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Quick Select</label>
+                        <select id="commonExpressions"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="" selected disabled>Common expressions</option>
+                            <option value="* * * * *">Every minute</option>
+                            <option value="*/5 * * * *">Every 5 minutes</option>
+                            <option value="*/15 * * * *">Every 15 minutes</option>
+                            <option value="0 * * * *">Every hour</option>
+                            <option value="0 */2 * * *">Every 2 hours</option>
+                            <option value="0 */6 * * *">Every 6 hours</option>
+                            <option value="0 0 * * *">Every day at midnight</option>
+                            <option value="0 12 * * *">Every day at noon</option>
+                            <option value="0 0 * * 0">Every Sunday at midnight</option>
+                            <option value="0 0 1 * *">First day of every month</option>
+                            <option value="0 0 1 1 *">January 1st each year</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-span-1 bg-white p-6 rounded-lg shadow-md">
+                <div class="mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-3">Human-Readable Description</h2>
+                    <div id="humanReadable" class="p-3 bg-gray-50 rounded-md text-gray-700 min-h-[60px]">
+                        Enter a cron expression to see its description
+                    </div>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-800 mb-3">Structure Guide</h2>
+                    <div class="bg-gray-50 p-3 rounded-md">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr>
+                                    <th class="pb-2 font-medium">Field</th>
+                                    <th class="pb-2 font-medium">Range</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="has-tooltip">
+                                    <td class="py-1 pr-2">Minute</td>
+                                    <td>0-59</td>
+                                    <td class="tooltip bg-gray-700 text-white p-2 rounded shadow-lg text-xs w-48">
+                                        Specifies the minute of the hour (0-59)
+                                    </td>
+                                </tr>
+                                <tr class="has-tooltip">
+                                    <td class="py-1 pr-2">Hour</td>
+                                    <td>0-23</td>
+                                    <td class="tooltip bg-gray-700 text-white p-2 rounded shadow-lg text-xs w-48">
+                                        Specifies the hour of the day (0-23)
+                                    </td>
+                                </tr>
+                                <tr class="has-tooltip">
+                                    <td class="py-1 pr-2">Day of Month</td>
+                                    <td>1-31</td>
+                                    <td class="tooltip bg-gray-700 text-white p-2 rounded shadow-lg text-xs w-48">
+                                        Specifies the day of the month (1-31)
+                                    </td>
+                                </tr>
+                                <tr class="has-tooltip">
+                                    <td class="py-1 pr-2">Month</td>
+                                    <td>1-12</td>
+                                    <td class="tooltip bg-gray-700 text-white p-2 rounded shadow-lg text-xs w-48">
+                                        Specifies the month (1-12 or JAN-DEC)
+                                    </td>
+                                </tr>
+                                <tr class="has-tooltip">
+                                    <td class="py-1 pr-2">Day of Week</td>
+                                    <td>0-6</td>
+                                    <td class="tooltip bg-gray-700 text-white p-2 rounded shadow-lg text-xs w-48">
+                                        Specifies the day of the week (0-6 or SUN-SAT)
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="mt-4 text-xs text-gray-600">
+                            <div class="has-tooltip inline-block mr-3">
+                                <span class="font-medium">*</span>
+                                <span class="tooltip bg-gray-700 text-white p-2 rounded shadow-lg text-xs w-48">Any
+                                    value</span>
+                            </div>
+                            <div class="has-tooltip inline-block mr-3">
+                                <span class="font-medium">,</span>
+                                <span class="tooltip bg-gray-700 text-white p-2 rounded shadow-lg text-xs w-48">Value
+                                    list separator</span>
+                            </div>
+                            <div class="has-tooltip inline-block mr-3">
+                                <span class="font-medium">-</span>
+                                <span class="tooltip bg-gray-700 text-white p-2 rounded shadow-lg text-xs w-48">Range of
+                                    values</span>
+                            </div>
+                            <div class="has-tooltip inline-block mr-3">
+                                <span class="font-medium">/</span>
+                                <span class="tooltip bg-gray-700 text-white p-2 rounded shadow-lg text-xs w-48">Step
+                                    values</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-span-1 md:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold text-gray-800 mb-3">Execution Schedule Preview</h2>
+                <div id="schedulePreview" class="space-y-2">
+                    <div class="p-3 bg-gray-50 rounded-md text-gray-500 italic">
+                        Enter a valid cron expression to see upcoming execution times
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-3">Additional Help</h2>
+                    <div class="p-4 bg-blue-50 rounded-md">
+                        <h3 class="font-medium text-blue-700 mb-2">Examples of Special Characters</h3>
+                        <ul class="text-sm space-y-1 text-gray-800">
+                            <li><strong>*</strong> - Matches any value (e.g., <code>* * * * *</code> runs every minute)
+                            </li>
+                            <li><strong>0 12 * * *</strong> - Runs at 12:00 PM (noon) every day</li>
+                            <li><strong>*/15 * * * *</strong> - Runs every 15 minutes</li>
+                            <li><strong>0 0 * * 1-5</strong> - Runs at midnight Monday through Friday</li>
+                            <li><strong>0 0 1,15 * *</strong> - Runs at midnight on the 1st and 15th of each month</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="mt-8 text-center text-gray-500 text-sm">
+            <p>Cron Expression Editor - A client-side cron parsing tool</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const cronInput = document.getElementById('cronExpression');
+            const humanReadable = document.getElementById('humanReadable');
+            const schedulePreview = document.getElementById('schedulePreview');
+            const commonExpressions = document.getElementById('commonExpressions');
+            const validationMessage = document.getElementById('validationMessage');
+
+            // Check if required libraries are loaded
+            if (typeof cronstrue === 'undefined' || typeof later === 'undefined' || typeof luxon === 'undefined') {
+                alert('Required libraries not loaded. Please check your internet connection and try again.');
+                return;
+            }
+
+            // Helper function to validate cron expression format
+            function isValidCronFormat(cron) {
+                // Basic validation for 5-part cron expression
+                const parts = cron.split(' ').filter(part => part.trim() !== '');
+
+                // Check if we have exactly 5 parts
+                if (parts.length !== 5) return false;
+
+                // Special case: "* * * * *" is always valid (every minute)
+                if (cron === "* * * * *") return true;
+
+                // Each part should contain only valid characters
+                const validChars = /^[\d*\/\-,]+$/;
+                for (let part of parts) {
+                    if (!validChars.test(part)) return false;
+                }
+
+                return true;
+            }
+
+
+            // Initialize with a default cron expression
+            cronInput.value = '0 0 * * *';
+            updateCronDescription();
+
+            // Event listeners
+            cronInput.addEventListener('input', updateCronDescription);
+            commonExpressions.addEventListener('change', function () {
+                cronInput.value = this.value;
+                updateCronDescription();
+                this.selectedIndex = 0; // Reset dropdown after selection
+            });
+
+            function updateCronDescription() {
+                const cronExpression = cronInput.value.trim();
+
+                if (!cronExpression) {
+                    resetDisplay();
+                    return;
+                }
+
+                // First validate format
+                if (!isValidCronFormat(cronExpression)) {
+                    displayError();
+                    return;
+                }
+
+                try {
+                    // Human-readable description
+                    const description = cronstrue.toString(cronExpression);
+                    humanReadable.textContent = description;
+                    humanReadable.classList.remove('text-gray-500', 'italic');
+
+                    // Use later.js to get next 5 dates
+                    const schedule = later.parse.cron(cronExpression, false); // 5-field cron
+
+                    // Always assume the schedule is valid if we get this far
+                    const nextDates = later.schedule(schedule).next(5);
+
+                    schedulePreview.innerHTML = '';
+                    nextDates.forEach((date, index) => {
+                        const dateEl = document.createElement('div');
+                        dateEl.className = 'p-3 border-l-4 border-blue-500 bg-gray-50 rounded-md';
+                        dateEl.innerHTML = `
+                <span class="font-medium">${index + 1}.</span> 
+                <span>${formatDateTime(date)}</span>
+            `;
+                        schedulePreview.appendChild(dateEl);
+                    });
+
+                    cronInput.classList.remove('error-highlight');
+                    validationMessage.classList.add('hidden');
+                } catch (error) {
+                    console.error("Error processing cron expression:", error);
+                    displayError();
+                }
+            }
+
+
+            function resetDisplay() {
+                humanReadable.textContent = 'Enter a cron expression to see its description';
+                humanReadable.classList.add('text-gray-500', 'italic');
+                schedulePreview.innerHTML = `
+                    <div class="p-3 bg-gray-50 rounded-md text-gray-500 italic">
+                      Enter a valid cron expression to see upcoming execution times
+                    </div>
+                `;
+                cronInput.classList.remove('error-highlight');
+                validationMessage.classList.add('hidden');
+            }
+
+            function displayError() {
+                humanReadable.textContent = 'Invalid cron expression';
+                humanReadable.classList.add('text-gray-500', 'italic');
+                schedulePreview.innerHTML = `
+                    <div class="p-3 bg-gray-50 rounded-md text-red-500">
+                      Please enter a valid cron expression to see the schedule
+                    </div>
+                `;
+                cronInput.classList.add('error-highlight');
+                validationMessage.classList.remove('hidden');
+            }
+
+            function formatDateTime(date) {
+                try {
+                    return luxon.DateTime.fromJSDate(date).toFormat('EEE, MMM d, yyyy h:mm a');
+                } catch (error) {
+                    console.error("Error formatting date:", error);
+                    return "Invalid date";
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
