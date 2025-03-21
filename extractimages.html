@@ -43,94 +43,106 @@
         <textarea id="imageHtmlOutput" class="w-full h-48 p-2 border rounded font-mono text-sm" readonly></textarea>
     </div>
 
-    <script>
-        const pasteArea = document.getElementById('pasteArea');
-        const imageGrid = document.getElementById('imageGrid');
-        const downloadBtn = document.getElementById('downloadZip');
-        const fileTypeSelector = document.getElementById('fileType');
-        const htmlOutput = document.getElementById('imageHtmlOutput');
-        const toggleHtmlMode = document.getElementById('toggleHtmlMode');
-        const copyHtmlBtn = document.getElementById('copyHtml');
-        let imageElements = [];
+<script>
+    const pasteArea = document.getElementById('pasteArea');
+    const imageGrid = document.getElementById('imageGrid');
+    const downloadBtn = document.getElementById('downloadZip');
+    const fileTypeSelector = document.getElementById('fileType');
+    const htmlOutput = document.getElementById('imageHtmlOutput');
+    const toggleHtmlMode = document.getElementById('toggleHtmlMode');
+    const copyHtmlBtn = document.getElementById('copyHtml');
+    let imageElements = [];
 
-        pasteArea.addEventListener('paste', (e) => {
-            setTimeout(() => {
-                const imgs = pasteArea.querySelectorAll('img');
-                imgs.forEach((img) => addImage(img.src));
-            }, 100);
+    pasteArea.addEventListener('paste', (e) => {
+        setTimeout(() => {
+            const imgs = pasteArea.querySelectorAll('img');
+            imgs.forEach((img) => addImage(img.src));
+        }, 100);
+    });
+
+    toggleHtmlMode.addEventListener('change', updateImageHtmlOutput);
+
+    copyHtmlBtn.addEventListener('click', () => {
+        htmlOutput.select();
+        document.execCommand('copy');
+    });
+
+    function updateImageHtmlOutput() {
+        const mode = toggleHtmlMode.checked ? 'urls' : 'html';
+        const lines = imageElements.map(img => {
+            return mode === 'urls'
+                ? img.src
+                : `<img src=\"${img.src}\" alt=\"Extracted Image\">`;
         });
+        htmlOutput.value = lines.join('\n');
+    }
 
-        toggleHtmlMode.addEventListener('change', updateImageHtmlOutput);
+    function addImage(src) {
+        if (imageElements.some(el => el.src === src)) return;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'relative';
+        const img = document.createElement('img');
+        img.src = src;
+        img.className = 'w-full h-auto rounded shadow';
+        img.title = 'Right-click to save';
+        img.style.cursor = 'context-menu';
 
-        copyHtmlBtn.addEventListener('click', () => {
-            htmlOutput.select();
-            document.execCommand('copy');
-        });
-
-        function updateImageHtmlOutput() {
-            const mode = toggleHtmlMode.checked ? 'urls' : 'html';
-            const lines = imageElements.map(img => {
-                return mode === 'urls'
-                    ? img.src
-                    : `<img src=\"${img.src}\" alt=\"Extracted Image\">`;
-            });
-            htmlOutput.value = lines.join('\n');
-        }
-
-        function addImage(src) {
-            if (imageElements.some(el => el.src === src)) return;
-            const wrapper = document.createElement('div');
-            wrapper.className = 'relative';
-            const img = document.createElement('img');
-            img.src = src;
-            img.className = 'w-full h-auto rounded shadow';
-            img.title = 'Right-click to save';
-            img.style.cursor = 'context-menu';
-
-            const btn = document.createElement('button');
-            btn.textContent = '×';
-            btn.className = 'absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 text-center font-bold';
-            btn.onclick = () => {
-                imageGrid.removeChild(wrapper);
-                imageElements = imageElements.filter(el => el.src !== src);
-                updateImageHtmlOutput();
-            };
-
-            wrapper.appendChild(img);
-            wrapper.appendChild(btn);
-            imageGrid.appendChild(wrapper);
-            imageElements.push(img);
+        const btn = document.createElement('button');
+        btn.textContent = '×';
+        btn.className = 'absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 text-center font-bold';
+        btn.onclick = () => {
+            imageGrid.removeChild(wrapper);
+            imageElements = imageElements.filter(el => el.src !== src);
             updateImageHtmlOutput();
+        };
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(btn);
+        imageGrid.appendChild(wrapper);
+        imageElements.push(img);
+        updateImageHtmlOutput();
+    }
+
+    downloadBtn.addEventListener('click', async () => {
+        const type = fileTypeSelector.value;
+        const zip = new JSZip();
+        let count = 0;
+
+        const typeAliases = {
+            jpg: ['jpeg', 'jpg'],
+            png: ['png'],
+            webp: ['webp'],
+            bmp: ['bmp']
+        };
+
+        for (const img of imageElements) {
+            // if (!img.src.startsWith('data:') && !img.src.startsWith('blob:')) {
+            //     console.warn(`Skipping image due to CORS: ${img.src}`);
+            //     continue;
+            // }
+
+            try {
+                const response = await fetch(img.src);
+                const blob = await response.blob();
+                const mimeSubtype = blob.type.split('/')[1];
+                if (typeAliases[type].includes(mimeSubtype)) {
+                    zip.file(`image_${++count}.${type}`, blob);
+                }
+            } catch (err) {
+                console.warn(`Could not fetch ${img.src}:`, err);
+            }
         }
 
-        downloadBtn.addEventListener('click', async () => {
-            const type = fileTypeSelector.value;
-            const zip = new JSZip();
-            let count = 0;
-            for (const img of imageElements) {
-                if (!img.src.startsWith('data:') && !img.src.startsWith('blob:')) {
-                    console.warn(`Skipping image due to CORS: ${img.src}`);
-                    continue;
-                }
-                try {
-                    const response = await fetch(img.src);
-                    const blob = await response.blob();
-                    if (blob.type.includes(type)) {
-                        zip.file(`image_${++count}.${type}`, blob);
-                    }
-                } catch (err) {
-                    console.warn(`Could not fetch ${img.src}:`, err);
-                }
-            }
-            if (count === 0) {
-                alert(`No downloadable images of type .${type} found. This could be due to CORS restrictions.`);
-                return;
-            }
-            zip.generateAsync({ type: 'blob' }).then((content) => {
-                saveAs(content, `images_${type}.zip`);
-            });
-        });
-    </script>
+        if (count === 0) {
+            alert(`No downloadable images of type .${type} found. This could be due to CORS restrictions.`);
+            return;
+        }
+
+        const content = await zip.generateAsync({ type: 'blob' });
+        saveAs(content, `images_${type}.zip`);
+    });
+</script>
+
 </body>
 
 </html>
