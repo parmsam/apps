@@ -31,6 +31,7 @@ Inspired by similar tiny apps from [Jeremy Howard](https://github.com/jph00/apps
 - [Extract images](extractimages.html) - Extract images from pasted content.
 - [Multi-URL iframe dashboard](iframesdash.html) - Create a dashboard with multiple URLs in iFrames.
 - [Image resizer](imageresizer.html) - Resize images to a specific width and height.
+- [HEIC image converter](heicfmtconv.html) - Convert HEIC images to other image formats like JPG, PNG, and WEBP.
 
 ---
 
