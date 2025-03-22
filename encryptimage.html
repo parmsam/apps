@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Encrypt Image</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 30px 10px;
+        }
+
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            margin: 20px 0;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        img {
+            max-width: 100%;
+            margin-top: 15px;
+            border-radius: 8px;
+        }
+
+        .output-box {
+            background: #eee;
+            word-wrap: break-word;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .drop-zone {
+            border: 2px dashed #999;
+            padding: 20px;
+            text-align: center;
+            margin-top: 10px;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+
+        .drop-zone.dragover {
+            border-color: #007BFF;
+            background: #e0f0ff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" id="encrypt-section">
+        <h2>Encrypt Image</h2>
+        <div class="drop-zone" id="dropZone">Drag and drop image here or click to select</div>
+        <input type="file" id="imageInput" accept="image/*" style="display:none;">
+        <input type="password" id="passphrase" placeholder="Passphrase" required>
+        <button onclick="handleImageEncrypt()">Encrypt Image</button>
+        <img id="imagePreview" style="display:none;">
+        <div class="output-box" id="encrypted-link"></div>
+    </div>
+
+    <div class="container" id="decrypt-section" style="display:none;">
+        <h2>Decrypt Image</h2>
+        <input type="password" id="decrypt-passphrase" placeholder="Passphrase" required>
+        <button onclick="handleImageDecrypt()">Decrypt</button>
+        <img id="decrypted-image" src="" alt="Decrypted Preview" style="display:none;">
+        <div class="output-box" id="decrypt-message"></div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById("dropZone");
+        const imageInput = document.getElementById("imageInput");
+        let selectedFile = null;
+
+        dropZone.addEventListener("click", () => imageInput.click());
+        dropZone.addEventListener("dragover", e => {
+            e.preventDefault();
+            dropZone.classList.add("dragover");
+        });
+        dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+        dropZone.addEventListener("drop", e => {
+            e.preventDefault();
+            dropZone.classList.remove("dragover");
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith("image/")) {
+                selectedFile = file;
+                showPreview(file);
+            }
+        });
+        imageInput.addEventListener("change", e => {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith("image/")) {
+                selectedFile = file;
+                showPreview(file);
+            }
+        });
+
+        function showPreview(file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const img = document.getElementById("imagePreview");
+                img.src = reader.result;
+                img.style.display = "block";
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function compressImage(file) {
+            const img = new Image();
+            const dataURL = await new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(file);
+            });
+
+            return new Promise(resolve => {
+                img.onload = () => {
+                    const canvas = document.createElement("canvas");
+                    const scale = 0.7;
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(blob => resolve(blob), "image/jpeg", 0.7);
+                };
+                img.src = dataURL;
+            });
+        }
+
+        async function deriveKey(passphrase, salt) {
+            const enc = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(passphrase), { name: "PBKDF2" }, false, ["deriveKey"]);
+            return crypto.subtle.deriveKey(
+                { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
+                keyMaterial,
+                { name: "AES-GCM", length: 256 },
+                false,
+                ["encrypt", "decrypt"]
+            );
+        }
+
+        async function encryptImageData(arrayBuffer, passphrase) {
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const key = await deriveKey(passphrase, salt);
+            const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, arrayBuffer);
+            const payload = {
+                iv: Array.from(iv),
+                salt: Array.from(salt),
+                data: Array.from(new Uint8Array(encrypted))
+            };
+            return btoa(JSON.stringify(payload));
+        }
+
+        async function decryptImageData(encryptedBase64, passphrase) {
+            const decoded = JSON.parse(atob(encryptedBase64));
+            const iv = new Uint8Array(decoded.iv);
+            const salt = new Uint8Array(decoded.salt);
+            const data = new Uint8Array(decoded.data);
+            const key = await deriveKey(passphrase, salt);
+            const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+            return new Blob([decrypted]);
+        }
+
+        async function handleImageEncrypt() {
+            const passphrase = document.getElementById("passphrase").value;
+            if (!selectedFile || !passphrase) return alert("Select image and enter passphrase.");
+
+            const compressedBlob = await compressImage(selectedFile);
+            const arrayBuffer = await compressedBlob.arrayBuffer();
+            const encrypted = await encryptImageData(arrayBuffer, passphrase);
+            const encryptedUrl = location.origin + location.pathname + "#" + encrypted;
+            location.hash = encrypted;
+            document.getElementById("encrypted-link").textContent = encryptedUrl;
+            document.getElementById("decrypt-section").style.display = "block";
+        }
+
+        async function handleImageDecrypt() {
+            const passphrase = document.getElementById("decrypt-passphrase").value;
+            const encryptedData = location.hash.slice(1);
+            if (!encryptedData) return alert("No encrypted data found in URL.");
+
+            try {
+                const blob = await decryptImageData(encryptedData, passphrase);
+                const url = URL.createObjectURL(blob);
+                const img = document.getElementById("decrypted-image");
+                img.src = url;
+                img.style.display = "block";
+                document.getElementById("decrypt-message").textContent = "Decryption successful!";
+            } catch (e) {
+                document.getElementById("decrypt-message").textContent = "Decryption failed.";
+            }
+        }
+
+        window.onload = function () {
+            if (location.hash) {
+                document.getElementById("decrypt-section").style.display = "block";
+                document.getElementById("encrypt-section").style.display = "none";
+            }
+        };
+    </script>
+</body>
+
+</html>

@@ -32,6 +32,9 @@ Inspired by similar tiny apps from [Jeremy Howard](https://github.com/jph00/apps
 - [Multi-URL iframe dashboard](iframesdash.html) - Create a dashboard with multiple URLs in iframes.
 - [Image resizer](imageresizer.html) - Resize images to a specific width and height.
 - [HEIC image converter](heicfmtconv.html) - Convert HEIC images to other image formats like JPG, PNG, and WEBP.
+- [Encrypt image](encryptimage.html) - Encrypt and decrypt images with a passphrase - inspired by my similar [Encrypt message](encryptmessage.html) tool.
+
+
 
 ---
 
