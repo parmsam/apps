@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Encrypt Image</title>
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.3/dist/heic2any.min.js"></script>
     <style>
         body {
             font-family: sans-serif;
@@ -111,7 +112,7 @@
     <script>
         const dropZone = document.getElementById("dropZone");
         const imageInput = document.getElementById("imageInput");
-        let selectedFile = null;
+        let originalBlob = null;
 
         dropZone.addEventListener("click", () => imageInput.click());
         dropZone.addEventListener("dragover", e => {
@@ -123,49 +124,62 @@
             e.preventDefault();
             dropZone.classList.remove("dragover");
             const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith("image/")) {
-                selectedFile = file;
-                showPreview(file);
-            }
+            handleFileInput(file);
         });
         imageInput.addEventListener("change", e => {
             const file = e.target.files[0];
-            if (file && file.type.startsWith("image/")) {
-                selectedFile = file;
-                showPreview(file);
-            }
+            handleFileInput(file);
         });
 
-        function showPreview(file) {
+        async function handleFileInput(file) {
+            if (!file || !file.type.startsWith("image/")) return;
+
+            if (file.type === "image/heic" || file.name.toLowerCase().endsWith(".heic")) {
+                try {
+                    const convertedBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+                    originalBlob = convertedBlob;
+                } catch (err) {
+                    alert("HEIC conversion failed.");
+                    return;
+                }
+            } else {
+                originalBlob = file;
+            }
+
             const reader = new FileReader();
             reader.onload = () => {
                 const img = document.getElementById("imagePreview");
                 img.src = reader.result;
                 img.style.display = "block";
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(originalBlob);
         }
 
-        async function compressToFitSize(file, passphrase, maxChars = 45000) {
-            const img = new Image();
+        async function compressToFitSize(blob, passphrase, maxChars = 65000) {
             const dataURL = await new Promise(resolve => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(reader.result);
-                reader.readAsDataURL(file);
+                reader.readAsDataURL(blob);
             });
 
+            const img = new Image();
             return new Promise((resolve, reject) => {
                 img.onload = async () => {
                     let scale = 1.0;
-                    while (scale > 0.1) {
+                    while (scale >= 0.1) {
                         const canvas = document.createElement("canvas");
                         canvas.width = img.width * scale;
                         canvas.height = img.height * scale;
                         const ctx = canvas.getContext("2d");
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg", 0.6));
-                        const arrayBuffer = await blob.arrayBuffer();
+
+                        const quality = Math.max(scale * 0.6, 0.2); // lower quality as scale decreases
+                        const compressedBlob = await new Promise(r => canvas.toBlob(r, "image/jpeg", quality));
+                        const arrayBuffer = await compressedBlob.arrayBuffer();
                         const encrypted = await encryptImageData(arrayBuffer, passphrase);
+
+                        console.log(`Scale: ${scale.toFixed(2)} | Quality: ${quality.toFixed(2)} | Encrypted size: ${encrypted.length}`);
+
                         if (encrypted.length <= maxChars) {
                             resolve(encrypted);
                             return;
@@ -215,10 +229,10 @@
 
         async function handleImageEncrypt() {
             const passphrase = document.getElementById("passphrase").value;
-            if (!selectedFile || !passphrase) return alert("Select image and enter passphrase.");
+            if (!originalBlob || !passphrase) return alert("Select image and enter passphrase.");
 
             try {
-                const encrypted = await compressToFitSize(selectedFile, passphrase);
+                const encrypted = await compressToFitSize(originalBlob, passphrase);
                 const encryptedUrl = location.origin + location.pathname + "#" + encrypted;
                 location.hash = encrypted;
                 document.getElementById("encrypted-link").textContent = encryptedUrl;
