@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HEIC Converter</title>
     <script src="https://unpkg.com/heic2any/dist/heic2any.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 
@@ -29,6 +30,12 @@
             </select>
         </div>
 
+        <div class="mt-4 text-right">
+            <button id="convertAllBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Convert All
+                & Download ZIP</button>
+        </div>
+
+        <div id="loading" class="hidden text-center text-blue-500 mt-4">Processing...</div>
         <div id="previewContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-6"></div>
     </div>
 
@@ -37,6 +44,8 @@
         const fileInput = document.getElementById('fileInput');
         const previewContainer = document.getElementById('previewContainer');
         const formatSelect = document.getElementById('formatSelect');
+        const convertAllBtn = document.getElementById('convertAllBtn');
+        const loading = document.getElementById('loading');
 
         let files = [];
 
@@ -46,10 +55,17 @@
                 const div = document.createElement('div');
                 div.className = 'relative border rounded overflow-hidden shadow';
 
+                const spinner = document.createElement('div');
+                spinner.className = 'flex justify-center items-center h-40';
+                spinner.innerHTML = '<svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>';
+                div.appendChild(spinner);
+                previewContainer.appendChild(div);
+
                 try {
                     const previewBlob = await heic2any({ blob: file, toType: 'image/jpeg' });
                     const previewUrl = URL.createObjectURL(previewBlob);
 
+                    div.innerHTML = '';
                     const img = document.createElement('img');
                     img.src = previewUrl;
                     img.className = 'w-full h-40 object-cover';
@@ -66,6 +82,7 @@
                     convertBtn.innerText = 'Convert';
                     convertBtn.className = 'bg-blue-500 hover:bg-blue-600 text-white text-sm py-1 px-2 w-full';
                     convertBtn.onclick = async () => {
+                        loading.classList.remove('hidden');
                         const format = formatSelect.value;
                         try {
                             const outputBlob = await heic2any({ blob: file, toType: format });
@@ -76,17 +93,42 @@
                         } catch (err) {
                             alert('Conversion failed: ' + err.message);
                         }
+                        loading.classList.add('hidden');
                     };
 
                     div.appendChild(img);
                     div.appendChild(delBtn);
                     div.appendChild(convertBtn);
-                    previewContainer.appendChild(div);
                 } catch (error) {
-                    console.error('Preview failed', error);
+                    div.innerHTML = '<p class="text-red-500 p-4">Preview failed</p>';
                 }
             });
         }
+
+        convertAllBtn.onclick = async () => {
+            if (!files.length) return;
+            loading.classList.remove('hidden');
+            const format = formatSelect.value;
+            const zip = new JSZip();
+
+            for (const file of files) {
+                try {
+                    const outputBlob = await heic2any({ blob: file, toType: format });
+                    const ext = format.split('/')[1];
+                    const filename = file.name.replace(/\.heic$/i, '.' + ext);
+                    zip.file(filename, outputBlob);
+                } catch (err) {
+                    console.error('Failed to convert', file.name, err);
+                }
+            }
+
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(zipBlob);
+            link.download = 'converted_images.zip';
+            link.click();
+            loading.classList.add('hidden');
+        };
 
         function handleFiles(newFiles) {
             for (const file of newFiles) {
