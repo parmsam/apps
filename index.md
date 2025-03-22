@@ -29,7 +29,7 @@ Inspired by similar tiny apps from [Jeremy Howard](https://github.com/jph00/apps
 - [Image saver](imagesaver.html) - Save one or more images from clipboard to your device.
 - [Cron expression generator](crongen.html) - Create cron schedule expressions. Inspired by [crontab guru](https://crontab.guru/) website.
 - [Extract images](extractimages.html) - Extract images from pasted content.
-- [Multi-URL iframe dashboard](iframesdash.html) - Create a dashboard with multiple URLs in iFrames.
+- [Multi-URL iframe dashboard](iframesdash.html) - Create a dashboard with multiple URLs in iframes.
 - [Image resizer](imageresizer.html) - Resize images to a specific width and height.
 - [HEIC image converter](heicfmtconv.html) - Convert HEIC images to other image formats like JPG, PNG, and WEBP.
 
