@@ -13,7 +13,10 @@
         <h1 class="text-2xl font-bold mb-4">Clipboard Manager</h1>
         <div class="flex justify-between items-center mb-4">
             <input id="search" type="text" placeholder="Search..." class="w-full p-2 border rounded mr-4" />
-            <button id="clearAll" class="p-2 bg-red-500 text-white rounded">Clear All</button>
+            <div class="flex gap-2">
+                <button id="toggleAll" class="p-2 bg-blue-500 text-white rounded">Toggle All</button>
+                <button id="clearAll" class="p-2 bg-red-500 text-white rounded">Clear All</button>
+            </div>
         </div>
 
         <div id="paste-area"
@@ -29,6 +32,7 @@
         const search = document.getElementById("search");
         const pasteArea = document.getElementById("paste-area");
         const clearAllBtn = document.getElementById("clearAll");
+        const toggleAllBtn = document.getElementById("toggleAll");
         const entries = [];
 
         function saveToLocalStorage() {
@@ -67,21 +71,16 @@
             deleteBtn.textContent = "Delete";
 
             toggleBtn.onclick = () => {
-                const isNowHTML = card.dataset.isHtml === "true";
-                if (isNowHTML) {
-                    contentDiv.textContent = extractMainText(card.dataset.rawContent);
-                } else {
-                    contentDiv.innerHTML = card.dataset.rawContent;
-                }
-                card.dataset.isHtml = (!isNowHTML).toString();
-                toggleBtn.textContent = !isNowHTML ? "To Plaintext" : "To Rich Text";
+                toggleCardView(card, contentDiv, toggleBtn);
                 saveToLocalStorage();
             };
 
             copyBtn.onclick = () => {
                 const isNowHTML = card.dataset.isHtml === "true";
-                const text = isNowHTML ? contentDiv.innerHTML : contentDiv.textContent;
-                navigator.clipboard.writeText(text);
+                const clipboardItem = isNowHTML
+                    ? new ClipboardItem({ "text/html": new Blob([card.dataset.rawContent], { type: "text/html" }) })
+                    : new ClipboardItem({ "text/plain": new Blob([contentDiv.textContent], { type: "text/plain" }) });
+                navigator.clipboard.write([clipboardItem]);
             };
 
             deleteBtn.onclick = () => {
@@ -99,6 +98,17 @@
             grid.prepend(card);
             entries.push(card);
             if (!skipSave) saveToLocalStorage();
+        }
+
+        function toggleCardView(card, contentDiv, toggleBtn) {
+            const isNowHTML = card.dataset.isHtml === "true";
+            if (isNowHTML) {
+                contentDiv.textContent = extractMainText(card.dataset.rawContent);
+            } else {
+                contentDiv.innerHTML = card.dataset.rawContent;
+            }
+            card.dataset.isHtml = (!isNowHTML).toString();
+            toggleBtn.textContent = !isNowHTML ? "To Plaintext" : "To Rich Text";
         }
 
         function escapeHTML(str) {
@@ -141,6 +151,15 @@
                 localStorage.removeItem("clipboardEntries");
                 grid.innerHTML = "";
             }
+        });
+
+        toggleAllBtn.addEventListener("click", () => {
+            entries.forEach(card => {
+                const contentDiv = card.querySelector("div");
+                const toggleBtn = card.querySelector("button");
+                toggleCardView(card, contentDiv, toggleBtn);
+            });
+            saveToLocalStorage();
         });
 
         loadFromLocalStorage();
