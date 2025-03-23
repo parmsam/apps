@@ -20,6 +20,12 @@
             }
         }
     </script>
+    <style>
+        .math-container {
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-50 min-h-screen flex flex-col items-center justify-start p-6">
@@ -36,8 +42,8 @@
                 <div class="flex gap-2">
                     <input type="number" step="0.1" id="distance" class="w-full border rounded px-3 py-2" required />
                     <select id="distanceUnit" class="border rounded px-3 py-2">
-                        <option value="km">km</option>
                         <option value="mi">miles</option>
+                        <option value="km">km</option>
                     </select>
                 </div>
             </div>
@@ -47,8 +53,8 @@
                 <div class="flex gap-2">
                     <input type="number" step="1" id="elevation" class="w-full border rounded px-3 py-2" required />
                     <select id="elevationUnit" class="border rounded px-3 py-2">
-                        <option value="m">meters</option>
                         <option value="ft">feet</option>
+                        <option value="m">meters</option>
                     </select>
                 </div>
             </div>
@@ -56,11 +62,11 @@
             <div>
                 <label class="block font-semibold mb-1">Pace</label>
                 <div class="flex gap-2">
-                    <input type="number" step="0.1" id="pace" class="w-full border rounded px-3 py-2" />
+                    <input type="number" step="0.1" id="pace" class="w-full border rounded px-3 py-2" value="3.1"/>
                     <select id="pacePreset" class="border rounded px-3 py-2">
                         <option value="">Select pace</option>
                         <option value="slow">Slow</option>
-                        <option value="normal">Normal</option>
+                        <option value="normal" selected>Normal</option>
                         <option value="fast">Fast</option>
                         <option value="run">Run</option>
                     </select>
@@ -79,7 +85,15 @@
         </form>
 
         <div id="result" class="mt-6 text-xl font-semibold text-center text-gray-700 hidden"></div>
-        <div id="equation" class="mt-4 text-center text-gray-600 text-base"></div>
+
+        <div class="mt-4 text-center text-gray-700 text-base">
+            <p class="font-semibold mb-1">Calculation Formula:</p>
+            <div id="generalEquation" class="math-container">
+                \[\text{Time (hrs)} = \frac{\text{Distance (mi)}}{\text{Pace (mi/h)}} + \frac{\text{Elevation gain (ft)}}{2000} + \left(\frac{\text{Flat Time} + \text{Elevation Time}}{60} \times \text{Rest (min/hr)}\right)\]
+            </div>
+        </div>
+
+        <div id="equation" class="math-container mt-4 text-center text-gray-600 text-base"></div>
         <canvas id="elevationChart" class="mt-8 hidden"></canvas>
     </div>
 
@@ -88,11 +102,10 @@
         const resultDiv = document.getElementById('result');
         const equationDiv = document.getElementById('equation');
         const chartCanvas = document.getElementById('elevationChart');
-        let chart;
-
         const paceInput = document.getElementById('pace');
         const pacePreset = document.getElementById('pacePreset');
         const distanceUnit = document.getElementById('distanceUnit');
+        let chart;
 
         function convertToMetric(distance, distUnit, elevation, elevUnit) {
             return {
@@ -102,11 +115,13 @@
         }
 
         function estimateTime(km, elevation, pace, restPerHour) {
-            const flatTime = km / pace;
-            const elevationTime = elevation / 600;
+            const miles = km * 0.621371; // Convert km to miles
+            const elevationFeet = elevation * 3.28084; // Convert meters to feet
+            const flatTime = miles / pace;
+            const elevationTime = elevationFeet / 2000; // Adjusted for feet
             const totalTime = flatTime + elevationTime;
             const restTime = (totalTime * restPerHour) / 60;
-            return { total: totalTime + restTime, flatTime, elevationTime, restTime };
+            return { total: totalTime + restTime, flatTime, elevationTime, restTime, miles, elevationFeet };
         }
 
         function formatHours(hours) {
@@ -147,12 +162,8 @@
                 },
                 options: {
                     scales: {
-                        y: {
-                            title: { display: true, text: 'Elevation (m)' }
-                        },
-                        x: {
-                            title: { display: true, text: 'Distance (km)' }
-                        }
+                        y: { title: { display: true, text: 'Elevation (m)' } },
+                        x: { title: { display: true, text: 'Distance (km)' } }
                     }
                 }
             });
@@ -160,7 +171,9 @@
         }
 
         function displayEquation(km, meters, pace, restPerHour, flatTime, elevationTime, restTime, totalTime) {
-            const latex = `Time = \\frac{${km.toFixed(2)}}{${pace}} + \\frac{${meters.toFixed(0)}}{600} + \\left(\\frac{${flatTime.toFixed(2)} + ${elevationTime.toFixed(2)}}{60} \\times ${restPerHour} \\right) = ${totalTime.toFixed(2)} \\text{ hrs}`;
+            const miles = km * 0.621371; // Convert km to miles
+            const elevationFeet = meters * 3.28084; // Convert meters to feet
+            const latex = `\\text{Time} = \\frac{${miles.toFixed(2)}\\ \\text{mi}}{${pace}\\ \\text{mi/h}} + \\frac{${elevationFeet.toFixed(0)}\\ \\text{ft}}{2000} + \\left(\\frac{${flatTime.toFixed(2)} + ${elevationTime.toFixed(2)}}{60} \\times ${restPerHour}\\ \\text{min/hr}\\right) = ${totalTime.toFixed(2)}\\ \\text{hrs}`;
             equationDiv.innerHTML = `\\[${latex}\\]`;
             MathJax.typesetPromise();
         }
@@ -187,7 +200,6 @@
             const elevation = parseFloat(document.getElementById('elevation').value);
             const pace = parseFloat(document.getElementById('pace').value);
             const restPerHour = parseFloat(document.getElementById('restPerHour').value);
-
             const distUnit = distanceUnit.value;
             const elevUnit = document.getElementById('elevationUnit').value;
 
@@ -202,7 +214,6 @@
             displayEquation(km, meters, pace, restPerHour, flatTime, elevationTime, restTime, total);
         });
 
-        // Auto-load from URL if present
         window.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             ['distance', 'elevation', 'pace', 'restPerHour'].forEach(id => {
