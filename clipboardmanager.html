@@ -77,10 +77,30 @@
 
             copyBtn.onclick = () => {
                 const isNowHTML = card.dataset.isHtml === "true";
-                const clipboardItem = isNowHTML
-                    ? new ClipboardItem({ "text/html": new Blob([card.dataset.rawContent], { type: "text/html" }) })
-                    : new ClipboardItem({ "text/plain": new Blob([contentDiv.textContent], { type: "text/plain" }) });
-                navigator.clipboard.write([clipboardItem]);
+                if (isNowHTML) {
+                    const tempEl = document.createElement("div");
+                    tempEl.innerHTML = card.dataset.rawContent;
+                    tempEl.style.position = 'absolute';
+                    tempEl.style.left = '-9999px';
+                    document.body.appendChild(tempEl);
+
+                    const range = document.createRange();
+                    range.selectNodeContents(tempEl);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+
+                    try {
+                        document.execCommand('copy');
+                    } catch (err) {
+                        alert('Copy failed');
+                    }
+
+                    selection.removeAllRanges();
+                    document.body.removeChild(tempEl);
+                } else {
+                    navigator.clipboard.writeText(contentDiv.textContent);
+                }
             };
 
             deleteBtn.onclick = () => {
