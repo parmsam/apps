@@ -127,7 +127,7 @@
         function formatHours(hours) {
             const h = Math.floor(hours);
             const m = Math.round((hours - h) * 60);
-            return `${h}h ${m}m`;
+            return { formatted: `${h}h ${m}m`, decimal: hours.toFixed(2) };
         }
 
         function getPresetPace(level, unit) {
@@ -143,9 +143,11 @@
         }
 
         function drawChart(km, elevation) {
+            const miles = km * 0.621371; // Convert km to miles
+            const elevationFeet = elevation * 3.28084; // Convert meters to feet
             const points = 10;
-            const labels = Array.from({ length: points }, (_, i) => `${(i * km / (points - 1)).toFixed(1)} km`);
-            const elevations = Array.from({ length: points }, (_, i) => elevation * (i / (points - 1)));
+            const labels = Array.from({ length: points }, (_, i) => `${(i * miles / (points - 1)).toFixed(1)} mi`);
+            const elevations = Array.from({ length: points }, (_, i) => elevationFeet * (i / (points - 1)));
 
             if (chart) chart.destroy();
             chart = new Chart(chartCanvas, {
@@ -162,8 +164,8 @@
                 },
                 options: {
                     scales: {
-                        y: { title: { display: true, text: 'Elevation (m)' } },
-                        x: { title: { display: true, text: 'Distance (km)' } }
+                        y: { title: { display: true, text: 'Elevation (ft)' } },
+                        x: { title: { display: true, text: 'Distance (mi)' } }
                     }
                 }
             });
@@ -206,7 +208,8 @@
             const { km, meters } = convertToMetric(distance, distUnit, elevation, elevUnit);
             const { total, flatTime, elevationTime, restTime } = estimateTime(km, meters, pace, restPerHour);
 
-            resultDiv.textContent = `Estimated Time: ${formatHours(total)}`;
+            const { formatted, decimal } = formatHours(total);
+            resultDiv.textContent = `Estimated Time: ${formatted} (${decimal} hours)`;
             resultDiv.classList.remove('hidden');
 
             updateURL({ distance, elevation, pace, restPerHour, distUnit, elevUnit });
