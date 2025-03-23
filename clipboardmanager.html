@@ -51,11 +51,17 @@
             const contentDiv = document.createElement("div");
             contentDiv.className = "mb-2";
             contentDiv.contentEditable = false;
-            contentDiv.innerHTML = isHTML ? content : escapeHTML(content);
 
             const toggleBtn = document.createElement("button");
             toggleBtn.className = "text-sm text-blue-600 hover:underline mr-2";
-            toggleBtn.textContent = isHTML ? "To Plaintext" : "To Rich Text";
+
+            if (isHTML) {
+                contentDiv.innerHTML = content;
+                toggleBtn.textContent = "To Plaintext";
+            } else {
+                contentDiv.textContent = content;
+                toggleBtn.textContent = "To Rich Text";
+            }
 
             const copyBtn = document.createElement("button");
             copyBtn.className = "text-sm text-green-600 hover:underline mr-2";
@@ -131,12 +137,6 @@
             toggleBtn.textContent = !isNowHTML ? "To Plaintext" : "To Rich Text";
         }
 
-        function escapeHTML(str) {
-            const div = document.createElement("div");
-            div.textContent = str;
-            return div.innerHTML;
-        }
-
         function extractMainText(html) {
             const div = document.createElement("div");
             div.innerHTML = html;
@@ -146,7 +146,7 @@
         function loadFromLocalStorage() {
             const data = JSON.parse(localStorage.getItem("clipboardEntries") || "[]");
             data.forEach(entry => {
-                createCard(entry.isHTML ? entry.content : escapeHTML(entry.content), entry.isHTML, true, entry.timestamp);
+                createCard(entry.content, entry.isHTML, true, entry.timestamp);
             });
         }
 
