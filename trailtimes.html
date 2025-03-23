@@ -1,145 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Naismith Trail Time Estimator</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: '#16a34a'
-          }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Naismith Trail Time Estimator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#16a34a'
+                    }
+                }
+            }
         }
-      }
-    }
-  </script>
+    </script>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center p-6">
-  <div class="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-8">
-    <h1 class="text-3xl font-bold text-primary mb-2 text-center">Naismith Trail Time Estimator</h1>
-    <p class="text-center text-gray-600 text-sm mb-6">
-      Based on <a href="https://en.wikipedia.org/wiki/Naismith%27s_rule" class="text-primary underline" target="_blank">Naismith's Rule</a>: Estimate hiking duration with distance, elevation, and pace.
-    </p>
 
-    <form id="hikeForm" class="space-y-4">
-      <div>
-        <label class="block font-semibold mb-1">Distance</label>
-        <div class="flex gap-2">
-          <input type="number" step="0.1" id="distance" class="w-full border rounded px-3 py-2" required />
-          <select id="distanceUnit" class="border rounded px-3 py-2">
-            <option value="km">km</option>
-            <option value="mi">miles</option>
-          </select>
-        </div>
-      </div>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-start p-6">
+    <div class="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-8">
+        <h1 class="text-3xl font-bold text-primary mb-2 text-center">Naismith Trail Time Estimator</h1>
+        <p class="text-center text-gray-600 text-sm mb-6">
+            Based on <a href="https://en.wikipedia.org/wiki/Naismith%27s_rule" class="text-primary underline"
+                target="_blank">Naismith's Rule</a>: Estimate hiking duration with distance, elevation, and pace.
+        </p>
 
-      <div>
-        <label class="block font-semibold mb-1">Elevation Gain</label>
-        <div class="flex gap-2">
-          <input type="number" step="1" id="elevation" class="w-full border rounded px-3 py-2" required />
-          <select id="elevationUnit" class="border rounded px-3 py-2">
-            <option value="m">meters</option>
-            <option value="ft">feet</option>
-          </select>
-        </div>
-      </div>
+        <form id="hikeForm" class="space-y-4">
+            <div>
+                <label class="block font-semibold mb-1">Distance</label>
+                <div class="flex gap-2">
+                    <input type="number" step="0.1" id="distance" class="w-full border rounded px-3 py-2" required />
+                    <select id="distanceUnit" class="border rounded px-3 py-2">
+                        <option value="km">km</option>
+                        <option value="mi">miles</option>
+                    </select>
+                </div>
+            </div>
 
-      <div>
-        <label class="block font-semibold mb-1">Pace</label>
-        <div class="flex gap-2">
-          <input type="number" step="0.1" id="pace" class="w-full border rounded px-3 py-2" />
-          <select id="pacePreset" class="border rounded px-3 py-2">
-            <option value="">Select pace</option>
-            <option value="slow">Slow</option>
-            <option value="normal">Normal</option>
-            <option value="fast">Fast</option>
-            <option value="run">Run</option>
-          </select>
-        </div>
-        <p class="text-sm text-gray-500">Pace auto-fills based on terrain and fitness (in km/h or mi/h)</p>
-      </div>
+            <div>
+                <label class="block font-semibold mb-1">Elevation Gain</label>
+                <div class="flex gap-2">
+                    <input type="number" step="1" id="elevation" class="w-full border rounded px-3 py-2" required />
+                    <select id="elevationUnit" class="border rounded px-3 py-2">
+                        <option value="m">meters</option>
+                        <option value="ft">feet</option>
+                    </select>
+                </div>
+            </div>
 
-      <div>
-        <label class="block font-semibold mb-1">Rest Time (optional)</label>
-        <input type="number" step="1" id="restPerHour" value="0" class="w-full border rounded px-3 py-2" />
-        <p class="text-sm text-gray-500">Minutes of rest per hour of hiking</p>
-      </div>
+            <div>
+                <label class="block font-semibold mb-1">Pace</label>
+                <div class="flex gap-2">
+                    <input type="number" step="0.1" id="pace" class="w-full border rounded px-3 py-2" />
+                    <select id="pacePreset" class="border rounded px-3 py-2">
+                        <option value="">Select pace</option>
+                        <option value="slow">Slow</option>
+                        <option value="normal">Normal</option>
+                        <option value="fast">Fast</option>
+                        <option value="run">Run</option>
+                    </select>
+                </div>
+                <p class="text-sm text-gray-500">Pace auto-fills based on terrain and fitness (in km/h or mi/h)</p>
+            </div>
 
-      <button type="submit" class="bg-primary text-white px-6 py-2 rounded hover:bg-green-700">Estimate Time</button>
-    </form>
+            <div>
+                <label class="block font-semibold mb-1">Rest Time (optional)</label>
+                <input type="number" step="1" id="restPerHour" value="0" class="w-full border rounded px-3 py-2" />
+                <p class="text-sm text-gray-500">Minutes of rest per hour of hiking</p>
+            </div>
 
-    <div id="result" class="mt-6 text-xl font-semibold text-center text-gray-700 hidden"></div>
-  </div>
+            <button type="submit" class="bg-primary text-white px-6 py-2 rounded hover:bg-green-700">Estimate
+                Time</button>
+        </form>
 
-  <script>
-    const form = document.getElementById('hikeForm');
-    const resultDiv = document.getElementById('result');
-    const paceInput = document.getElementById('pace');
-    const pacePreset = document.getElementById('pacePreset');
-    const distanceUnit = document.getElementById('distanceUnit');
+        <div id="result" class="mt-6 text-xl font-semibold text-center text-gray-700 hidden"></div>
+        <div id="equation" class="mt-4 text-center text-gray-600 text-base"></div>
+        <canvas id="elevationChart" class="mt-8 hidden"></canvas>
+    </div>
 
-    function convertToMetric(distance, distUnit, elevation, elevUnit) {
-      return {
-        km: distUnit === 'mi' ? distance * 1.60934 : distance,
-        meters: elevUnit === 'ft' ? elevation * 0.3048 : elevation
-      };
-    }
+    <script>
+        const form = document.getElementById('hikeForm');
+        const resultDiv = document.getElementById('result');
+        const equationDiv = document.getElementById('equation');
+        const chartCanvas = document.getElementById('elevationChart');
+        let chart;
 
-    function estimateTime(km, elevation, pace, restPerHour) {
-      const flatTime = km / pace;
-      const elevationTime = elevation / 600;
-      const totalTime = flatTime + elevationTime;
-      const restTime = (totalTime * restPerHour) / 60;
-      return totalTime + restTime;
-    }
+        const paceInput = document.getElementById('pace');
+        const pacePreset = document.getElementById('pacePreset');
+        const distanceUnit = document.getElementById('distanceUnit');
 
-    function formatHours(hours) {
-      const h = Math.floor(hours);
-      const m = Math.round((hours - h) * 60);
-      return `${h}h ${m}m`;
-    }
+        function convertToMetric(distance, distUnit, elevation, elevUnit) {
+            return {
+                km: distUnit === 'mi' ? distance * 1.60934 : distance,
+                meters: elevUnit === 'ft' ? elevation * 0.3048 : elevation
+            };
+        }
 
-    function getPresetPace(level, unit) {
-      const paceKm = { slow: 3, normal: 5, fast: 6, run: 9 };
-      const paceMi = { slow: 2, normal: 3.1, fast: 3.7, run: 5.6 };
-      return unit === 'km' ? paceKm[level] : paceMi[level];
-    }
+        function estimateTime(km, elevation, pace, restPerHour) {
+            const flatTime = km / pace;
+            const elevationTime = elevation / 600;
+            const totalTime = flatTime + elevationTime;
+            const restTime = (totalTime * restPerHour) / 60;
+            return { total: totalTime + restTime, flatTime, elevationTime, restTime };
+        }
 
-    pacePreset.addEventListener('change', () => {
-      const unit = distanceUnit.value;
-      const val = pacePreset.value;
-      if (val) {
-        paceInput.value = getPresetPace(val, unit);
-      }
-    });
+        function formatHours(hours) {
+            const h = Math.floor(hours);
+            const m = Math.round((hours - h) * 60);
+            return `${h}h ${m}m`;
+        }
 
-    distanceUnit.addEventListener('change', () => {
-      const val = pacePreset.value;
-      if (val) {
-        paceInput.value = getPresetPace(val, distanceUnit.value);
-      }
-    });
+        function getPresetPace(level, unit) {
+            const paceKm = { slow: 3, normal: 5, fast: 6, run: 9 };
+            const paceMi = { slow: 2, normal: 3.1, fast: 3.7, run: 5.6 };
+            return unit === 'km' ? paceKm[level] : paceMi[level];
+        }
 
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
+        function updateURL(params) {
+            const url = new URL(window.location);
+            Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+            history.replaceState(null, '', url);
+        }
 
-      const distance = parseFloat(document.getElementById('distance').value);
-      const elevation = parseFloat(document.getElementById('elevation').value);
-      const pace = parseFloat(document.getElementById('pace').value);
-      const restPerHour = parseFloat(document.getElementById('restPerHour').value);
+        function drawChart(km, elevation) {
+            const points = 10;
+            const labels = Array.from({ length: points }, (_, i) => `${(i * km / (points - 1)).toFixed(1)} km`);
+            const elevations = Array.from({ length: points }, (_, i) => elevation * (i / (points - 1)));
 
-      const distUnit = distanceUnit.value;
-      const elevUnit = document.getElementById('elevationUnit').value;
+            if (chart) chart.destroy();
+            chart = new Chart(chartCanvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Elevation Profile',
+                        data: elevations,
+                        fill: true,
+                        borderColor: '#16a34a',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            title: { display: true, text: 'Elevation (m)' }
+                        },
+                        x: {
+                            title: { display: true, text: 'Distance (km)' }
+                        }
+                    }
+                }
+            });
+            chartCanvas.classList.remove('hidden');
+        }
 
-      const { km, meters } = convertToMetric(distance, distUnit, elevation, elevUnit);
+        function displayEquation(km, meters, pace, restPerHour, flatTime, elevationTime, restTime, totalTime) {
+            const latex = `Time = \\frac{${km.toFixed(2)}}{${pace}} + \\frac{${meters.toFixed(0)}}{600} + \\left(\\frac{${flatTime.toFixed(2)} + ${elevationTime.toFixed(2)}}{60} \\times ${restPerHour} \\right) = ${totalTime.toFixed(2)} \\text{ hrs}`;
+            equationDiv.innerHTML = `\\[${latex}\\]`;
+            MathJax.typesetPromise();
+        }
 
-      const time = estimateTime(km, meters, pace, restPerHour);
-      resultDiv.textContent = `Estimated Time: ${formatHours(time)}`;
-      resultDiv.classList.remove('hidden');
-    });
-  </script>
+        pacePreset.addEventListener('change', () => {
+            const unit = distanceUnit.value;
+            const val = pacePreset.value;
+            if (val) {
+                paceInput.value = getPresetPace(val, unit);
+            }
+        });
+
+        distanceUnit.addEventListener('change', () => {
+            const val = pacePreset.value;
+            if (val) {
+                paceInput.value = getPresetPace(val, distanceUnit.value);
+            }
+        });
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const distance = parseFloat(document.getElementById('distance').value);
+            const elevation = parseFloat(document.getElementById('elevation').value);
+            const pace = parseFloat(document.getElementById('pace').value);
+            const restPerHour = parseFloat(document.getElementById('restPerHour').value);
+
+            const distUnit = distanceUnit.value;
+            const elevUnit = document.getElementById('elevationUnit').value;
+
+            const { km, meters } = convertToMetric(distance, distUnit, elevation, elevUnit);
+            const { total, flatTime, elevationTime, restTime } = estimateTime(km, meters, pace, restPerHour);
+
+            resultDiv.textContent = `Estimated Time: ${formatHours(total)}`;
+            resultDiv.classList.remove('hidden');
+
+            updateURL({ distance, elevation, pace, restPerHour, distUnit, elevUnit });
+            drawChart(km, meters);
+            displayEquation(km, meters, pace, restPerHour, flatTime, elevationTime, restTime, total);
+        });
+
+        // Auto-load from URL if present
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            ['distance', 'elevation', 'pace', 'restPerHour'].forEach(id => {
+                if (params.has(id)) document.getElementById(id).value = params.get(id);
+            });
+            if (params.has('distUnit')) distanceUnit.value = params.get('distUnit');
+            if (params.has('elevUnit')) document.getElementById('elevationUnit').value = params.get('elevUnit');
+            if (params.has('distance')) form.dispatchEvent(new Event('submit'));
+        });
+    </script>
 </body>
+
 </html>
