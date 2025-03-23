@@ -33,6 +33,7 @@ Inspired by similar tiny apps from [Jeremy Howard](https://github.com/jph00/apps
 - [Image resizer](imageresizer.html) - Resize images to a specific width and height.
 - [HEIC image converter](heicfmtconv.html) - Convert HEIC images to other image formats like JPG, PNG, and WEBP.
 - [Encrypt image](encryptimage.html) - Encrypt and decrypt images with a passphrase - inspired by my similar [Encrypt message](encryptmessage.html) tool. Note that image files are sometimes too large to encrypt into a URL and may take a while to encrypt/decrypt. These encrypted URLs can get pretty long and may not work in some browsers. This was just an experiment to see if it could be done.
+- [Clipboard manager](clipboardmanager.html) - Manage and view your clipboard pastes by storing them in local storage via pastes on this page.
 
 ---
 

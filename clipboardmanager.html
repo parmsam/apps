@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clipboard Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-4">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold mb-4">Clipboard Manager</h1>
+        <div class="flex justify-between items-center mb-4">
+            <input id="search" type="text" placeholder="Search..." class="w-full p-2 border rounded mr-4" />
+            <button id="clearAll" class="p-2 bg-red-500 text-white rounded">Clear All</button>
+        </div>
+
+        <div id="paste-area"
+            class="p-4 mb-4 border-2 border-dashed border-gray-400 bg-white text-center cursor-pointer">
+            <p class="text-gray-500">Click or press Ctrl+V / Cmd+V to paste</p>
+        </div>
+
+        <div id="grid" class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3"></div>
+    </div>
+
+    <script>
+        const grid = document.getElementById("grid");
+        const search = document.getElementById("search");
+        const pasteArea = document.getElementById("paste-area");
+        const clearAllBtn = document.getElementById("clearAll");
+        const entries = [];
+
+        function saveToLocalStorage() {
+            const saved = entries.map(card => ({
+                content: card.dataset.rawContent,
+                isHTML: card.dataset.isHtml === "true",
+                timestamp: card.dataset.timestamp
+            }));
+            localStorage.setItem("clipboardEntries", JSON.stringify(saved));
+        }
+
+        function createCard(content, isHTML, skipSave = false, timestamp = null) {
+            const card = document.createElement("div");
+            card.className = "bg-white p-4 rounded shadow border relative";
+
+            const contentDiv = document.createElement("div");
+            contentDiv.className = "mb-2";
+            contentDiv.contentEditable = false;
+            contentDiv.innerHTML = isHTML ? content : escapeHTML(content);
+
+            const toggleBtn = document.createElement("button");
+            toggleBtn.className = "text-sm text-blue-600 hover:underline mr-2";
+            toggleBtn.textContent = isHTML ? "To Plaintext" : "To Rich Text";
+
+            const copyBtn = document.createElement("button");
+            copyBtn.className = "text-sm text-green-600 hover:underline mr-2";
+            copyBtn.textContent = "Copy";
+
+            const timestampEl = document.createElement("div");
+            timestampEl.className = "text-xs text-gray-500 mt-1";
+            const ts = timestamp || new Date().toISOString();
+            timestampEl.textContent = new Date(ts).toLocaleString();
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "text-sm text-red-600 hover:underline absolute top-2 right-2";
+            deleteBtn.textContent = "Delete";
+
+            toggleBtn.onclick = () => {
+                const isNowHTML = card.dataset.isHtml === "true";
+                if (isNowHTML) {
+                    contentDiv.textContent = extractMainText(card.dataset.rawContent);
+                } else {
+                    contentDiv.innerHTML = card.dataset.rawContent;
+                }
+                card.dataset.isHtml = (!isNowHTML).toString();
+                toggleBtn.textContent = !isNowHTML ? "To Plaintext" : "To Rich Text";
+                saveToLocalStorage();
+            };
+
+            copyBtn.onclick = () => {
+                const isNowHTML = card.dataset.isHtml === "true";
+                const text = isNowHTML ? contentDiv.innerHTML : contentDiv.textContent;
+                navigator.clipboard.writeText(text);
+            };
+
+            deleteBtn.onclick = () => {
+                card.remove();
+                const index = entries.indexOf(card);
+                if (index > -1) entries.splice(index, 1);
+                saveToLocalStorage();
+            };
+
+            card.append(contentDiv, toggleBtn, copyBtn, timestampEl, deleteBtn);
+            card.dataset.rawContent = content;
+            card.dataset.isHtml = isHTML;
+            card.dataset.timestamp = ts;
+            card.dataset.content = extractMainText(content).toLowerCase();
+            grid.prepend(card);
+            entries.push(card);
+            if (!skipSave) saveToLocalStorage();
+        }
+
+        function escapeHTML(str) {
+            const div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function extractMainText(html) {
+            const div = document.createElement("div");
+            div.innerHTML = html;
+            return div.textContent || "";
+        }
+
+        function loadFromLocalStorage() {
+            const data = JSON.parse(localStorage.getItem("clipboardEntries") || "[]");
+            data.forEach(entry => {
+                createCard(entry.isHTML ? entry.content : escapeHTML(entry.content), entry.isHTML, true, entry.timestamp);
+            });
+        }
+
+        pasteArea.addEventListener("click", () => pasteArea.focus());
+        document.addEventListener("paste", async (e) => {
+            const html = e.clipboardData.getData("text/html");
+            const text = e.clipboardData.getData("text/plain");
+            if (html && html !== text) createCard(html, true);
+            else createCard(text, false);
+        });
+
+        search.addEventListener("input", () => {
+            const query = search.value.toLowerCase();
+            entries.forEach((el) => {
+                el.style.display = el.dataset.content.includes(query) ? "block" : "none";
+            });
+        });
+
+        clearAllBtn.addEventListener("click", () => {
+            if (confirm("Are you sure you want to clear all clipboard history?")) {
+                entries.splice(0, entries.length);
+                localStorage.removeItem("clipboardEntries");
+                grid.innerHTML = "";
+            }
+        });
+
+        loadFromLocalStorage();
+    </script>
+</body>
+
+</html>
