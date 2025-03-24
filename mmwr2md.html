@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CDC MMWR to Markdown</title>
+    <script src="https://cdn.jsdelivr.net/npm/turndown@7.1.1/lib/turndown.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            background-color: #f9fafb;
+            color: #111827;
+            font-family: sans-serif;
+            padding: 1.5rem;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 768px;
+            margin: auto;
+        }
+
+        h1 {
+            font-size: 1.875rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            box-sizing: border-box;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            color: white;
+        }
+
+        #convertBtn {
+            background-color: #2563eb;
+        }
+
+        #convertBtn:hover {
+            background-color: #1d4ed8;
+        }
+
+        #copyBtn {
+            background-color: #16a34a;
+        }
+
+        #copyBtn:hover {
+            background-color: #15803d;
+        }
+
+        #toggleRender {
+            background-color: #4b5563;
+        }
+
+        #toggleRender:hover {
+            background-color: #374151;
+        }
+
+        #renderedOutput {
+            padding: 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            background-color: white;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(255, 255, 255, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .spinner {
+            border: 4px solid #d1d5db;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            width: 3rem;
+            height: 3rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>CDC MMWR to Markdown</h1>
+
+        <input type="text" id="urlInput" value="https://www.cdc.gov/mmwr/volumes/74/wr/mm7409a2.htm"
+            placeholder="Enter CDC MMWR URL" />
+
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="includeTitle" checked>
+                <span>Include Title</span>
+            </label>
+            <label>
+                <input type="checkbox" id="ignoreLinks">
+                <span>Ignore Links</span>
+            </label>
+            <label>
+                <input type="checkbox" id="cleanFilter" checked>
+                <span>Clean/Filter</span>
+            </label>
+        </div>
+
+        <div class="button-group">
+            <button id="convertBtn">Convert</button>
+            <button id="copyBtn">Copy Markdown</button>
+            <button id="toggleRender">Toggle Render</button>
+        </div>
+
+        <textarea id="markdownOutput" rows="20"></textarea>
+        <div id="renderedOutput" class="hidden"></div>
+    </div>
+
+    <!-- Loading spinner -->
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        const convertBtn = document.getElementById('convertBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const toggleRender = document.getElementById('toggleRender');
+        const output = document.getElementById('markdownOutput');
+        const renderDiv = document.getElementById('renderedOutput');
+        const loading = document.getElementById('loading');
+
+        let isRendered = false;
+
+        function showLoading() {
+            loading.classList.add('active');
+        }
+
+        function hideLoading() {
+            loading.classList.remove('active');
+        }
+
+        convertBtn.onclick = async () => {
+            const url = document.getElementById('urlInput').value;
+            const includeTitle = document.getElementById('includeTitle').checked;
+            const ignoreLinks = document.getElementById('ignoreLinks').checked;
+            const cleanFilter = document.getElementById('cleanFilter').checked;
+
+            showLoading();
+            try {
+                const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+                const { contents } = await res.json();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(contents, 'text/html');
+
+                let contentEl = doc.querySelector('main') || doc.querySelector('#main-content');
+                if (!contentEl) throw new Error('Main content not found');
+
+                if (cleanFilter) {
+                    contentEl.querySelectorAll('nav, aside, script, noscript, .print, .hidden, .backtotop, .social-sharing').forEach(e => e.remove());
+                }
+
+                if (ignoreLinks) {
+                    contentEl.querySelectorAll('a').forEach(a => {
+                        const span = document.createElement('span');
+                        span.textContent = a.textContent;
+                        a.replaceWith(span);
+                    });
+                }
+
+                const turndownService = new window.TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
+
+                turndownService.addRule('strikethrough', {
+                    filter: ['del', 's', 'strike'],
+                    replacement: function (content) {
+                        return '~~' + content + '~~';
+                    }
+                });
+
+                turndownService.addRule('table', {
+                    filter: function (node) {
+                        return node.nodeName === 'TABLE';
+                    },
+                    replacement: function (content, node) {
+                        const rows = Array.from(node.querySelectorAll('tr')).map(row =>
+                            Array.from(row.children).map(cell => cell.textContent.trim())
+                        );
+
+                        if (!rows.length) return '';
+                        const numCols = Math.max(...rows.map(r => r.length));
+                        const fullRows = rows.map(r => {
+                            const diff = numCols - r.length;
+                            return r.concat(Array(diff).fill(''));
+                        });
+
+                        const header = fullRows[0];
+                        const separator = header.map(() => '---');
+                        const body = fullRows.slice(1);
+                        const table = [header, separator, ...body].map(r => '| ' + r.join(' | ') + ' |');
+                        return '\n' + table.join('\n') + '\n';
+                    }
+                });
+
+                let markdown = turndownService.turndown(contentEl.innerHTML);
+
+                if (includeTitle) {
+                    const title = doc.querySelector('h1, title')?.textContent.trim();
+                    if (title) markdown = `# ${title}\n\n` + markdown;
+                }
+
+                output.value = markdown;
+                renderDiv.classList.add('hidden');
+                renderDiv.innerHTML = '';
+
+                if (isRendered) {
+                    const html = marked.parse(markdown, {
+                        gfm: true,
+                        breaks: true
+                    });
+                    renderDiv.innerHTML = html;
+                    renderDiv.classList.remove('hidden');
+                    output.classList.add('hidden');
+                } else {
+                    output.classList.remove('hidden');
+                }
+            } catch (err) {
+                output.value = 'Error: ' + err.message;
+            } finally {
+                hideLoading();
+            }
+        };
+
+        copyBtn.onclick = () => {
+            navigator.clipboard.writeText(output.value).catch(err => {
+                console.error('Copy failed:', err);
+            });
+        };
+
+        toggleRender.onclick = () => {
+            isRendered = !isRendered;
+            showLoading();
+            setTimeout(() => {
+                if (isRendered) {
+                    const html = marked.parse(output.value);
+                    renderDiv.innerHTML = html;
+                    renderDiv.classList.remove('hidden');
+                    output.classList.add('hidden');
+                } else {
+                    renderDiv.classList.add('hidden');
+                    output.classList.remove('hidden');
+                }
+                hideLoading();
+            }, 100); // short delay to allow spinner to render
+        };
+    </script>
+</body>
+
+</html>
