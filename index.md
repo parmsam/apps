@@ -35,7 +35,7 @@ Inspired by similar tiny apps from [Jeremy Howard](https://github.com/jph00/apps
 - [Encrypt image](encryptimage.html) - Encrypt and decrypt images with a passphrase - inspired by my similar [Encrypt message](encryptmessage.html) tool. Note that image files are sometimes too large to encrypt into a URL and may take a while to encrypt/decrypt. These encrypted URLs can get pretty long and may not work in some browsers. This was just an experiment to see if it could be done.
 - [Clipboard manager](clipboardmanager.html) - Manage and view your clipboard pastes by storing them in local storage on this webpage.
 - [Hiking time](trailtimes.html) - Calculate hiking time based on Naismith's Rule.
-- [mmwr2md](mmwr2md.html) - Convert MMWR webpages to markdown format.
+- [mmwr2md](mmwr2md.html) - Convert [CDC MMWR](https://www.cdc.gov/mmwr/) webpages to markdown format.
 
 ---
 
