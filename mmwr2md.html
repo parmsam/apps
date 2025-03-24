@@ -202,6 +202,15 @@
         #renderedOutput th {
             background-color: #f3f4f6;
         }
+
+        .info-message {
+            background-color: #fef3c7;
+            color: #92400e;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
     </style>
 </head>
 
@@ -238,6 +247,11 @@
             <button id="downloadBtn" style="background-color: #8b5cf6;">Download MD</button>
         </div>
 
+        <div class="info-message">
+            If you encounter a CORS error, it may be due to the CORS proxy service. Please check the URL and try the conversion
+            again.
+        </div>
+        
         <div id="outputContainer">
             <textarea id="markdownOutput" rows="20"></textarea>
             <div id="renderedOutput" class="hidden"></div>
