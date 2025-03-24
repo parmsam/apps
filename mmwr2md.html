@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>CDC MMWR to Markdown</title>
+    <title>Enhanced CDC MMWR to Markdown</title>
     <script src="https://cdn.jsdelivr.net/npm/turndown@7.1.1/lib/turndown.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
@@ -16,7 +16,7 @@
         }
 
         .container {
-            max-width: 768px;
+            max-width: 800px;
             margin: auto;
         }
 
@@ -34,6 +34,7 @@
             border-radius: 0.375rem;
             margin-bottom: 1rem;
             box-sizing: border-box;
+            font-family: monospace;
         }
 
         .checkbox-group {
@@ -51,6 +52,7 @@
 
         .button-group {
             display: flex;
+            flex-wrap: wrap;
             gap: 1rem;
             margin-bottom: 1rem;
         }
@@ -61,6 +63,7 @@
             border-radius: 0.375rem;
             cursor: pointer;
             color: white;
+            transition: background-color 0.2s;
         }
 
         #convertBtn {
@@ -92,6 +95,7 @@
             border: 1px solid #d1d5db;
             border-radius: 0.375rem;
             background-color: white;
+            overflow-x: auto;
         }
 
         .hidden {
@@ -131,14 +135,81 @@
                 transform: rotate(360deg);
             }
         }
+
+        .error {
+            color: #dc2626;
+            border: 1px solid #dc2626;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+        }
+
+        .tab-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            background-color: #e5e7eb;
+            border-radius: 0.375rem 0.375rem 0 0;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background-color: white;
+            border: 1px solid #d1d5db;
+            border-bottom: none;
+        }
+
+        .tab-content {
+            border: 1px solid #d1d5db;
+            border-radius: 0 0.375rem 0.375rem 0.375rem;
+            padding: 1rem;
+            background-color: white;
+        }
+
+        .success-message {
+            background-color: #10b981;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .success-message.active {
+            opacity: 1;
+        }
+
+        /* Table styling in rendered output */
+        #renderedOutput table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        #renderedOutput th,
+        #renderedOutput td {
+            border: 1px solid #d1d5db;
+            padding: 0.5rem;
+        }
+
+        #renderedOutput th {
+            background-color: #f3f4f6;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>CDC MMWR to Markdown</h1>
+        <h1>Enhanced CDC MMWR to Markdown</h1>
 
-        <input type="text" id="urlInput" value="https://www.cdc.gov/mmwr/volumes/74/wr/mm7409a2.htm"
+        <input type="text" id="urlInput" value="https://www.cdc.gov/mmwr/volumes/74/wr/mm7408a1.htm"
             placeholder="Enter CDC MMWR URL" />
 
         <div class="checkbox-group">
@@ -147,8 +218,12 @@
                 <span>Include Title</span>
             </label>
             <label>
-                <input type="checkbox" id="ignoreLinks">
-                <span>Ignore Links</span>
+                <input type="checkbox" id="preserveLinks" checked>
+                <span>Preserve Links</span>
+            </label>
+            <label>
+                <input type="checkbox" id="includeImages" checked>
+                <span>Include Images</span>
             </label>
             <label>
                 <input type="checkbox" id="cleanFilter" checked>
@@ -160,10 +235,13 @@
             <button id="convertBtn">Convert</button>
             <button id="copyBtn">Copy Markdown</button>
             <button id="toggleRender">Toggle Render</button>
+            <button id="downloadBtn" style="background-color: #8b5cf6;">Download MD</button>
         </div>
 
-        <textarea id="markdownOutput" rows="20"></textarea>
-        <div id="renderedOutput" class="hidden"></div>
+        <div id="outputContainer">
+            <textarea id="markdownOutput" rows="20"></textarea>
+            <div id="renderedOutput" class="hidden"></div>
+        </div>
     </div>
 
     <!-- Loading spinner -->
@@ -171,13 +249,18 @@
         <div class="spinner"></div>
     </div>
 
+    <!-- Copy success message -->
+    <div id="copySuccess" class="success-message">Copied to clipboard!</div>
+
     <script>
         const convertBtn = document.getElementById('convertBtn');
         const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
         const toggleRender = document.getElementById('toggleRender');
         const output = document.getElementById('markdownOutput');
         const renderDiv = document.getElementById('renderedOutput');
         const loading = document.getElementById('loading');
+        const copySuccess = document.getElementById('copySuccess');
 
         let isRendered = false;
 
@@ -189,10 +272,36 @@
             loading.classList.remove('active');
         }
 
+        function showCopySuccess() {
+            copySuccess.classList.add('active');
+            setTimeout(() => {
+                copySuccess.classList.remove('active');
+            }, 2000);
+        }
+
+        // Function to download text as a file
+        function downloadText(text, filename) {
+            const blob = new Blob([text], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
         convertBtn.onclick = async () => {
             const url = document.getElementById('urlInput').value;
+            if (!url.includes('cdc.gov/mmwr')) {
+                const shouldProceed = confirm('This URL does not appear to be a CDC MMWR page. Proceed anyway?');
+                if (!shouldProceed) return;
+            }
+
             const includeTitle = document.getElementById('includeTitle').checked;
-            const ignoreLinks = document.getElementById('ignoreLinks').checked;
+            const preserveLinks = document.getElementById('preserveLinks').checked;
+            const includeImages = document.getElementById('includeImages').checked;
             const cleanFilter = document.getElementById('cleanFilter').checked;
 
             showLoading();
@@ -202,23 +311,120 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(contents, 'text/html');
 
-                let contentEl = doc.querySelector('main') || doc.querySelector('#main-content');
-                if (!contentEl) throw new Error('Main content not found');
+                // Find the main content element
+                let contentEl = doc.querySelector('main') || doc.querySelector('#main-content') || doc.querySelector('.body');
+                if (!contentEl) {
+                    // Try to find the main content by excluding known non-content areas
+                    const body = doc.querySelector('body');
+                    const nonContentSelectors = 'header, footer, nav, aside, .header, .footer, .navigation, .sidebar';
+                    const nonContentElements = Array.from(body.querySelectorAll(nonContentSelectors));
 
-                if (cleanFilter) {
-                    contentEl.querySelectorAll('nav, aside, script, noscript, .print, .hidden, .backtotop, .social-sharing').forEach(e => e.remove());
+                    // Create a clone of the body and remove non-content elements
+                    contentEl = body.cloneNode(true);
+                    nonContentElements.forEach(el => {
+                        const match = contentEl.querySelector(`#${el.id}`) || contentEl.querySelector(`.${el.className}`);
+                        if (match) match.remove();
+                    });
                 }
 
-                if (ignoreLinks) {
+                if (!contentEl) throw new Error('Main content not found');
+
+                // Clean up the content
+                if (cleanFilter) {
+                    const elementsToRemove = contentEl.querySelectorAll(
+                        'nav, aside, script, noscript, .print, .hidden, .backtotop, .social-sharing, ' +
+                        'style, meta, link, .header, .footer, footer, .TopLinkRow, [id*="banner"], ' +
+                        '.site-utilities, .mm, .container-breadcrumb, form'
+                    );
+                    elementsToRemove.forEach(e => e.remove());
+                }
+
+                // Handle image links - convert to ![alt text](url)
+                contentEl.querySelectorAll('img').forEach(img => {
+                    if (!includeImages) {
+                        // If not including images, remove them or replace with their alt text
+                        const altText = img.getAttribute('alt');
+                        if (altText && altText.trim()) {
+                            const textNode = document.createTextNode(`[Image: ${altText}]`);
+                            img.parentNode.replaceChild(textNode, img);
+                        } else {
+                            img.remove();
+                        }
+                    } else {
+                        // Make image URLs absolute
+                        const src = img.getAttribute('src');
+                        if (src && !src.startsWith('http')) {
+                            const baseUrl = new URL(url).origin;
+                            img.setAttribute('src', new URL(src, baseUrl).href);
+                        }
+                    }
+                });
+
+                // If not preserving links, replace with text
+                if (!preserveLinks) {
                     contentEl.querySelectorAll('a').forEach(a => {
                         const span = document.createElement('span');
                         span.textContent = a.textContent;
                         a.replaceWith(span);
                     });
+                } else {
+                    // Make all URLs absolute
+                    contentEl.querySelectorAll('a').forEach(a => {
+                        const href = a.getAttribute('href');
+                        if (href && !href.startsWith('http') && !href.startsWith('#') && !href.startsWith('mailto:')) {
+                            const baseUrl = new URL(url).origin;
+                            a.setAttribute('href', new URL(href, baseUrl).href);
+                        }
+                    });
                 }
 
-                const turndownService = new window.TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
+                // Enhance tables: identify and handle table captions and footnotes
+                contentEl.querySelectorAll('table').forEach(table => {
+                    // Look for table caption
+                    const caption = table.querySelector('caption');
+                    if (caption) {
+                        // Extract caption text and add it as a paragraph after the table
+                        const captionText = caption.textContent.trim();
+                        if (captionText) {
+                            const captionPara = document.createElement('p');
+                            captionPara.innerHTML = `<strong>Table:</strong> ${captionText}`;
+                            table.parentNode.insertBefore(captionPara, table.nextSibling);
+                        }
+                        // Remove caption from table so it doesn't appear in the table markdown
+                        caption.remove();
+                    }
 
+                    // Look for footnotes in the last row
+                    const rows = table.querySelectorAll('tr');
+                    if (rows.length > 0) {
+                        const lastRow = rows[rows.length - 1];
+                        const cells = lastRow.querySelectorAll('td');
+
+                        // Check if last row contains footnotes (usually spans multiple columns or has special formatting)
+                        if (cells.length === 1 && cells[0].hasAttribute('colspan')) {
+                            const footnoteText = cells[0].textContent.trim();
+                            if (footnoteText) {
+                                // Create footnote paragraph after the table
+                                const footnotePara = document.createElement('p');
+                                footnotePara.innerHTML = `<em>Note: ${footnoteText}</em>`;
+                                table.parentNode.insertBefore(footnotePara, table.nextSibling);
+                            }
+                            // Remove footnote row from table
+                            lastRow.remove();
+                        }
+                    }
+                });
+
+                // Setup TurndownService with customizations
+                const turndownService = new window.TurndownService({
+                    headingStyle: 'atx',
+                    codeBlockStyle: 'fenced',
+                    bulletListMarker: '-',
+                    hr: '---',
+                    emDelimiter: '*'
+                });
+
+                // Strikethrough
                 turndownService.addRule('strikethrough', {
                     filter: ['del', 's', 'strike'],
                     replacement: function (content) {
@@ -226,38 +432,126 @@
                     }
                 });
 
+                // Enhanced table handling
                 turndownService.addRule('table', {
                     filter: function (node) {
                         return node.nodeName === 'TABLE';
                     },
                     replacement: function (content, node) {
-                        const rows = Array.from(node.querySelectorAll('tr')).map(row =>
-                            Array.from(row.children).map(cell => cell.textContent.trim())
-                        );
+                        // Extract table rows and cells
+                        const rows = Array.from(node.querySelectorAll('tr')).map(row => {
+                            return Array.from(row.querySelectorAll('th, td')).map(cell => {
+                                // Preserve line breaks inside cells
+                                let text = cell.textContent.trim();
+                                text = text.replace(/\n/g, ' ');  // Replace literal newlines with spaces
+                                return text;
+                            });
+                        });
 
                         if (!rows.length) return '';
+
+                        // Find the maximum number of columns
                         const numCols = Math.max(...rows.map(r => r.length));
+
+                        // Ensure all rows have the same number of columns
                         const fullRows = rows.map(r => {
                             const diff = numCols - r.length;
                             return r.concat(Array(diff).fill(''));
                         });
 
-                        const header = fullRows[0];
-                        const separator = header.map(() => '---');
-                        const body = fullRows.slice(1);
-                        const table = [header, separator, ...body].map(r => '| ' + r.join(' | ') + ' |');
+                        // Determine if first row is header (has th elements)
+                        const hasHeaderRow = node.querySelector('tr th') !== null;
+
+                        let headerRow = [];
+                        let bodyRows = [];
+
+                        if (hasHeaderRow) {
+                            headerRow = fullRows[0];
+                            bodyRows = fullRows.slice(1);
+                        } else {
+                            // If no header row, create an empty header
+                            headerRow = Array(numCols).fill('');
+                            bodyRows = fullRows;
+                        }
+
+                        // Create separator row
+                        const separator = headerRow.map(() => '---');
+
+                        // Build table markdown
+                        const table = [
+                            '| ' + headerRow.join(' | ') + ' |',
+                            '| ' + separator.join(' | ') + ' |',
+                            ...bodyRows.map(r => '| ' + r.join(' | ') + ' |')
+                        ];
+
                         return '\n' + table.join('\n') + '\n';
                     }
                 });
 
+                // Figures and images
+                turndownService.addRule('figure', {
+                    filter: 'figure',
+                    replacement: function (content, node) {
+                        const img = node.querySelector('img');
+                        const figcaption = node.querySelector('figcaption');
+
+                        if (img && includeImages) {
+                            const src = img.getAttribute('src');
+                            const alt = img.getAttribute('alt') || '';
+                            const caption = figcaption ? figcaption.textContent.trim() : '';
+
+                            let markdown = `![${alt}](${src})`;
+                            if (caption) {
+                                markdown += `\n\n*Figure: ${caption}*`;
+                            }
+
+                            return markdown;
+                        }
+
+                        return content;
+                    }
+                });
+
+                // Super/subscript
+                turndownService.addRule('superscript', {
+                    filter: 'sup',
+                    replacement: function (content) {
+                        return '^' + content;
+                    }
+                });
+
+                turndownService.addRule('subscript', {
+                    filter: 'sub',
+                    replacement: function (content) {
+                        return '~' + content;
+                    }
+                });
+
+                // Convert the HTML to Markdown
                 let markdown = turndownService.turndown(contentEl.innerHTML);
 
+                // Add the title if needed
                 if (includeTitle) {
-                    const title = doc.querySelector('h1, title')?.textContent.trim();
-                    if (title) markdown = `# ${title}\n\n` + markdown;
+                    const titleElement = doc.querySelector('h1.title, h1, title');
+                    if (titleElement) {
+                        let title = titleElement.textContent.trim();
+                        // Remove any common prefixes
+                        title = title.replace(/^(CDC\s+|MMWR\s+|Vol\.\s+\d+\s+)/i, '');
+                        markdown = `# ${title}\n\n` + markdown;
+                    }
                 }
 
+                // Clean up the markdown
+                markdown = markdown
+                    // Remove excess blank lines
+                    .replace(/\n{3,}/g, '\n\n')
+                    // Fix lists with incorrect indentation
+                    .replace(/\n\s+[-*] /g, '\n- ');
+
+                // Update output textarea
                 output.value = markdown;
+
+                // Update render view if needed
                 renderDiv.classList.add('hidden');
                 renderDiv.innerHTML = '';
 
@@ -273,6 +567,7 @@
                     output.classList.remove('hidden');
                 }
             } catch (err) {
+                console.error(err);
                 output.value = 'Error: ' + err.message;
             } finally {
                 hideLoading();
@@ -280,9 +575,39 @@
         };
 
         copyBtn.onclick = () => {
-            navigator.clipboard.writeText(output.value).catch(err => {
-                console.error('Copy failed:', err);
-            });
+            navigator.clipboard.writeText(output.value)
+                .then(() => {
+                    showCopySuccess();
+                })
+                .catch(err => {
+                    console.error('Copy failed:', err);
+                });
+        };
+
+        downloadBtn.onclick = () => {
+            if (!output.value.trim()) {
+                alert('No content to download. Please convert a CDC page first.');
+                return;
+            }
+
+            const url = document.getElementById('urlInput').value;
+            let filename = 'mmwr-article.md';
+
+            try {
+                // Try to extract a meaningful filename from the URL
+                const urlObj = new URL(url);
+                const pathParts = urlObj.pathname.split('/');
+                const lastPart = pathParts[pathParts.length - 1];
+
+                if (lastPart && lastPart.includes('.htm')) {
+                    filename = lastPart.replace('.htm', '.md');
+                }
+            } catch (e) {
+                // Use default filename if URL parsing fails
+                console.error('Error generating filename:', e);
+            }
+
+            downloadText(output.value, filename);
         };
 
         toggleRender.onclick = () => {
@@ -290,17 +615,42 @@
             showLoading();
             setTimeout(() => {
                 if (isRendered) {
-                    const html = marked.parse(output.value);
+                    const html = marked.parse(output.value, {
+                        gfm: true,
+                        breaks: true
+                    });
                     renderDiv.innerHTML = html;
                     renderDiv.classList.remove('hidden');
                     output.classList.add('hidden');
+                    toggleRender.textContent = 'Show Markdown';
                 } else {
                     renderDiv.classList.add('hidden');
                     output.classList.remove('hidden');
+                    toggleRender.textContent = 'Toggle Render';
                 }
                 hideLoading();
             }, 100); // short delay to allow spinner to render
         };
+
+        // Initialize keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + Enter to convert
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                convertBtn.click();
+            }
+
+            // Ctrl/Cmd + S to download
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                downloadBtn.click();
+            }
+
+            // Ctrl/Cmd + C with focus on output to copy
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c' && document.activeElement === output) {
+                copyBtn.click();
+            }
+        });
     </script>
 </body>
 
