@@ -62,7 +62,7 @@
             <div>
                 <label class="block font-semibold mb-1">Pace</label>
                 <div class="flex gap-2">
-                    <input type="number" step="0.1" id="pace" class="w-full border rounded px-3 py-2" value="3.1"/>
+                    <input type="number" step="0.1" id="pace" class="w-full border rounded px-3 py-2" value="3.1" />
                     <select id="pacePreset" class="border rounded px-3 py-2">
                         <option value="">Select pace</option>
                         <option value="slow">Slow</option>
@@ -89,7 +89,8 @@
         <div class="mt-4 text-center text-gray-700 text-base">
             <p class="font-semibold mb-1">Calculation Formula:</p>
             <div id="generalEquation" class="math-container">
-                \[\text{Time (hrs)} = \frac{\text{Distance (mi)}}{\text{Pace (mi/h)}} + \frac{\text{Elevation gain (ft)}}{2000} + \left(\frac{\text{Flat Time} + \text{Elevation Time}}{60} \times \text{Rest (min/hr)}\right)\]
+                \[\text{Time (hrs)} = \frac{\text{Distance (mi)}}{\text{Pace (mi/h)}} + \frac{\text{Elevation gain (ft)}}{2000\ \text{ft/hr}} + \left(\frac{\text{Flat Time (hrs)} + \text{Elevation Time (hrs)}}{60\
+                \text{min/hr}} \times \text{Rest (min/hr)}\right)\]
             </div>
         </div>
 
@@ -169,64 +170,64 @@
                     }
                 }
             });
-            chartCanvas.classList.remove('hidden');
-        }
+                                chartCanvas.classList.remove('hidden');
+                            }
 
-        function displayEquation(km, meters, pace, restPerHour, flatTime, elevationTime, restTime, totalTime) {
-            const miles = km * 0.621371; // Convert km to miles
-            const elevationFeet = meters * 3.28084; // Convert meters to feet
-            const latex = `\\text{Time} = \\frac{${miles.toFixed(2)}\\ \\text{mi}}{${pace}\\ \\text{mi/h}} + \\frac{${elevationFeet.toFixed(0)}\\ \\text{ft}}{2000} + \\left(\\frac{${flatTime.toFixed(2)} + ${elevationTime.toFixed(2)}}{60} \\times ${restPerHour}\\ \\text{min/hr}\\right) = ${totalTime.toFixed(2)}\\ \\text{hrs}`;
-            equationDiv.innerHTML = `\\[${latex}\\]`;
-            MathJax.typesetPromise();
-        }
+                            function displayEquation(km, meters, pace, restPerHour, flatTime, elevationTime, restTime, totalTime) {
+                                const miles = km * 0.621371; // Convert km to miles
+                                const elevationFeet = meters * 3.28084; // Convert meters to feet
+                                const latex = `\\text{Time} = \\frac{${miles.toFixed(2)}\\ \\text{mi}}{${pace}\\ \\text{mi/h}} + \\frac{${elevationFeet.toFixed(0)}\\ \\text{ft}}{2000\\ \\text{ft/hr}} + \\left(\\frac{${flatTime.toFixed(2)}\\ \\text{hrs} + ${elevationTime.toFixed(2)}\\ \\text{hrs}}{60\\ \\text{min/hr}} \\times ${restPerHour}\\ \\text{min/hr}\\right) = ${totalTime.toFixed(2)}\\ \\text{hrs}`;
+                                equationDiv.innerHTML = `\\[${latex}\\]`;
+                                MathJax.typesetPromise();
+                            }
 
-        pacePreset.addEventListener('change', () => {
-            const unit = distanceUnit.value;
-            const val = pacePreset.value;
-            if (val) {
-                paceInput.value = getPresetPace(val, unit);
-            }
-        });
+                            pacePreset.addEventListener('change', () => {
+                                const unit = distanceUnit.value;
+                                const val = pacePreset.value;
+                                if (val) {
+                                    paceInput.value = getPresetPace(val, unit);
+                                }
+                            });
 
-        distanceUnit.addEventListener('change', () => {
-            const val = pacePreset.value;
-            if (val) {
-                paceInput.value = getPresetPace(val, distanceUnit.value);
-            }
-        });
+                            distanceUnit.addEventListener('change', () => {
+                                const val = pacePreset.value;
+                                if (val) {
+                                    paceInput.value = getPresetPace(val, distanceUnit.value);
+                                }
+                            });
 
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
+                            form.addEventListener('submit', (e) => {
+                                e.preventDefault();
 
-            const distance = parseFloat(document.getElementById('distance').value);
-            const elevation = parseFloat(document.getElementById('elevation').value);
-            const pace = parseFloat(document.getElementById('pace').value);
-            const restPerHour = parseFloat(document.getElementById('restPerHour').value);
-            const distUnit = distanceUnit.value;
-            const elevUnit = document.getElementById('elevationUnit').value;
+                                const distance = parseFloat(document.getElementById('distance').value);
+                                const elevation = parseFloat(document.getElementById('elevation').value);
+                                const pace = parseFloat(document.getElementById('pace').value);
+                                const restPerHour = parseFloat(document.getElementById('restPerHour').value);
+                                const distUnit = distanceUnit.value;
+                                const elevUnit = document.getElementById('elevationUnit').value;
 
-            const { km, meters } = convertToMetric(distance, distUnit, elevation, elevUnit);
-            const { total, flatTime, elevationTime, restTime } = estimateTime(km, meters, pace, restPerHour);
+                                const { km, meters } = convertToMetric(distance, distUnit, elevation, elevUnit);
+                                const { total, flatTime, elevationTime, restTime } = estimateTime(km, meters, pace, restPerHour);
 
-            const { formatted, decimal } = formatHours(total);
-            resultDiv.textContent = `Estimated Time: ${formatted} (${decimal} hours)`;
-            resultDiv.classList.remove('hidden');
+                                const { formatted, decimal } = formatHours(total);
+                                resultDiv.textContent = `Estimated Time: ${formatted} (${decimal} hours)`;
+                                resultDiv.classList.remove('hidden');
 
-            updateURL({ distance, elevation, pace, restPerHour, distUnit, elevUnit });
-            drawChart(km, meters);
-            displayEquation(km, meters, pace, restPerHour, flatTime, elevationTime, restTime, total);
-        });
+                                updateURL({ distance, elevation, pace, restPerHour, distUnit, elevUnit });
+                                drawChart(km, meters);
+                                displayEquation(km, meters, pace, restPerHour, flatTime, elevationTime, restTime, total);
+                            });
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const params = new URLSearchParams(window.location.search);
-            ['distance', 'elevation', 'pace', 'restPerHour'].forEach(id => {
-                if (params.has(id)) document.getElementById(id).value = params.get(id);
-            });
-            if (params.has('distUnit')) distanceUnit.value = params.get('distUnit');
-            if (params.has('elevUnit')) document.getElementById('elevationUnit').value = params.get('elevUnit');
-            if (params.has('distance')) form.dispatchEvent(new Event('submit'));
-        });
-    </script>
-</body>
-
-</html>
+                            window.addEventListener('DOMContentLoaded', () => {
+                                const params = new URLSearchParams(window.location.search);
+                                ['distance', 'elevation', 'pace', 'restPerHour'].forEach(id => {
+                                    if (params.has(id)) document.getElementById(id).value = params.get(id);
+                                });
+                                if (params.has('distUnit')) distanceUnit.value = params.get('distUnit');
+                                if (params.has('elevUnit')) document.getElementById('elevationUnit').value = params.get('elevUnit');
+                                if (params.has('distance')) form.dispatchEvent(new Event('submit'));
+                            });
+                        </script>
+    </body>
+    
+    </html>
