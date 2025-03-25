@@ -7,6 +7,58 @@
     <title>Text Case Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Light mode (default) */
+        body {
+            background-color: #f3f4f6; /* bg-gray-100 */
+            color: #1f2937; /* text-gray-800 */
+        }
+
+        /* Dark mode */
+        .dark body {
+            background-color: #1f2937; /* bg-gray-800 */
+            color: #f3f4f6; /* text-gray-100 */
+        }
+
+        .dark .bg-white {
+            background-color: #374151; /* bg-gray-700 */
+        }
+
+        .dark .text-gray-800 {
+            color: #f3f4f6; /* text-gray-100 */
+        }
+
+        .dark .text-gray-600 {
+            color: #d1d5db; /* text-gray-300 */
+        }
+
+        .dark .border-gray-300 {
+            border-color: #4b5563; /* border-gray-600 */
+        }
+
+        .dark .bg-green-600 {
+            background-color: #10b981; /* bg-green-500 */
+        }
+
+        .dark .bg-red-600 {
+            background-color: #ef4444; /* bg-red-500 */
+        }
+
+        .dark .bg-blue-600 {
+            background-color: #3b82f6; /* bg-blue-500 */
+        }
+
+        .dark .hover\:bg-blue-700:hover {
+            background-color: #2563eb; /* bg-blue-700 */
+        }
+
+        .dark .hover\:bg-green-700:hover {
+            background-color: #059669; /* bg-green-700 */
+        }
+
+        .dark .hover\:bg-red-700:hover {
+            background-color: #dc2626; /* bg-red-700 */
+        }
+
         .toast {
             animation: slideIn 0.4s ease forwards;
         }
@@ -23,10 +75,33 @@
             }
         }
     </style>
+    <script>
+        // Apply dark mode based on system preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+
+        // Listen for changes in system preference
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (e.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
 </head>
 
 <body class="bg-gray-100 font-sans">
     <div class="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg relative">
+        <!-- Dark Mode Toggle Button -->
+        <div class="flex justify-end mb-4">
+            <button id="darkModeToggle"
+                class="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg shadow hover:bg-gray-700 transition">
+                🌙 Toggle Dark Mode
+            </button>
+        </div>
+
         <h1 class="text-3xl font-bold mb-4 text-gray-800">✨ Text Case Converter</h1>
         <textarea id="textInput"
             class="w-full p-4 border rounded-lg h-40 text-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
@@ -210,6 +285,27 @@
             saveHistory(textInput.value);
             updatePreview();
         };
+
+        const darkModeToggle = document.getElementById("darkModeToggle");
+
+        // Check localStorage for saved preference
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme === "dark") {
+            document.documentElement.classList.add("dark");
+        } else if (savedTheme === "light") {
+            document.documentElement.classList.remove("dark");
+        }
+
+        // Toggle dark mode and save preference
+        darkModeToggle.addEventListener("click", () => {
+            if (document.documentElement.classList.contains("dark")) {
+                document.documentElement.classList.remove("dark");
+                localStorage.setItem("theme", "light");
+            } else {
+                document.documentElement.classList.add("dark");
+                localStorage.setItem("theme", "dark");
+            }
+        });
     </script>
 </body>
 
