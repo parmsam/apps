@@ -2,101 +2,93 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Text Case Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-            text-align: center;
+        .toast {
+            animation: slideIn 0.4s ease forwards;
         }
 
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
 
-        textarea {
-            width: 95%;
-            height: 100px;
-            margin-bottom: 10px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        .buttons {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .case-button {
-            background: #007BFF;
-            color: white;
-        }
-
-        .case-button:hover {
-            background: #0056b3;
-        }
-
-        .copy-button {
-            background: #28a745;
-            color: white;
-        }
-
-        .copy-button:hover {
-            background: #218838;
-        }
-
-        .clear-button {
-            background: #dc3545;
-            color: white;
-        }
-
-        .clear-button:hover {
-            background: #c82333;
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 
-<body>
-    <div class="container">
-        <h2>Text Case Converter</h2>
-        <textarea id="textInput" placeholder="Enter text here..."></textarea>
-        <div class="buttons">
-            <button class="case-button" onclick="convertCase('uppercase')">UPPERCASE</button>
-            <button class="case-button" onclick="convertCase('lowercase')">lowercase</button>
-            <button class="case-button" onclick="convertCase('snake_case')">snake_case</button>
-            <button class="case-button" onclick="convertCase('camelCase')">camelCase</button>
-            <button class="case-button" onclick="convertCase('PascalCase')">PascalCase</button>
-            <button class="case-button" onclick="convertCase('kebab-case')">kebab-case</button>
-            <button class="case-button" onclick="convertCase('reverse')">esrever</button>
-            <button class="case-button" onclick="convertCase('vowelCASE')">vOwEl CaSe</button>
-            <button class="case-button" onclick="convertCase('consonantCASE')">CoNsOnAnT CaSe</button>
-            <button class="case-button" onclick="convertCase('sentenceCase')">Sentence case</button>
-            <button class="case-button" onclick="convertCase('Title Case')">Title Case</button>
-            <button class="case-button" onclick="convertCase('alternatingCase')">aLtErNaTiNg cAsE</button>
-            <button class="case-button" onclick="convertCase('randomCase')">rAnDoM cAsE</button>
-            <button class="case-button" onclick="convertCase('inverseCase')">InVeRsE cAsE</button>
-            <button class="copy-button" onclick="copyText()">Copy</button>
-            <button class="clear-button" onclick="clearText()">Clear Input</button>
+<body class="bg-gray-100 font-sans">
+    <div class="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg">
+        <h1 class="text-3xl font-bold mb-4 text-gray-800">✨ Text Case Converter</h1>
+        <textarea id="textInput"
+            class="w-full p-4 border rounded-lg h-40 text-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+            placeholder="Type or paste your text here..."></textarea>
+
+        <h3 class="mt-6 mb-2 text-lg font-semibold text-gray-600">🔧 Choose a conversion style:</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <button
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
+                onclick="convertCase('uppercase')" title="Convert to UPPERCASE">🔠 UPPERCASE</button>
+            <button
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
+                onclick="convertCase('lowercase')" title="Convert to lowercase">🔡 lowercase</button>
+            <button
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
+                onclick="convertCase('snake_case')" title="snake_case format">🐍 snake_case</button>
+            <button
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
+                onclick="convertCase('camelCase')" title="camelCase format">🐫 camelCase</button>
+            <button
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
+                onclick="convertCase('PascalCase')" title="PascalCase format">🏛 PascalCase</button>
+            <button
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
+                onclick="convertCase('kebab-case')" title="kebab-case format">🥙 kebab-case</button>
+            <button
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
+                onclick="convertCase('reverse')" title="Reverse the text">🔁 Reverse</button>
+            <button
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
+                onclick="convertCase('vowelCASE')" title="Capitalize vowels">🟢 VowelCASE</button>
+            <button
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
+                onclick="convertCase('consonantCASE')" title="Capitalize consonants">🟣 ConsonantCASE</button>
+            <button
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
+                onclick="convertCase('sentenceCase')" title="Convert to Sentence case">📜 Sentence Case</button>
+            <button
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
+                onclick="convertCase('Title Case')" title="Convert to Title Case">📘 Title Case</button>
+            <button
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
+                onclick="convertCase('alternatingCase')" title="aLtErNaTiNg CaSe">🎭 aLtErNaTiNg</button>
+            <button
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
+                onclick="convertCase('randomCase')" title="Random casing">🎲 rAnDoM</button>
+            <button
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
+                onclick="convertCase('inverseCase')" title="Swap upper/lower case">🔄 InVeRsE</button>
         </div>
+
+        <div class="flex justify-between mt-6">
+            <button
+                class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 hover:scale-105 transition"
+                onclick="copyText()">📋 Copy</button>
+            <button
+                class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 hover:scale-105 transition"
+                onclick="clearText()">🗑️ Clear</button>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-5 right-5 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg hidden toast">
     </div>
 
     <script>
@@ -106,27 +98,50 @@
                 case 'uppercase': text = text.toUpperCase(); break;
                 case 'lowercase': text = text.toLowerCase(); break;
                 case 'snake_case': text = text.replace(/\s+/g, '_').toLowerCase(); break;
-                case 'camelCase': text = text.replace(/(?:^|\s)([a-z])/g, (m, p1, i) => i === 0 ? p1.toLowerCase() : p1.toUpperCase()).replace(/\s+/g, ''); break;
-                case 'PascalCase': text = text.replace(/(?:^|\s)([a-z])/g, (m, p1) => p1.toUpperCase()).replace(/\s+/g, ''); break;
+                case 'camelCase':
+                    text = text.toLowerCase().replace(/(?:\s+)([a-z])/g, (_, c) => c.toUpperCase());
+                    break;
+                case 'PascalCase':
+                    text = text.toLowerCase().replace(/(?:^|\s)(\w)/g, (_, c) => c.toUpperCase()).replace(/\s+/g, '');
+                    break;
                 case 'kebab-case': text = text.replace(/\s+/g, '-').toLowerCase(); break;
                 case 'reverse': text = text.split('').reverse().join(''); break;
-                case 'vowelCASE': text = text.replace(/[aeiouAEIOU]/g, c => c.toUpperCase()); break;
-                case 'consonantCASE': text = text.replace(/[^aeiouAEIOU\s]/g, c => c.toUpperCase()); break;
-                case 'sentenceCase': text = text.charAt(0).toUpperCase() + text.slice(1).toLowerCase(); break;
-                case 'Title Case': text = text.replace(/\b\w/g, c => c.toUpperCase()); break;
-                case 'alternatingCase': text = text.split('').map((c, i) => i % 2 === 0 ? c.toLowerCase() : c.toUpperCase()).join(''); break;
-                case 'randomCase': text = text.split('').map(c => Math.random() > 0.5 ? c.toUpperCase() : c.toLowerCase()).join(''); break;
-                case 'inverseCase': text = text.split('').map(c => c === c.toLowerCase() ? c.toUpperCase() : c.toLowerCase()).join(''); break;
+                case 'vowelCASE': text = text.replace(/[aeiou]/gi, c => c.toUpperCase()); break;
+                case 'consonantCASE': text = text.replace(/[^aeiou\s\d\W_]/gi, c => c.toUpperCase()); break;
+                case 'sentenceCase':
+                    text = text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+                    break;
+                case 'Title Case':
+                    text = text.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+                    break;
+                case 'alternatingCase':
+                    text = text.split('').map((c, i) => i % 2 ? c.toUpperCase() : c.toLowerCase()).join('');
+                    break;
+                case 'randomCase':
+                    text = text.split('').map(c => Math.random() < 0.5 ? c.toLowerCase() : c.toUpperCase()).join('');
+                    break;
+                case 'inverseCase':
+                    text = text.split('').map(c =>
+                        c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()).join('');
+                    break;
             }
             document.getElementById("textInput").value = text;
         }
+
         function copyText() {
-            let text = document.getElementById("textInput");
-            text.select();
-            document.execCommand("copy");
+            const input = document.getElementById("textInput");
+            navigator.clipboard.writeText(input.value).then(() => showToast("Copied to clipboard!"));
         }
+
         function clearText() {
             document.getElementById("textInput").value = "";
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.classList.remove("hidden");
+            setTimeout(() => toast.classList.add("hidden"), 2000);
         }
     </script>
 </body>
