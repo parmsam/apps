@@ -26,56 +26,69 @@
 </head>
 
 <body class="bg-gray-100 font-sans">
-    <div class="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg">
+    <div class="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg relative">
         <h1 class="text-3xl font-bold mb-4 text-gray-800">✨ Text Case Converter</h1>
         <textarea id="textInput"
             class="w-full p-4 border rounded-lg h-40 text-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
             placeholder="Type or paste your text here..."></textarea>
 
-        <h3 class="mt-6 mb-2 text-lg font-semibold text-gray-600">🔧 Choose a conversion style:</h3>
+        <div class="flex justify-between mt-3 mb-1">
+            <div class="space-x-2">
+                <button
+                    class="px-3 py-1 text-sm bg-yellow-500 text-white font-semibold rounded shadow hover:bg-yellow-600"
+                    onclick="undo()">↩️ Undo</button>
+                <button
+                    class="px-3 py-1 text-sm bg-yellow-500 text-white font-semibold rounded shadow hover:bg-yellow-600"
+                    onclick="redo()">↪️ Redo</button>
+            </div>
+            <p class="text-sm text-gray-500">(Try Ctrl+U / Ctrl+L, Ctrl+Z / Ctrl+Shift+Z)</p>
+        </div>
+
+        <h3 class="mt-4 mb-2 text-lg font-semibold text-gray-600">🔧 Choose a conversion style:</h3>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <!-- Buttons (unchanged) -->
             <button
                 class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
-                onclick="convertCase('uppercase')" title="Convert to UPPERCASE">🔠 UPPERCASE</button>
+                onclick="convertCase('uppercase')">🔠 UPPERCASE</button>
             <button
                 class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
-                onclick="convertCase('lowercase')" title="Convert to lowercase">🔡 lowercase</button>
+                onclick="convertCase('lowercase')">🔡 lowercase</button>
             <button
                 class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
-                onclick="convertCase('snake_case')" title="snake_case format">🐍 snake_case</button>
+                onclick="convertCase('snake_case')">🐍 snake_case</button>
             <button
                 class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
-                onclick="convertCase('camelCase')" title="camelCase format">🐫 camelCase</button>
+                onclick="convertCase('camelCase')">🐫 camelCase</button>
             <button
                 class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
-                onclick="convertCase('PascalCase')" title="PascalCase format">🏛 PascalCase</button>
+                onclick="convertCase('PascalCase')">🏛 PascalCase</button>
             <button
                 class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
-                onclick="convertCase('kebab-case')" title="kebab-case format">🥙 kebab-case</button>
+                onclick="convertCase('kebab-case')">🥙 kebab-case</button>
             <button
                 class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
-                onclick="convertCase('reverse')" title="Reverse the text">🔁 Reverse</button>
+                onclick="convertCase('reverse')">🔁 Reverse</button>
             <button
                 class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
-                onclick="convertCase('vowelCASE')" title="Capitalize vowels">🟢 VowelCASE</button>
+                onclick="convertCase('vowelCASE')">🟢 VowelCASE</button>
             <button
                 class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
-                onclick="convertCase('consonantCASE')" title="Capitalize consonants">🟣 ConsonantCASE</button>
+                onclick="convertCase('consonantCASE')">🟣 ConsonantCASE</button>
             <button
                 class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
-                onclick="convertCase('sentenceCase')" title="Convert to Sentence case">📜 Sentence Case</button>
+                onclick="convertCase('sentenceCase')">📜 Sentence Case</button>
             <button
                 class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
-                onclick="convertCase('Title Case')" title="Convert to Title Case">📘 Title Case</button>
+                onclick="convertCase('Title Case')">📘 Title Case</button>
             <button
                 class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
-                onclick="convertCase('alternatingCase')" title="aLtErNaTiNg CaSe">🎭 aLtErNaTiNg</button>
+                onclick="convertCase('alternatingCase')">🎭 aLtErNaTiNg</button>
             <button
                 class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
-                onclick="convertCase('randomCase')" title="Random casing">🎲 rAnDoM</button>
+                onclick="convertCase('randomCase')">🎲 rAnDoM</button>
             <button
                 class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:scale-105 transition"
-                onclick="convertCase('inverseCase')" title="Swap upper/lower case">🔄 InVeRsE</button>
+                onclick="convertCase('inverseCase')">🔄 InVeRsE</button>
         </div>
 
         <div class="flex justify-between mt-6">
@@ -86,55 +99,79 @@
                 class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 hover:scale-105 transition"
                 onclick="clearText()">🗑️ Clear</button>
         </div>
+
+        <!-- Floating Preview Panel -->
+        <div
+            class="fixed top-5 right-5 bg-white border border-gray-300 shadow-xl rounded-lg p-4 w-72 max-h-60 overflow-y-auto text-left text-sm text-gray-700">
+            <h4 class="font-semibold mb-2 text-gray-800">🔍 Live Preview</h4>
+            <div id="livePreview" class="whitespace-pre-wrap"></div>
+        </div>
     </div>
 
     <div id="toast" class="fixed bottom-5 right-5 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg hidden toast">
     </div>
 
     <script>
+        const textInput = document.getElementById("textInput");
+        const preview = document.getElementById("livePreview");
+        const history = [];
+        let historyIndex = -1;
+
+        function saveHistory(text) {
+            if (historyIndex < history.length - 1) {
+                history.splice(historyIndex + 1);
+            }
+            history.push(text);
+            historyIndex++;
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                textInput.value = history[historyIndex];
+                updatePreview();
+            }
+        }
+
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                textInput.value = history[historyIndex];
+                updatePreview();
+            }
+        }
+
         function convertCase(type) {
-            let text = document.getElementById("textInput").value;
+            let text = textInput.value;
+            saveHistory(text);
             switch (type) {
                 case 'uppercase': text = text.toUpperCase(); break;
                 case 'lowercase': text = text.toLowerCase(); break;
                 case 'snake_case': text = text.replace(/\s+/g, '_').toLowerCase(); break;
-                case 'camelCase':
-                    text = text.toLowerCase().replace(/(?:\s+)([a-z])/g, (_, c) => c.toUpperCase());
-                    break;
-                case 'PascalCase':
-                    text = text.toLowerCase().replace(/(?:^|\s)(\w)/g, (_, c) => c.toUpperCase()).replace(/\s+/g, '');
-                    break;
+                case 'camelCase': text = text.toLowerCase().replace(/(?:\s+)([a-z])/g, (_, c) => c.toUpperCase()); break;
+                case 'PascalCase': text = text.toLowerCase().replace(/(?:^|\s)(\w)/g, (_, c) => c.toUpperCase()).replace(/\s+/g, ''); break;
                 case 'kebab-case': text = text.replace(/\s+/g, '-').toLowerCase(); break;
                 case 'reverse': text = text.split('').reverse().join(''); break;
                 case 'vowelCASE': text = text.replace(/[aeiou]/gi, c => c.toUpperCase()); break;
                 case 'consonantCASE': text = text.replace(/[^aeiou\s\d\W_]/gi, c => c.toUpperCase()); break;
-                case 'sentenceCase':
-                    text = text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
-                    break;
-                case 'Title Case':
-                    text = text.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
-                    break;
-                case 'alternatingCase':
-                    text = text.split('').map((c, i) => i % 2 ? c.toUpperCase() : c.toLowerCase()).join('');
-                    break;
-                case 'randomCase':
-                    text = text.split('').map(c => Math.random() < 0.5 ? c.toLowerCase() : c.toUpperCase()).join('');
-                    break;
-                case 'inverseCase':
-                    text = text.split('').map(c =>
-                        c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()).join('');
-                    break;
+                case 'sentenceCase': text = text.charAt(0).toUpperCase() + text.slice(1).toLowerCase(); break;
+                case 'Title Case': text = text.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()); break;
+                case 'alternatingCase': text = text.split('').map((c, i) => i % 2 ? c.toUpperCase() : c.toLowerCase()).join(''); break;
+                case 'randomCase': text = text.split('').map(c => Math.random() < 0.5 ? c.toLowerCase() : c.toUpperCase()).join(''); break;
+                case 'inverseCase': text = text.split('').map(c => c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()).join(''); break;
             }
-            document.getElementById("textInput").value = text;
+            textInput.value = text;
+            updatePreview();
         }
 
         function copyText() {
-            const input = document.getElementById("textInput");
-            navigator.clipboard.writeText(input.value).then(() => showToast("Copied to clipboard!"));
+            navigator.clipboard.writeText(textInput.value).then(() => showToast("Copied to clipboard!"));
         }
 
         function clearText() {
-            document.getElementById("textInput").value = "";
+            saveHistory(textInput.value);
+            textInput.value = "";
+            updatePreview();
         }
 
         function showToast(message) {
@@ -143,6 +180,36 @@
             toast.classList.remove("hidden");
             setTimeout(() => toast.classList.add("hidden"), 2000);
         }
+
+        function updatePreview() {
+            preview.textContent = textInput.value;
+        }
+
+        textInput.addEventListener("input", () => {
+            updatePreview();
+        });
+
+        window.addEventListener("keydown", (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+                e.preventDefault();
+                convertCase('uppercase');
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+                e.preventDefault();
+                convertCase('lowercase');
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                undo();
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
+                e.preventDefault();
+                redo();
+            }
+        });
+
+        // Save initial state
+        window.onload = () => {
+            saveHistory(textInput.value);
+            updatePreview();
+        };
     </script>
 </body>
 
