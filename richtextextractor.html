@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rich Text HTML Extractor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/turndown/7.1.2/turndown.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -79,9 +80,9 @@
         <h3>Rendered Output:</h3>
         <div id="rendered-output" class="preview"></div>
     </div>
-
     <script>
         let mode = 'html';
+
         document.getElementById("paste-area").addEventListener("paste", (event) => {
             event.preventDefault();
             const clipboardData = event.clipboardData || window.clipboardData;
@@ -110,28 +111,55 @@
                 outputArea.value = content;
                 renderedOutput.innerHTML = content;
             } else if (mode === 'markdown') {
-                let converter = new showdown.Converter({
-                    tables: true,
-                    simplifiedAutoLink: true,
-                    strikethrough: true,
-                    ghCodeBlocks: true,
-                    omitExtraWLInCodeBlocks: true
-                });
-
                 let tempDiv = document.createElement("div");
                 tempDiv.innerHTML = content;
 
-                // Remove unsupported and redundant HTML tags before conversion
-                tempDiv.querySelectorAll("meta, style, script, link, span, div, header, footer, nav, aside, section, article").forEach(el => el.remove());
+                // Remove unsupported/redundant tags
+                tempDiv.querySelectorAll("script, style, link, meta, noscript").forEach(el => el.remove());
 
-                let markdown = converter.makeMarkdown(tempDiv.innerHTML, document);
+                let turndownService = new TurndownService({
+                    headingStyle: 'atx',
+                    codeBlockStyle: 'fenced',
+                    emDelimiter: '*'
+                });
+
+                let markdown = turndownService.turndown(tempDiv.innerHTML);
                 outputArea.value = markdown;
-                renderedOutput.innerHTML = converter.makeHtml(markdown);
+
+                // Optional: render Markdown to HTML for preview
+                let mdRenderer = new showdown.Converter();
+                renderedOutput.innerHTML = mdRenderer.makeHtml(markdown);
             } else if (mode === 'plaintext') {
                 let tempDiv = document.createElement("div");
                 tempDiv.innerHTML = content;
-                outputArea.value = tempDiv.innerText;
-                renderedOutput.innerText = tempDiv.innerText;
+
+                // Handle links as [text](url)
+                tempDiv.querySelectorAll("a").forEach(a => {
+                    const text = a.textContent.trim();
+                    const href = a.getAttribute("href");
+                    if (href) {
+                        a.replaceWith(`${text} (${href})`);
+                    }
+                });
+
+                // Convert list items to `- item`
+                tempDiv.querySelectorAll("li").forEach(li => {
+                    li.textContent = `- ${li.textContent}`;
+                });
+
+                // Add newlines around block elements
+                tempDiv.querySelectorAll("p, br, h1, h2, h3, h4, h5, h6, div").forEach(el => {
+                    const newline = document.createTextNode("\n");
+                    el.parentNode.insertBefore(newline.cloneNode(), el);
+                    el.parentNode.insertBefore(newline.cloneNode(), el.nextSibling);
+                });
+
+                // Strip and collapse excessive whitespace
+                let rawText = tempDiv.textContent;
+                let cleanText = rawText.replace(/\n{3,}/g, '\n\n').trim();
+
+                outputArea.value = cleanText;
+                renderedOutput.innerText = cleanText;
             }
         }
 
