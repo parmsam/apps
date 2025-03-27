@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Weekly Planner</title>
     <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 
@@ -45,14 +44,14 @@
         <div class="mb-2 text-sm text-gray-600" id="current-time"></div>
         <div id="mode-message" class="mb-2 text-sm text-gray-600"></div>
         <div id="calendar"
-            class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 bg-white rounded p-4 shadow mt-4">
-        </div>
+            class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 bg-white rounded p-4 shadow mt-4"></div>
     </div>
 
     <script>
         const defaultMarkdown = `Monday: 9am - 11am, 2pm - 3pm
 Tuesday: 10am - 12pm
 Wednesday: 1pm - 2:30pm
+Thursday: 4am-5am, 9pm-9:34pm
 Friday: 1pm - 5pm`;
 
         const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -68,7 +67,7 @@ Friday: 1pm - 5pm`;
         let isViewMode = false;
 
         function replaceUnderscoreWithSpace(text) {
-                return text.replace(/_/g, ' ');
+            return text.replace(/_/g, ' ');
         }
 
         function showCurrentTime() {
@@ -77,27 +76,81 @@ Friday: 1pm - 5pm`;
             currentTimeDiv.textContent = `Current time in ${zone}: ${now.toFormat("cccc, LLL dd yyyy, hh:mm a ZZZZ")}`;
         }
 
-        function parseMarkdown(text) {
-            const lines = text.split("\n");
-            const entries = [];
-            let errors = [];
+        function normalizeTimeRange(rawRange, zone) {
+            const rangeMatch = rawRange.match(/^(\d{1,2}(?::\d{2})?)\s*(am|pm)?\s*-\s*(\d{1,2}(?::\d{2})?)\s*(am|pm)?$/i);
+            if (!rangeMatch) return rawRange;
 
-            lines.forEach((line, i) => {
-                if (!line.includes(":")) {
-                    if (line.trim() !== "") errors.push(`Line ${i + 1}: Missing ":"`);
-                    return;
-                }
-                const [day, rest] = line.split(":");
-                if (!days.includes(day.trim())) {
-                    errors.push(`Line ${i + 1}: Invalid day "${day.trim()}"`);
-                    return;
-                }
-                const times = rest.split(",").map(t => t.trim()).filter(Boolean);
-                entries.push({ day: day.trim(), times });
-            });
+            let [, startTime, startMeridiem, endTime, endMeridiem] = rangeMatch;
 
-            return { entries, errors };
+            startTime = startTime.trim().toLowerCase();
+            endTime = endTime.trim().toLowerCase();
+            startMeridiem = startMeridiem?.toLowerCase();
+            endMeridiem = endMeridiem?.toLowerCase();
+
+            if (!startMeridiem && endMeridiem) startMeridiem = endMeridiem;
+            if (!endMeridiem && startMeridiem) endMeridiem = startMeridiem;
+
+            const parseTime = (timeStr, meridiem) => {
+                const full = `${timeStr} ${meridiem}`;
+                let dt = luxon.DateTime.fromFormat(full, "h:mm a", { zone });
+                if (!dt.isValid) dt = luxon.DateTime.fromFormat(full, "h a", { zone });
+                return dt;
+            };
+
+            const start = parseTime(startTime, startMeridiem);
+            const end = parseTime(endTime, endMeridiem);
+
+            if (!start.isValid || !end.isValid) return rawRange;
+
+            return `${start.toFormat("h:mm a")} - ${end.toFormat("h:mm a")}`;
         }
+
+        function parseMarkdown(text) {
+                const lines = text.split("\n");
+                const entries = [];
+                const errors = [];
+                const zone = timezoneSelect.value;
+
+                lines.forEach((line, i) => {
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine) return; // skip empty lines
+
+                    const colonIndex = trimmedLine.indexOf(":");
+                    if (colonIndex === -1) {
+                        errors.push(`Line ${i + 1}: Missing ":"`);
+                        return;
+                    }
+
+                    const day = trimmedLine.slice(0, colonIndex).trim();
+                    const rest = trimmedLine.slice(colonIndex + 1).trim();
+
+                    if (!days.includes(day)) {
+                        errors.push(`Line ${i + 1}: Invalid day "${day}"`);
+                        return;
+                    }
+
+                    const times = rest.split(",").map(t => t.trim()).filter(Boolean);
+                    const enrichedTimes = [];
+
+                    times.forEach(raw => {
+                        const normalized = normalizeTimeRange(raw, zone);
+                        let dt = luxon.DateTime.fromFormat(normalized.split(" - ")[0], "h:mm a", { zone });
+                        if (!dt.isValid) dt = luxon.DateTime.fromFormat(normalized.split(" - ")[0], "h a", { zone });
+
+                        enrichedTimes.push({ label: normalized, sortKey: dt.isValid ? dt : null });
+                    });
+
+                    enrichedTimes.sort((a, b) => {
+                        if (!a.sortKey || !b.sortKey) return 0;
+                        return a.sortKey.toMillis() - b.sortKey.toMillis();
+                    });
+
+                    const sortedLabels = enrichedTimes.map(e => e.label);
+                    entries.push({ day, times: sortedLabels });
+                });
+
+                return { entries, errors };
+            }
 
         function renderCalendar(entries, mode) {
             calendar.innerHTML = "";
@@ -131,7 +184,6 @@ Friday: 1pm - 5pm`;
             const mode = document.querySelector("input[name='mode']:checked").value;
             const timezone = timezoneSelect.value;
 
-            // Update the message above the calendar
             const modeMessage = document.getElementById("mode-message");
             modeMessage.textContent = `Here are my ${mode === "availables" ? "availabilities" : "meetings"} in the ${replaceUnderscoreWithSpace(timezone)} time zone:`;
 
@@ -165,7 +217,7 @@ Friday: 1pm - 5pm`;
             timezoneSelect.value = zone;
 
             if (viewParam) {
-                toggleViewMode(true); // start in view mode
+                toggleViewMode(true);
             }
 
             updateViewFromInput();
