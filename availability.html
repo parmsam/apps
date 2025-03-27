@@ -43,6 +43,7 @@
         </div>
 
         <div class="mb-2 text-sm text-gray-600" id="current-time"></div>
+        <div id="mode-message" class="mb-2 text-sm text-gray-600"></div>
         <div id="calendar"
             class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 bg-white rounded p-4 shadow mt-4">
         </div>
@@ -65,6 +66,10 @@ Friday: 1pm - 5pm`;
         const editControls = document.getElementById("edit-controls");
 
         let isViewMode = false;
+
+        function replaceUnderscoreWithSpace(text) {
+                return text.replace(/_/g, ' ');
+        }
 
         function showCurrentTime() {
             const zone = timezoneSelect.value;
@@ -124,6 +129,11 @@ Friday: 1pm - 5pm`;
             const markdown = input.value;
             const { entries, errors } = parseMarkdown(markdown);
             const mode = document.querySelector("input[name='mode']:checked").value;
+            const timezone = timezoneSelect.value;
+
+            // Update the message above the calendar
+            const modeMessage = document.getElementById("mode-message");
+            modeMessage.textContent = `Here are my ${mode === "availables" ? "availabilities" : "meetings"} in the ${replaceUnderscoreWithSpace(timezone)} time zone:`;
 
             if (errors.length > 0) {
                 warning.textContent = errors.join(" | ");
@@ -134,7 +144,7 @@ Friday: 1pm - 5pm`;
 
             renderCalendar(entries, mode);
             showCurrentTime();
-            updateURLParams(markdown, mode, timezoneSelect.value, isViewMode);
+            updateURLParams(markdown, mode, timezone, isViewMode);
         }
 
         function updateURLParams(text, mode, zone, view) {
