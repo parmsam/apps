@@ -21,7 +21,7 @@
         </div>
 
         <div id="edit-controls" class="space-y-4 mb-4">
-            <div class="flex justify-between items-center">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div class="space-x-4">
                     <label><input type="radio" name="mode" value="availables" checked> Availabilities</label>
                     <label><input type="radio" name="mode" value="meetings"> Meetings</label>
@@ -33,6 +33,10 @@
                         <option value="UTC">UTC</option>
                         <option value="Asia/Kolkata">IST</option>
                     </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label for="week-start" class="text-sm">Select week of:</label>
+                    <input type="date" id="week-start" class="p-1 border rounded" />
                 </div>
             </div>
 
@@ -63,8 +67,12 @@ Friday: 1pm - 5pm`;
         const currentTimeDiv = document.getElementById("current-time");
         const viewToggle = document.getElementById("view-toggle");
         const editControls = document.getElementById("edit-controls");
+        const weekStartInput = document.getElementById("week-start");
+        const modeMessage = document.getElementById("mode-message");
 
         let isViewMode = false;
+        let selectedWeekDate = luxon.DateTime.now().toISODate();
+        weekStartInput.value = selectedWeekDate;
 
         function replaceUnderscoreWithSpace(text) {
             return text.replace(/_/g, ' ');
@@ -106,51 +114,51 @@ Friday: 1pm - 5pm`;
         }
 
         function parseMarkdown(text) {
-                const lines = text.split("\n");
-                const entries = [];
-                const errors = [];
-                const zone = timezoneSelect.value;
+            const lines = text.split("\n");
+            const entries = [];
+            const errors = [];
+            const zone = timezoneSelect.value;
 
-                lines.forEach((line, i) => {
-                    const trimmedLine = line.trim();
-                    if (!trimmedLine) return; // skip empty lines
+            lines.forEach((line, i) => {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return;
 
-                    const colonIndex = trimmedLine.indexOf(":");
-                    if (colonIndex === -1) {
-                        errors.push(`Line ${i + 1}: Missing ":"`);
-                        return;
-                    }
+                const colonIndex = trimmedLine.indexOf(":");
+                if (colonIndex === -1) {
+                    errors.push(`Line ${i + 1}: Missing ":"`);
+                    return;
+                }
 
-                    const day = trimmedLine.slice(0, colonIndex).trim();
-                    const rest = trimmedLine.slice(colonIndex + 1).trim();
+                const day = trimmedLine.slice(0, colonIndex).trim();
+                const rest = trimmedLine.slice(colonIndex + 1).trim();
 
-                    if (!days.includes(day)) {
-                        errors.push(`Line ${i + 1}: Invalid day "${day}"`);
-                        return;
-                    }
+                if (!days.includes(day)) {
+                    errors.push(`Line ${i + 1}: Invalid day "${day}"`);
+                    return;
+                }
 
-                    const times = rest.split(",").map(t => t.trim()).filter(Boolean);
-                    const enrichedTimes = [];
+                const times = rest.split(",").map(t => t.trim()).filter(Boolean);
+                const enrichedTimes = [];
 
-                    times.forEach(raw => {
-                        const normalized = normalizeTimeRange(raw, zone);
-                        let dt = luxon.DateTime.fromFormat(normalized.split(" - ")[0], "h:mm a", { zone });
-                        if (!dt.isValid) dt = luxon.DateTime.fromFormat(normalized.split(" - ")[0], "h a", { zone });
+                times.forEach(raw => {
+                    const normalized = normalizeTimeRange(raw, zone);
+                    let dt = luxon.DateTime.fromFormat(normalized.split(" - ")[0], "h:mm a", { zone });
+                    if (!dt.isValid) dt = luxon.DateTime.fromFormat(normalized.split(" - ")[0], "h a", { zone });
 
-                        enrichedTimes.push({ label: normalized, sortKey: dt.isValid ? dt : null });
-                    });
-
-                    enrichedTimes.sort((a, b) => {
-                        if (!a.sortKey || !b.sortKey) return 0;
-                        return a.sortKey.toMillis() - b.sortKey.toMillis();
-                    });
-
-                    const sortedLabels = enrichedTimes.map(e => e.label);
-                    entries.push({ day, times: sortedLabels });
+                    enrichedTimes.push({ label: normalized, sortKey: dt.isValid ? dt : null });
                 });
 
-                return { entries, errors };
-            }
+                enrichedTimes.sort((a, b) => {
+                    if (!a.sortKey || !b.sortKey) return 0;
+                    return a.sortKey.toMillis() - b.sortKey.toMillis();
+                });
+
+                const sortedLabels = enrichedTimes.map(e => e.label);
+                entries.push({ day, times: sortedLabels });
+            });
+
+            return { entries, errors };
+        }
 
         function renderCalendar(entries, mode) {
             calendar.innerHTML = "";
@@ -184,8 +192,12 @@ Friday: 1pm - 5pm`;
             const mode = document.querySelector("input[name='mode']:checked").value;
             const timezone = timezoneSelect.value;
 
-            const modeMessage = document.getElementById("mode-message");
-            modeMessage.textContent = `Here are my ${mode === "availables" ? "availabilities" : "meetings"} in the ${replaceUnderscoreWithSpace(timezone)} time zone:`;
+            selectedWeekDate = weekStartInput.value || luxon.DateTime.now().toISODate();
+            const startOfWeek = luxon.DateTime.fromISO(selectedWeekDate).startOf('week');
+            const endOfWeek = startOfWeek.plus({ days: 6 });
+            const weekRangeText = `${startOfWeek.toFormat("LLL dd")} - ${endOfWeek.toFormat("LLL dd, yyyy")}`;
+
+            modeMessage.textContent = `Here are my ${mode === "availables" ? "availabilities" : "meetings"} for the week of ${weekRangeText} in the ${replaceUnderscoreWithSpace(timezone)} time zone:`;
 
             if (errors.length > 0) {
                 warning.textContent = errors.join(" | ");
@@ -196,12 +208,12 @@ Friday: 1pm - 5pm`;
 
             renderCalendar(entries, mode);
             showCurrentTime();
-            updateURLParams(markdown, mode, timezone, isViewMode);
+            updateURLParams(markdown, mode, timezone, isViewMode, selectedWeekDate);
         }
 
-        function updateURLParams(text, mode, zone, view) {
+        function updateURLParams(text, mode, zone, view, week) {
             const encoded = encodeURIComponent(text);
-            const params = new URLSearchParams({ text: encoded, mode, zone, view: view ? "1" : "0" });
+            const params = new URLSearchParams({ text: encoded, mode, zone, view: view ? "1" : "0", week });
             history.replaceState(null, "", "?" + params.toString());
         }
 
@@ -211,10 +223,15 @@ Friday: 1pm - 5pm`;
             const mode = params.get("mode") || "availables";
             const zone = params.get("zone") || "America/New_York";
             const viewParam = params.get("view") === "1";
+            const weekParam = params.get("week");
 
             input.value = text;
             document.querySelector(`input[value='${mode}']`).checked = true;
             timezoneSelect.value = zone;
+            if (weekParam) {
+                selectedWeekDate = weekParam;
+                weekStartInput.value = weekParam;
+            }
 
             if (viewParam) {
                 toggleViewMode(true);
@@ -232,6 +249,7 @@ Friday: 1pm - 5pm`;
 
         input.addEventListener("input", updateViewFromInput);
         timezoneSelect.addEventListener("change", updateViewFromInput);
+        weekStartInput.addEventListener("change", updateViewFromInput);
         document.querySelectorAll("input[name='mode']").forEach(el => el.addEventListener("change", updateViewFromInput));
         shareBtn.addEventListener("click", () => navigator.clipboard.writeText(location.href));
         viewToggle.addEventListener("click", () => toggleViewMode());
