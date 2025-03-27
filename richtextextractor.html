@@ -124,8 +124,13 @@
                     emDelimiter: '*'
                 });
 
-                var gfm = turndownPluginGfm.gfm;
-                turndownService.use(gfm);
+                // try to use GFM plugin
+                try {
+                    var gfm = turndownPluginGfm.gfm;
+                    turndownService.use(gfm);
+                } catch (e) {
+                    console.error("GFM plugin not found. Markdown may not be formatted correctly.");
+                }
 
                 let markdown = turndownService.turndown(tempDiv.innerHTML);
                 outputArea.value = markdown;
