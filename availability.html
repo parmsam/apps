@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" class="transition-colors duration-300">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weekly Planner</title>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans transition-colors duration-300">
+    <div class="max-w-4xl mx-auto p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-3xl font-bold">Weekly Planner</h1>
+            <button id="dark-toggle" class="px-3 py-1 rounded border dark:border-white border-gray-800 text-sm">Toggle
+                Dark Mode</button>
+        </div>
+
+        <div class="mb-2 text-sm text-gray-600 dark:text-gray-300" id="current-time"></div>
+
+        <div class="flex justify-between items-center mb-4">
+            <div class="space-x-4">
+                <label><input type="radio" name="mode" value="availables" checked> Availabilities</label>
+                <label><input type="radio" name="mode" value="meetings"> Meetings</label>
+                <select id="timezone" class="ml-4 p-1 rounded border dark:bg-gray-800 dark:border-gray-600">
+                    <option value="America/New_York" selected>EST</option>
+                    <option value="America/Chicago">CST</option>
+                    <option value="America/Denver">MST</option>
+                    <option value="America/Los_Angeles">PST</option>
+                    <option value="UTC">GMT/UTC</option>
+                    <option value="Asia/Kolkata">IST</option>
+                </select>
+            </div>
+            <button id="share-button" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Copy Share
+                Link</button>
+        </div>
+
+        <textarea id="markdown-input" class="w-full h-40 p-3 border rounded dark:bg-gray-800 dark:border-gray-600"
+            placeholder="Enter markdown..."></textarea>
+        <div id="warning" class="text-red-500 text-sm mt-1 hidden"></div>
+
+        <div id="calendar"
+            class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 bg-white dark:bg-gray-800 rounded p-4 shadow mt-6">
+        </div>
+    </div>
+
+    <script>
+        const defaultMarkdown = `Monday: 9am - 11am, 2pm - 3pm
+Tuesday: 10am - 12pm
+Wednesday: 1pm - 2:30pm
+Friday: 1pm - 5pm`;
+
+        const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        const calendar = document.getElementById("calendar");
+        const input = document.getElementById("markdown-input");
+        const shareBtn = document.getElementById("share-button");
+        const warning = document.getElementById("warning");
+        const timezoneSelect = document.getElementById("timezone");
+        const currentTimeDiv = document.getElementById("current-time");
+        const darkToggle = document.getElementById("dark-toggle");
+
+        function showCurrentTime() {
+            const zone = timezoneSelect.value;
+            const now = luxon.DateTime.now().setZone(zone);
+            currentTimeDiv.textContent = `Current time in ${zone}: ${now.toFormat("cccc, LLL dd yyyy, hh:mm a ZZZZ")}`;
+        }
+
+        function parseMarkdown(text) {
+            const lines = text.split("\n");
+            const entries = [];
+            let errors = [];
+
+            lines.forEach((line, i) => {
+                if (!line.includes(":")) {
+                    if (line.trim() !== "") errors.push(`Line ${i + 1}: Missing ":"`);
+                    return;
+                }
+                const [day, rest] = line.split(":");
+                if (!days.includes(day.trim())) {
+                    errors.push(`Line ${i + 1}: Invalid day "${day.trim()}"`);
+                    return;
+                }
+                const times = rest.split(",").map(t => t.trim()).filter(Boolean);
+                entries.push({ day: day.trim(), times });
+            });
+
+            return { entries, errors };
+        }
+
+        function renderCalendar(entries, mode) {
+            calendar.innerHTML = "";
+            const today = luxon.DateTime.now().setZone(timezoneSelect.value).weekday % 7; // 0 = Sunday, 1 = Monday...
+
+            days.forEach((day, index) => {
+                const col = document.createElement("div");
+                col.className = `border p-2 rounded shadow-sm ${index === (today + 6) % 7 ? 'bg-yellow-100 dark:bg-yellow-900' : ''}`;
+                const title = document.createElement("div");
+                title.className = "font-semibold mb-2";
+                title.textContent = day;
+                col.appendChild(title);
+
+                const entry = entries.find(e => e.day === day);
+                if (entry) {
+                    entry.times.forEach(t => {
+                        const block = document.createElement("div");
+                        block.className = `text-sm mb-1 px-2 py-1 rounded ${mode === "availables" ? "bg-green-200 dark:bg-green-800" : "bg-red-200 dark:bg-red-800"
+                            }`;
+                        block.textContent = t;
+                        col.appendChild(block);
+                    });
+                }
+
+                calendar.appendChild(col);
+            });
+        }
+
+        function updateViewFromInput() {
+            const markdown = input.value;
+            const { entries, errors } = parseMarkdown(markdown);
+            const mode = document.querySelector("input[name='mode']:checked").value;
+
+            if (errors.length > 0) {
+                warning.textContent = errors.join(" | ");
+                warning.classList.remove("hidden");
+            } else {
+                warning.classList.add("hidden");
+            }
+
+            renderCalendar(entries, mode);
+            showCurrentTime();
+            updateURLParams(markdown, mode, timezoneSelect.value);
+        }
+
+        function updateURLParams(text, mode, zone) {
+            const encoded = encodeURIComponent(text);
+            const params = new URLSearchParams({ text: encoded, mode, zone });
+            history.replaceState(null, "", "?" + params.toString());
+        }
+
+        function loadFromURL() {
+            const params = new URLSearchParams(location.search);
+            const text = decodeURIComponent(params.get("text") || defaultMarkdown);
+            const mode = params.get("mode") || "availables";
+            const zone = params.get("zone") || "America/New_York";
+
+            input.value = text;
+            document.querySelector(`input[value='${mode}']`).checked = true;
+            timezoneSelect.value = zone;
+            updateViewFromInput();
+        }
+
+        input.addEventListener("input", updateViewFromInput);
+        timezoneSelect.addEventListener("change", updateViewFromInput);
+        document.querySelectorAll("input[name='mode']").forEach(el => el.addEventListener("change", updateViewFromInput));
+        shareBtn.addEventListener("click", () => navigator.clipboard.writeText(location.href));
+        darkToggle.addEventListener("click", () => {
+            document.documentElement.classList.toggle("dark");
+            localStorage.setItem("theme", document.documentElement.classList.contains("dark") ? "dark" : "light");
+        });
+
+        // Apply saved theme
+        if (localStorage.getItem("theme") === "dark") {
+            document.documentElement.classList.add("dark");
+        }
+
+        loadFromURL();
+    </script>
+</body>
+
+</html>
