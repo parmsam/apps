@@ -36,7 +36,7 @@ Inspired by similar tiny apps from [Jeremy Howard](https://github.com/jph00/apps
 - [Clipboard manager](clipboardmanager.html) - Manage and view your clipboard pastes by storing them in local storage on this webpage.
 - [Hiking time](trailtimes.html) - Calculate hiking time based on Naismith's Rule.
 - [mmwr2md](mmwr2md.html) - Convert [CDC MMWR](https://www.cdc.gov/mmwr/) webpages to markdown format.
-- [Weekly availability](weeklyavailability.html) - Enter and visualize weekly availability for scheduling.
+- [Weekly availability](availability.html) - Enter and visualize weekly availability for scheduling.
 
 ---
 

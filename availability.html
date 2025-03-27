@@ -14,35 +14,38 @@
     <div class="max-w-4xl mx-auto p-6">
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-3xl font-bold">Weekly Planner</h1>
-            <button id="dark-toggle" class="px-3 py-1 rounded border dark:border-white border-gray-800 text-sm">Toggle
-                Dark Mode</button>
+            <div class="flex gap-2">
+                <button id="dark-toggle" class="px-3 py-1 rounded border text-sm">Toggle Dark</button>
+                <button id="view-toggle" class="px-3 py-1 rounded border text-sm">View Mode</button>
+            </div>
+        </div>
+
+        <div id="edit-controls" class="space-y-4 mb-4">
+            <div class="flex justify-between items-center">
+                <div class="space-x-4">
+                    <label><input type="radio" name="mode" value="availables" checked> Availabilities</label>
+                    <label><input type="radio" name="mode" value="meetings"> Meetings</label>
+                    <select id="timezone" class="ml-4 p-1 rounded border dark:bg-gray-800 dark:border-gray-600">
+                        <option value="America/New_York" selected>EST</option>
+                        <option value="America/Chicago">CST</option>
+                        <option value="America/Denver">MST</option>
+                        <option value="America/Los_Angeles">PST</option>
+                        <option value="UTC">UTC</option>
+                        <option value="Asia/Kolkata">IST</option>
+                    </select>
+                </div>
+                <button id="share-button" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Copy
+                    Link</button>
+            </div>
+
+            <textarea id="markdown-input" class="w-full h-40 p-3 border rounded dark:bg-gray-800 dark:border-gray-600"
+                placeholder="Enter markdown..."></textarea>
+            <div id="warning" class="text-red-500 text-sm hidden"></div>
         </div>
 
         <div class="mb-2 text-sm text-gray-600 dark:text-gray-300" id="current-time"></div>
-
-        <div class="flex justify-between items-center mb-4">
-            <div class="space-x-4">
-                <label><input type="radio" name="mode" value="availables" checked> Availabilities</label>
-                <label><input type="radio" name="mode" value="meetings"> Meetings</label>
-                <select id="timezone" class="ml-4 p-1 rounded border dark:bg-gray-800 dark:border-gray-600">
-                    <option value="America/New_York" selected>EST</option>
-                    <option value="America/Chicago">CST</option>
-                    <option value="America/Denver">MST</option>
-                    <option value="America/Los_Angeles">PST</option>
-                    <option value="UTC">GMT/UTC</option>
-                    <option value="Asia/Kolkata">IST</option>
-                </select>
-            </div>
-            <button id="share-button" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Copy Share
-                Link</button>
-        </div>
-
-        <textarea id="markdown-input" class="w-full h-40 p-3 border rounded dark:bg-gray-800 dark:border-gray-600"
-            placeholder="Enter markdown..."></textarea>
-        <div id="warning" class="text-red-500 text-sm mt-1 hidden"></div>
-
         <div id="calendar"
-            class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 bg-white dark:bg-gray-800 rounded p-4 shadow mt-6">
+            class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 bg-white dark:bg-gray-800 rounded p-4 shadow mt-4">
         </div>
     </div>
 
@@ -53,13 +56,17 @@ Wednesday: 1pm - 2:30pm
 Friday: 1pm - 5pm`;
 
         const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-        const calendar = document.getElementById("calendar");
         const input = document.getElementById("markdown-input");
         const shareBtn = document.getElementById("share-button");
         const warning = document.getElementById("warning");
+        const calendar = document.getElementById("calendar");
         const timezoneSelect = document.getElementById("timezone");
         const currentTimeDiv = document.getElementById("current-time");
         const darkToggle = document.getElementById("dark-toggle");
+        const viewToggle = document.getElementById("view-toggle");
+        const editControls = document.getElementById("edit-controls");
+
+        let isViewMode = false;
 
         function showCurrentTime() {
             const zone = timezoneSelect.value;
@@ -91,7 +98,7 @@ Friday: 1pm - 5pm`;
 
         function renderCalendar(entries, mode) {
             calendar.innerHTML = "";
-            const today = luxon.DateTime.now().setZone(timezoneSelect.value).weekday % 7; // 0 = Sunday, 1 = Monday...
+            const today = luxon.DateTime.now().setZone(timezoneSelect.value).weekday % 7;
 
             days.forEach((day, index) => {
                 const col = document.createElement("div");
@@ -130,12 +137,12 @@ Friday: 1pm - 5pm`;
 
             renderCalendar(entries, mode);
             showCurrentTime();
-            updateURLParams(markdown, mode, timezoneSelect.value);
+            updateURLParams(markdown, mode, timezoneSelect.value, isViewMode);
         }
 
-        function updateURLParams(text, mode, zone) {
+        function updateURLParams(text, mode, zone, view) {
             const encoded = encodeURIComponent(text);
-            const params = new URLSearchParams({ text: encoded, mode, zone });
+            const params = new URLSearchParams({ text: encoded, mode, zone, view: view ? "1" : "0" });
             history.replaceState(null, "", "?" + params.toString());
         }
 
@@ -144,21 +151,37 @@ Friday: 1pm - 5pm`;
             const text = decodeURIComponent(params.get("text") || defaultMarkdown);
             const mode = params.get("mode") || "availables";
             const zone = params.get("zone") || "America/New_York";
+            const viewParam = params.get("view") === "1";
 
             input.value = text;
             document.querySelector(`input[value='${mode}']`).checked = true;
             timezoneSelect.value = zone;
+
+            if (viewParam) {
+                toggleViewMode(true); // start in view mode
+            }
+
             updateViewFromInput();
         }
+
+        function toggleViewMode(forceView = null) {
+            isViewMode = forceView !== null ? forceView : !isViewMode;
+            editControls.classList.toggle("hidden", isViewMode);
+            viewToggle.textContent = isViewMode ? "Edit Mode" : "View Mode";
+            updateViewFromInput();
+        }
+
+        darkToggle.addEventListener("click", () => {
+            document.documentElement.classList.toggle("dark");
+            const theme = document.documentElement.classList.contains("dark") ? "dark" : "light";
+            localStorage.setItem("theme", theme);
+        });
 
         input.addEventListener("input", updateViewFromInput);
         timezoneSelect.addEventListener("change", updateViewFromInput);
         document.querySelectorAll("input[name='mode']").forEach(el => el.addEventListener("change", updateViewFromInput));
         shareBtn.addEventListener("click", () => navigator.clipboard.writeText(location.href));
-        darkToggle.addEventListener("click", () => {
-            document.documentElement.classList.toggle("dark");
-            localStorage.setItem("theme", document.documentElement.classList.contains("dark") ? "dark" : "light");
-        });
+        viewToggle.addEventListener("click", () => toggleViewMode());
 
         // Apply saved theme
         if (localStorage.getItem("theme") === "dark") {
