@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rich Text HTML Extractor</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/turndown/7.1.2/turndown.min.js"></script>
+    <script src="https://unpkg.com/turndown-plugin-gfm/dist/turndown-plugin-gfm.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,7 +22,7 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+        }   
 
         textarea {
             width: 100%;
@@ -123,11 +124,23 @@
                     emDelimiter: '*'
                 });
 
+                var gfm = turndownPluginGfm.gfm;
+                turndownService.use(gfm);
+
                 let markdown = turndownService.turndown(tempDiv.innerHTML);
                 outputArea.value = markdown;
 
+                showdown.setFlavor('github');
                 // Optional: render Markdown to HTML for preview
-                let mdRenderer = new showdown.Converter();
+                let mdRenderer = new showdown.Converter({
+                    strikethrough: true,
+                    tables: true,
+                    tablesHeaderId: true,
+                    tasklists: true,
+                    emoji:  true,
+                    underline: true
+                    // simpleLineBreaks: true,
+                });
                 renderedOutput.innerHTML = mdRenderer.makeHtml(markdown);
             } else if (mode === 'plaintext') {
                 let tempDiv = document.createElement("div");
