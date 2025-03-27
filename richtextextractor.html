@@ -133,11 +133,29 @@
                 }
 
                 let markdown = turndownService.turndown(tempDiv.innerHTML);
+                markdown = markdown.replace(/^(\s*\|.*?\|)\s*$/gm, line => {
+                    if (line.includes(':') && line.includes('-')) {
+                        return line.replace(/:-{1,2}:/g, ':---:')
+                            .replace(/:-{1,2}/g, ':---')
+                            .replace(/-{1,2}:/g, '---:')
+                            .replace(/(?<=\| )-{1,2}(?= \|)/g, '---');
+                    }
+                    return line;
+                });
                 outputArea.value = markdown;
 
                 // Render Markdown to HTML for preview
-                let mdRenderer = new showdown.Converter();
-                mdRenderer.setFlavor('github');
+                showdown.setFlavor('github');
+                let mdRenderer = new showdown.Converter({
+                    tables: true,
+                    strikethrough: true,
+                    tasklists: true,
+                    simpleLineBreaks: true,
+                    ghCompatibleHeaderId: true,
+                });
+                console.log(markdown);
+                console.log(mdRenderer.makeHtml(markdown));
+
                 renderedOutput.innerHTML = mdRenderer.makeHtml(markdown);
                 // var showdownOptions = mdRenderer.getOptions();
                 // console.log(showdownOptions);
