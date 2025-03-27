@@ -135,18 +135,12 @@
                 let markdown = turndownService.turndown(tempDiv.innerHTML);
                 outputArea.value = markdown;
 
-                showdown.setFlavor('github');
-                // Optional: render Markdown to HTML for preview
-                let mdRenderer = new showdown.Converter({
-                    strikethrough: true,
-                    tables: true,
-                    tablesHeaderId: true,
-                    tasklists: true,
-                    emoji:  true,
-                    underline: true
-                    // simpleLineBreaks: true,
-                });
+                // Render Markdown to HTML for preview
+                let mdRenderer = new showdown.Converter();
+                mdRenderer.setFlavor('github');
                 renderedOutput.innerHTML = mdRenderer.makeHtml(markdown);
+                // var showdownOptions = mdRenderer.getOptions();
+                // console.log(showdownOptions);
             } else if (mode === 'plaintext') {
                 let tempDiv = document.createElement("div");
                 tempDiv.innerHTML = content;
