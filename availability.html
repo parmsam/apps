@@ -58,7 +58,7 @@ Wednesday: 1pm - 2:30pm
 Thursday: 4am-5am, 9pm-9:34pm
 Friday: 1pm - 5pm`;
 
-        const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         const input = document.getElementById("markdown-input");
         const shareBtn = document.getElementById("share-button");
         const warning = document.getElementById("warning");
@@ -81,7 +81,7 @@ Friday: 1pm - 5pm`;
         function showCurrentTime() {
             const zone = timezoneSelect.value;
             const now = luxon.DateTime.now().setZone(zone);
-            currentTimeDiv.textContent = `Current time in ${zone}: ${now.toFormat("cccc, LLL dd yyyy, hh:mm a ZZZZ")}`;
+            currentTimeDiv.textContent = `Current date/time in ${zone} is ${now.toFormat("cccc, LLL dd yyyy, hh:mm a ZZZZ")}.`;
         }
 
         function normalizeTimeRange(rawRange, zone) {
@@ -193,7 +193,7 @@ Friday: 1pm - 5pm`;
             const timezone = timezoneSelect.value;
 
             selectedWeekDate = weekStartInput.value || luxon.DateTime.now().toISODate();
-            const startOfWeek = luxon.DateTime.fromISO(selectedWeekDate).startOf('week');
+            const startOfWeek = luxon.DateTime.fromISO(selectedWeekDate).startOf('week').minus({ days: 1 });
             const endOfWeek = startOfWeek.plus({ days: 6 });
             const weekRangeText = `${startOfWeek.toFormat("LLL dd")} - ${endOfWeek.toFormat("LLL dd, yyyy")}`;
 
