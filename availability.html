@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="transition-colors duration-300">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8" />
@@ -10,13 +10,14 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans transition-colors duration-300">
+<body class="bg-gray-100 text-gray-800 font-sans">
     <div class="max-w-4xl mx-auto p-6">
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-3xl font-bold">Weekly Planner</h1>
             <div class="flex gap-2">
-                <button id="dark-toggle" class="px-3 py-1 rounded border text-sm">Toggle Dark</button>
                 <button id="view-toggle" class="px-3 py-1 rounded border text-sm">View Mode</button>
+                <button id="share-button" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Copy
+                    Link</button>
             </div>
         </div>
 
@@ -25,7 +26,7 @@
                 <div class="space-x-4">
                     <label><input type="radio" name="mode" value="availables" checked> Availabilities</label>
                     <label><input type="radio" name="mode" value="meetings"> Meetings</label>
-                    <select id="timezone" class="ml-4 p-1 rounded border dark:bg-gray-800 dark:border-gray-600">
+                    <select id="timezone" class="ml-4 p-1 rounded border">
                         <option value="America/New_York" selected>EST</option>
                         <option value="America/Chicago">CST</option>
                         <option value="America/Denver">MST</option>
@@ -34,18 +35,16 @@
                         <option value="Asia/Kolkata">IST</option>
                     </select>
                 </div>
-                <button id="share-button" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Copy
-                    Link</button>
             </div>
 
-            <textarea id="markdown-input" class="w-full h-40 p-3 border rounded dark:bg-gray-800 dark:border-gray-600"
+            <textarea id="markdown-input" class="w-full h-40 p-3 border rounded"
                 placeholder="Enter markdown..."></textarea>
             <div id="warning" class="text-red-500 text-sm hidden"></div>
         </div>
 
-        <div class="mb-2 text-sm text-gray-600 dark:text-gray-300" id="current-time"></div>
+        <div class="mb-2 text-sm text-gray-600" id="current-time"></div>
         <div id="calendar"
-            class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 bg-white dark:bg-gray-800 rounded p-4 shadow mt-4">
+            class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 bg-white rounded p-4 shadow mt-4">
         </div>
     </div>
 
@@ -62,7 +61,6 @@ Friday: 1pm - 5pm`;
         const calendar = document.getElementById("calendar");
         const timezoneSelect = document.getElementById("timezone");
         const currentTimeDiv = document.getElementById("current-time");
-        const darkToggle = document.getElementById("dark-toggle");
         const viewToggle = document.getElementById("view-toggle");
         const editControls = document.getElementById("edit-controls");
 
@@ -102,7 +100,7 @@ Friday: 1pm - 5pm`;
 
             days.forEach((day, index) => {
                 const col = document.createElement("div");
-                col.className = `border p-2 rounded shadow-sm ${index === (today + 6) % 7 ? 'bg-yellow-100 dark:bg-yellow-900' : ''}`;
+                col.className = `border p-2 rounded shadow-sm ${index === (today + 6) % 7 ? 'bg-yellow-100' : ''}`;
                 const title = document.createElement("div");
                 title.className = "font-semibold mb-2";
                 title.textContent = day;
@@ -112,8 +110,7 @@ Friday: 1pm - 5pm`;
                 if (entry) {
                     entry.times.forEach(t => {
                         const block = document.createElement("div");
-                        block.className = `text-sm mb-1 px-2 py-1 rounded ${mode === "availables" ? "bg-green-200 dark:bg-green-800" : "bg-red-200 dark:bg-red-800"
-                            }`;
+                        block.className = `text-sm mb-1 px-2 py-1 rounded ${mode === "availables" ? "bg-green-200" : "bg-red-200"}`;
                         block.textContent = t;
                         col.appendChild(block);
                     });
@@ -171,22 +168,11 @@ Friday: 1pm - 5pm`;
             updateViewFromInput();
         }
 
-        darkToggle.addEventListener("click", () => {
-            document.documentElement.classList.toggle("dark");
-            const theme = document.documentElement.classList.contains("dark") ? "dark" : "light";
-            localStorage.setItem("theme", theme);
-        });
-
         input.addEventListener("input", updateViewFromInput);
         timezoneSelect.addEventListener("change", updateViewFromInput);
         document.querySelectorAll("input[name='mode']").forEach(el => el.addEventListener("change", updateViewFromInput));
         shareBtn.addEventListener("click", () => navigator.clipboard.writeText(location.href));
         viewToggle.addEventListener("click", () => toggleViewMode());
-
-        // Apply saved theme
-        if (localStorage.getItem("theme") === "dark") {
-            document.documentElement.classList.add("dark");
-        }
 
         loadFromURL();
     </script>
