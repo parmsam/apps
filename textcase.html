@@ -78,6 +78,13 @@
                 transform: translateY(0);
             }
         }
+
+        #livePreview {
+            background-color: #f3f4f6; /* bg-gray-100 */
+            color: #1f2937; /* text-gray-800 */
+            border: 2px solid #d1d5db; /* border-gray-300 */
+            border-radius: 0.2rem; /* rounded-lg */
+        }
     </style>
     <script>
         // Apply dark mode based on system preference
@@ -99,10 +106,14 @@
 <body class="bg-gray-100 font-sans">
     <div class="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg relative">
         <!-- Dark Mode Toggle Button -->
-        <div class="flex justify-end mb-4">
+        <div class="flex justify-end mb-4 gap-2">
             <button id="darkModeToggle"
                 class="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg shadow hover:bg-gray-700 transition">
                 🌙 Toggle Dark Mode
+            </button>
+            <button id="togglePreview"
+                class="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg shadow hover:bg-gray-700 transition">
+                👁️ Toggle Live Preview
             </button>
         </div>
 
@@ -180,10 +191,10 @@
         </div>
 
         <!-- Floating Preview Panel -->
-        <div
-            class="fixed top-5 right-5 bg-white border border-gray-300 shadow-xl rounded-lg p-4 w-72 max-h-60 overflow-y-auto text-left text-sm text-gray-700">
+        <div class="fixed top-5 right-5 bg-white border border-gray-300 shadow-xl rounded-lg p-4 w-72 max-h-60 overflow-y-auto text-left text-sm text-gray-700 hidden" 
+            id="previewPanel">
             <h4 class="font-semibold mb-2 text-gray-800">🔍 Live Preview</h4>
-            <div id="livePreview" class="whitespace-pre-wrap"></div>
+            <div id="livePreview" class="whitespace-pre-wrap hidden"></div>
         </div>
     </div>
 
@@ -308,6 +319,22 @@
             } else {
                 document.documentElement.classList.add("dark");
                 localStorage.setItem("theme", "dark");
+            }
+        });
+
+        const togglePreviewButton = document.getElementById("togglePreview");
+        const livePreview = document.getElementById("livePreview");
+        const previewPanel = document.getElementById("previewPanel");
+
+        togglePreviewButton.addEventListener("click", () => {
+            if (livePreview.classList.contains("hidden")) {
+                livePreview.classList.remove("hidden");
+                previewPanel.classList.remove("hidden");
+                togglePreviewButton.textContent = "👁️ Hide Live Preview";
+            } else {
+                livePreview.classList.add("hidden");
+                previewPanel.classList.add("hidden");
+                togglePreviewButton.textContent = "👁️ Show Live Preview";
             }
         });
     </script>
