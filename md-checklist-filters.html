@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Checklist Viewer</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 p-4 text-gray-800">
+    <h1 class="text-2xl font-bold mb-4">Markdown Checklist Viewer</h1>
+    <div id="ui-container"></div>
+
+    <script>
+        function createChecklistUI(markdown = `# Daily Tasks\n\n- [ ] Wake up early\n- [x] Drink water\n- [ ] Exercise for 30 minutes\n- [ ] Eat a healthy breakfast\n- [x] Review goals\n- [ ] Plan the day\n- [ ] Read for 15 minutes\n- [ ] Journal\n- [ ] Sleep by 10pm`) {
+            const container = document.createElement('div');
+            container.className = 'border border-gray-300 p-4 mb-6 rounded bg-white shadow';
+
+            const textarea = document.createElement('textarea');
+            textarea.className = 'w-full h-40 p-2 border border-gray-300 rounded mb-4';
+            textarea.value = markdown;
+
+            const output = document.createElement('div');
+            output.className = 'prose max-w-none border border-gray-300 rounded p-4 bg-gray-50 mb-4';
+
+            const buttons = document.createElement('div');
+            buttons.className = 'space-x-2 mb-4';
+
+            const copyBtn = createButton('Copy', 'bg-green-600 hover:bg-green-700');
+            const clearBtn = createButton('Clear', 'bg-red-600 hover:bg-red-700');
+            const filterCheckedBtn = createButton('Filter Checked', 'bg-blue-600 hover:bg-blue-700');
+            const filterUncheckedBtn = createButton('Filter Unchecked', 'bg-yellow-600 hover:bg-yellow-700');
+            const removeFilterBtn = createButton('Remove Filter', 'bg-gray-600 hover:bg-gray-700');
+
+            buttons.append(copyBtn, clearBtn, filterCheckedBtn, filterUncheckedBtn, removeFilterBtn);
+
+            container.append(textarea, output, buttons);
+            document.getElementById('ui-container').appendChild(container);
+
+            function render() {
+                let html = marked.parse(textarea.value);
+                html = html.replace(/<input type="checkbox"/g, '<input type="checkbox" class="mr-2 checklist-box"');
+                output.innerHTML = html;
+
+                // Enable toggling checkboxes via clicks and updating textarea
+                const boxes = output.querySelectorAll('input[type="checkbox"]');
+                const lines = textarea.value.split('\n');
+                let checkboxIndex = 0;
+
+                for (let i = 0; i < lines.length; i++) {
+                    if (/^- \[[ xX]\]/.test(lines[i])) {
+                        const checkbox = boxes[checkboxIndex];
+                        if (checkbox) {
+                            checkbox.checked = /\[x\]/i.test(lines[i]);
+                            checkbox.addEventListener('click', (e) => {
+                                lines[i] = lines[i].replace(/^(- \[)[ xX](\])/, `$1${checkbox.checked ? 'x' : ' '}$2`);
+                                textarea.value = lines.join('\n');
+                                render();
+                            });
+                        }
+                        checkboxIndex++;
+                    }
+                }
+            }
+
+            textarea.addEventListener('input', render);
+
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(textarea.value);
+            };
+
+            clearBtn.onclick = () => {
+                textarea.value = '';
+                render();
+            };
+
+            filterCheckedBtn.onclick = () => filterLines(true);
+            filterUncheckedBtn.onclick = () => filterLines(false);
+
+            removeFilterBtn.onclick = () => {
+                container.remove();
+            };
+
+            function filterLines(checked) {
+                const lines = textarea.value.split('\n');
+                const filtered = lines.filter(line => checked ? /^- \[x\]/i.test(line) : /^- \[ \]/.test(line));
+                createChecklistUI(filtered.join('\n'));
+            }
+
+            render();
+        }
+
+        function createButton(text, colorClass) {
+            const btn = document.createElement('button');
+            btn.textContent = text;
+            btn.className = `px-4 py-2 text-white rounded ${colorClass}`;
+            return btn;
+        }
+
+        // Initialize with a default checklist
+        createChecklistUI();
+    </script>
+</body>
+
+</html>

@@ -37,6 +37,7 @@ Inspired by similar tiny apps from [Jeremy Howard](https://github.com/jph00/apps
 - [Hiking time](trailtimes.html) - Calculate hiking time based on Naismith's Rule.
 - [mmwr2md](mmwr2md.html) - Convert [CDC MMWR](https://www.cdc.gov/mmwr/) webpages to markdown format.
 - [Weekly availability](availability.html) - Enter and visualize weekly availability for scheduling.
+- [Checklist filters](md-checklist-filters.html) - Filter checklist items in markdown format.
 
 ---
 
