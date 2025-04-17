@@ -14,7 +14,17 @@
     <div id="ui-container"></div>
 
     <script>
-        function createChecklistUI(markdown = `# Daily Tasks\n\n- [ ] Wake up early\n- [x] Drink water\n- [ ] Exercise for 30 minutes\n- [ ] Eat a healthy breakfast\n- [x] Review goals\n- [ ] Plan the day\n- [ ] Read for 15 minutes\n- [ ] Journal\n- [ ] Sleep by 10pm`) {
+        const STORAGE_KEY = 'markdownChecklist';
+
+        function saveToLocalStorage(content) {
+            localStorage.setItem(STORAGE_KEY, content);
+        }
+
+        function getFromLocalStorage() {
+            return localStorage.getItem(STORAGE_KEY);
+        }
+
+        function createChecklistUI(markdown = getFromLocalStorage() || `# Daily Tasks\n\n- [ ] Wake up early\n- [x] Drink water\n- [ ] Exercise for 30 minutes\n- [ ] Eat a healthy breakfast\n- [x] Review goals\n- [ ] Plan the day\n- [ ] Read for 15 minutes\n- [ ] Journal\n- [ ] Sleep by 10pm`) {
             const container = document.createElement('div');
             container.className = 'border border-gray-300 p-4 mb-6 rounded bg-white shadow';
 
@@ -24,6 +34,7 @@
 
             const output = document.createElement('div');
             output.className = 'prose max-w-none border border-gray-300 rounded p-4 bg-gray-50 mb-4';
+            output.style.cursor = 'pointer';
 
             const buttons = document.createElement('div');
             buttons.className = 'space-x-2 mb-4';
@@ -40,29 +51,41 @@
             document.getElementById('ui-container').appendChild(container);
 
             function render() {
-                let html = marked.parse(textarea.value);
-                html = html.replace(/<input type="checkbox"/g, '<input type="checkbox" class="mr-2 checklist-box"');
-                output.innerHTML = html;
-
-                // Enable toggling checkboxes via clicks and updating textarea
-                const boxes = output.querySelectorAll('input[type="checkbox"]');
+                saveToLocalStorage(textarea.value);
                 const lines = textarea.value.split('\n');
-                let checkboxIndex = 0;
-
-                for (let i = 0; i < lines.length; i++) {
-                    if (/^- \[[ xX]\]/.test(lines[i])) {
-                        const checkbox = boxes[checkboxIndex];
-                        if (checkbox) {
-                            checkbox.checked = /\[x\]/i.test(lines[i]);
-                            checkbox.addEventListener('click', (e) => {
-                                lines[i] = lines[i].replace(/^(- \[)[ xX](\])/, `$1${checkbox.checked ? 'x' : ' '}$2`);
-                                textarea.value = lines.join('\n');
-                                render();
-                            });
-                        }
-                        checkboxIndex++;
+                const parsed = lines.map(line => {
+                    if (/^- \[ \]/.test(line)) {
+                        return `<div class='flex items-start'><input type='checkbox' class='mr-2 checklist-box'><span>${line.slice(6)}</span></div>`;
+                    } else if (/^- \[x\]/i.test(line)) {
+                        return `<div class='flex items-start'><input type='checkbox' checked class='mr-2 checklist-box'><span>${line.slice(6)}</span></div>`;
+                    } else {
+                        return `<div>${line}</div>`;
                     }
-                }
+                }).join('');
+
+                output.innerHTML = parsed;
+
+                output.querySelectorAll('input[type="checkbox"]').forEach((checkbox, i) => {
+                    checkbox.addEventListener('change', () => {
+                        const lines = textarea.value.split('\n');
+                        let index = -1;
+                        let count = 0;
+                        for (let j = 0; j < lines.length; j++) {
+                            if (/^- \[[ xX]\]/.test(lines[j])) {
+                                if (count === i) {
+                                    index = j;
+                                    break;
+                                }
+                                count++;
+                            }
+                        }
+                        if (index >= 0) {
+                            lines[index] = lines[index].replace(/^(- \[)[ xX](\])/, `$1${checkbox.checked ? 'x' : ' '}$2`);
+                            textarea.value = lines.join('\n');
+                            render();
+                        }
+                    });
+                });
             }
 
             textarea.addEventListener('input', render);
@@ -99,7 +122,6 @@
             return btn;
         }
 
-        // Initialize with a default checklist
         createChecklistUI();
     </script>
 </body>
