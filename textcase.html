@@ -9,58 +9,73 @@
     <style>
         /* Light mode (default) */
         body {
-            background-color: #f3f4f6; /* bg-gray-100 */
-            color: #1f2937; /* text-gray-800 */
+            background-color: #f3f4f6;
+            /* bg-gray-100 */
+            color: #1f2937;
+            /* text-gray-800 */
         }
 
         .dark textarea {
-            color: #1f2937; /* Ensure text color remains consistent in dark mode */
+            color: #1f2937;
+            /* Ensure text color remains consistent in dark mode */
         }
 
         /* Dark mode */
         .dark body {
-            background-color: #1f2937; /* bg-gray-800 */
-            color: #f3f4f6; /* text-gray-100 */
+            background-color: #1f2937;
+            /* bg-gray-800 */
+            color: #f3f4f6;
+            /* text-gray-100 */
         }
 
         .dark .bg-white {
-            background-color: #374151; /* bg-gray-700 */
+            background-color: #374151;
+            /* bg-gray-700 */
         }
 
         .dark .text-gray-800 {
-            color: #f3f4f6; /* text-gray-100 */
+            color: #f3f4f6;
+            /* text-gray-100 */
         }
 
         .dark .text-gray-600 {
-            color: #d1d5db; /* text-gray-300 */
+            color: #d1d5db;
+            /* text-gray-300 */
         }
 
         .dark .border-gray-300 {
-            border-color: #4b5563; /* border-gray-600 */
+            border-color: #4b5563;
+            /* border-gray-600 */
         }
 
         .dark .bg-green-600 {
-            background-color: #10b981; /* bg-green-500 */
+            background-color: #10b981;
+            /* bg-green-500 */
         }
 
         .dark .bg-red-600 {
-            background-color: #ef4444; /* bg-red-500 */
+            background-color: #ef4444;
+            /* bg-red-500 */
         }
 
         .dark .bg-blue-600 {
-            background-color: #3b82f6; /* bg-blue-500 */
+            background-color: #3b82f6;
+            /* bg-blue-500 */
         }
 
         .dark .hover\:bg-blue-700:hover {
-            background-color: #2563eb; /* bg-blue-700 */
+            background-color: #2563eb;
+            /* bg-blue-700 */
         }
 
         .dark .hover\:bg-green-700:hover {
-            background-color: #059669; /* bg-green-700 */
+            background-color: #059669;
+            /* bg-green-700 */
         }
 
         .dark .hover\:bg-red-700:hover {
-            background-color: #dc2626; /* bg-red-700 */
+            background-color: #dc2626;
+            /* bg-red-700 */
         }
 
         .toast {
@@ -80,10 +95,20 @@
         }
 
         #livePreview {
-            background-color: #f3f4f6; /* bg-gray-100 */
-            color: #1f2937; /* text-gray-800 */
-            border: 2px solid #d1d5db; /* border-gray-300 */
-            border-radius: 0.2rem; /* rounded-lg */
+            background-color: #f3f4f6;
+            /* bg-gray-100 */
+            color: #1f2937;
+            /* text-gray-800 */
+            border: 2px solid #d1d5db;
+            /* border-gray-300 */
+            border-radius: 0.2rem;
+            /* rounded-lg */
+        }
+
+        .dark #findInput,
+        .dark #replaceInput {
+            color: #000 !important;
+            background-color: #fff !important;
         }
     </style>
     <script>
@@ -117,21 +142,35 @@
             </button>
         </div>
 
+        <!-- Find and Replace UI -->
+        <div class="flex flex-col sm:flex-row items-center gap-2 mb-3">
+            <input id="findInput" type="text" placeholder="Find..."
+                class="flex-1 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm text-black" />
+            <input id="replaceInput" type="text" placeholder="Replace with..."
+                class="flex-1 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm text-black" />
+            <button onclick="findAndReplace()"
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition text-sm">
+                🔎 Replace All
+            </button>
+        </div>
+
         <h1 class="text-3xl font-bold mb-4 text-gray-800">✨ Text Case Converter</h1>
         <textarea id="textInput"
             class="w-full p-4 border rounded-lg h-40 text-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
             placeholder="Type or paste your text here..."></textarea>
-            <div class="flex flex-col sm:flex-row justify-between mt-3 mb-1 space-y-2 sm:space-y-0">
-                <div class="flex space-x-2 justify-center sm:justify-start">
+
+        <div class="flex flex-col sm:flex-row justify-between mt-3 mb-1 space-y-2 sm:space-y-0">
+            <div class="flex space-x-2 justify-center sm:justify-start">
                 <button
                     class="px-3 py-1 text-sm bg-yellow-500 text-white font-semibold rounded shadow hover:bg-yellow-600"
                     onclick="undo()">↩️ Undo</button>
                 <button
                     class="px-3 py-1 text-sm bg-yellow-500 text-white font-semibold rounded shadow hover:bg-yellow-600"
                     onclick="redo()">↪️ Redo</button>
-                </div>
-                <p class="text-sm text-gray-500 text-center sm:text-right">(Try Ctrl+U / Ctrl+L, Ctrl+Z / Ctrl+Shift+Z)</p>
             </div>
+            <p class="text-sm text-gray-500 text-center sm:text-right">(Try Ctrl+U / Ctrl+L, Ctrl+Z / Ctrl+Shift+Z)
+            </p>
+        </div>
 
         <h3 class="mt-4 mb-2 text-lg font-semibold text-gray-600">🔧 Choose a conversion style:</h3>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -190,7 +229,7 @@
         </div>
 
         <!-- Floating Preview Panel -->
-        <div class="fixed top-5 right-5 bg-white border border-gray-300 shadow-xl rounded-lg p-4 w-72 max-h-60 overflow-y-auto text-left text-sm text-gray-700 hidden" 
+        <div class="fixed top-5 right-5 bg-white border border-gray-300 shadow-xl rounded-lg p-4 w-72 max-h-60 overflow-y-auto text-left text-sm text-gray-700 hidden"
             id="previewPanel">
             <h4 class="font-semibold mb-2 text-gray-800">🔍 Live Preview</h4>
             <div id="livePreview" class="whitespace-pre-wrap hidden"></div>
@@ -293,6 +332,28 @@
                 redo();
             }
         });
+
+        // Find and Replace logic
+        function findAndReplace() {
+            const findValue = document.getElementById("findInput").value;
+            const replaceValue = document.getElementById("replaceInput").value;
+            if (!findValue) {
+                showToast("Please enter text to find.");
+                return;
+            }
+            // Escape regex special characters in findValue
+            const regex = new RegExp(findValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+            const oldText = textInput.value;
+            const newText = oldText.replace(regex, replaceValue);
+            if (oldText !== newText) {
+                saveHistory(oldText);
+                textInput.value = newText;
+                updatePreview();
+                showToast("All occurrences replaced.");
+            } else {
+                showToast("No matches found.");
+            }
+        }
 
         // Save initial state
         window.onload = () => {
