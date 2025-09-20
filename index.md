@@ -38,8 +38,8 @@ Inspired by similar tiny apps from [Jeremy Howard](https://github.com/jph00/apps
 - [mmwr2md](mmwr2md.html) - Convert [CDC MMWR](https://www.cdc.gov/mmwr/) webpages to markdown format.
 - [Weekly availability](availability.html) - Enter and visualize weekly availability for scheduling.
 - [Checklist filters](md-checklist-filters.html) - Filter checklist items in markdown format.
-- [Reminders](reminders.html) - Simple reminders app that stores reminders in local storage.
-
+- [Reminders](reminders.html) - Simple reminders app that stores reminders in local storage. Option to convert to tasks in markdown format and import/export reminders as JSON.
+ 
 ---
 
 By [Sam Parmar](https://parmsam.github.io/quarto-site/) (Github repo is [here](https://www.github.com/parmsam/apps))
