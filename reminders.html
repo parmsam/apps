@@ -317,6 +317,23 @@
             transform: translateY(-1px);
         }
 
+        .copy-btn {
+            background: #ff9500;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .copy-btn:hover {
+            background: #e6840d;
+            transform: translateY(-1px);
+        }
+
         .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -405,9 +422,11 @@
         </div>
 
         <div class="export-controls">
-            <button class="export-btn" onclick="exportToFile()">📄 Export JSON</button>
-            <button class="export-btn" onclick="importFromFile()">📁 Import JSON</button>
-            <input type="file" id="file-input" accept=".json" style="display: none;" onchange="handleFileImport(event)">
+            <button class="export-btn" onclick="exportToMarkdown()">📄 Export Markdown</button>
+            <button class="copy-btn" onclick="copyMarkdownToClipboard()">📋 Copy Markdown</button>
+            <button class="export-btn" onclick="importFromMarkdown()">📁 Import Markdown</button>
+            <input type="file" id="file-input" accept=".md,.txt" style="display: none;"
+                onchange="handleFileImport(event)">
         </div>
     </div>
 
@@ -637,26 +656,104 @@
                 }
             }
 
-            exportToFile() {
-                const data = {
-                    lists: this.lists,
-                    exportDate: new Date().toISOString(),
-                    version: '1.0'
-                };
-
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            exportToMarkdown() {
+                const markdown = this.generateMarkdown();
+                const blob = new Blob([markdown], { type: 'text/markdown' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `reminders-backup-${new Date().toISOString().split('T')[0]}.json`;
+                a.download = `reminders-${new Date().toISOString().split('T')[0]}.md`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             }
 
-            importFromFile() {
+            async copyMarkdownToClipboard() {
+                const markdown = this.generateMarkdown();
+                try {
+                    await navigator.clipboard.writeText(markdown);
+                    // Visual feedback
+                    const btn = event.target;
+                    const originalText = btn.textContent;
+                    btn.textContent = '✅ Copied!';
+                    btn.style.background = '#34c759';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.background = '#ff9500';
+                    }, 2000);
+                } catch (err) {
+                    // Fallback for older browsers
+                    const textarea = document.createElement('textarea');
+                    textarea.value = markdown;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    alert('Markdown copied to clipboard!');
+                }
+            }
+
+            importFromMarkdown() {
                 document.getElementById('file-input').click();
+            }
+
+            parseMarkdownToLists(markdown) {
+                const lines = markdown.split('\n');
+                const lists = {};
+                let currentListId = null;
+                let currentListName = null;
+
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+
+                    // Skip empty lines and metadata
+                    if (!line || line.startsWith('*Generated') || line === '---') continue;
+
+                    // Handle list headers (## List Name)
+                    if (line.startsWith('## ')) {
+                        currentListName = line.substring(3).trim();
+                        currentListId = currentListName === '📋 My Reminders' ? 'default' : this.generateId();
+                        lists[currentListId] = {
+                            name: currentListName,
+                            items: []
+                        };
+                        continue;
+                    }
+
+                    // Handle subsections (### Active, ### Completed)
+                    if (line.startsWith('### ')) {
+                        continue;
+                    }
+
+                    // Handle tasks (- [ ] or - [x])
+                    if (line.match(/^- \[([ x])\] (.+)$/)) {
+                        const match = line.match(/^- \[([ x])\] (.+)$/);
+                        const completed = match[1] === 'x';
+                        const text = match[2];
+
+                        if (currentListId && lists[currentListId]) {
+                            const reminder = {
+                                id: this.generateId(),
+                                text: text,
+                                completed: completed,
+                                createdAt: new Date().toISOString(),
+                                completedAt: completed ? new Date().toISOString() : null
+                            };
+                            lists[currentListId].items.push(reminder);
+                        }
+                    }
+                }
+
+                // If no lists were found, create a default one
+                if (Object.keys(lists).length === 0) {
+                    lists['default'] = {
+                        name: '📋 My Reminders',
+                        items: []
+                    };
+                }
+
+                return lists;
             }
 
             handleFileImport(event) {
@@ -666,18 +763,35 @@
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     try {
-                        const data = JSON.parse(e.target.result);
-                        if (data.lists) {
+                        const content = e.target.result;
+
+                        // Try to parse as markdown first
+                        if (file.name.endsWith('.md') || file.name.endsWith('.txt')) {
+                            const parsedLists = this.parseMarkdownToLists(content);
+
                             if (confirm('This will replace all current data. Continue?')) {
-                                this.lists = data.lists;
+                                this.lists = parsedLists;
                                 this.currentList = Object.keys(this.lists)[0] || 'default';
                                 this.saveData();
                                 this.updateListSelector();
                                 this.renderLists();
-                                alert('Data imported successfully!');
+                                alert('Markdown imported successfully!');
                             }
                         } else {
-                            alert('Invalid file format');
+                            // Fallback: try JSON for backward compatibility
+                            const data = JSON.parse(content);
+                            if (data.lists) {
+                                if (confirm('This will replace all current data. Continue?')) {
+                                    this.lists = data.lists;
+                                    this.currentList = Object.keys(this.lists)[0] || 'default';
+                                    this.saveData();
+                                    this.updateListSelector();
+                                    this.renderLists();
+                                    alert('Data imported successfully!');
+                                }
+                            } else {
+                                alert('Invalid file format. Please use a markdown file (.md) or valid JSON.');
+                            }
                         }
                     } catch (error) {
                         alert('Error reading file: ' + error.message);
@@ -737,12 +851,16 @@
             app.toggleMarkdownView();
         }
 
-        function exportToFile() {
-            app.exportToFile();
+        function exportToMarkdown() {
+            app.exportToMarkdown();
         }
 
-        function importFromFile() {
-            app.importFromFile();
+        function copyMarkdownToClipboard() {
+            app.copyMarkdownToClipboard();
+        }
+
+        function importFromMarkdown() {
+            app.importFromMarkdown();
         }
 
         function handleFileImport(event) {
