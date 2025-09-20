@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reminders</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e5e7;
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1d1d1f;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .toggle-btn {
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .toggle-btn:hover {
+            background: #0056cc;
+            transform: translateY(-1px);
+        }
+
+        .clear-btn {
+            background: #ff3b30;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .clear-btn:hover {
+            background: #d70015;
+            transform: translateY(-1px);
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .reminder-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e5e5e7;
+            border-radius: 15px;
+            font-size: 16px;
+            background: white;
+            transition: border-color 0.2s ease;
+        }
+
+        .reminder-input:focus {
+            outline: none;
+            border-color: #007aff;
+        }
+
+        .add-btn {
+            background: #34c759;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 16px;
+        }
+
+        .add-btn:hover {
+            background: #248a3d;
+            transform: translateY(-1px);
+        }
+
+        .list-selector {
+            margin-bottom: 15px;
+        }
+
+        .list-selector select {
+            padding: 10px 15px;
+            border: 2px solid #e5e5e7;
+            border-radius: 10px;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .new-list-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .new-list-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #e5e5e7;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .create-list-btn {
+            background: #ff9500;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .lists-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .list-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f2f2f7;
+        }
+
+        .list-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .list-count {
+            background: #f2f2f7;
+            color: #8e8e93;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .reminder-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f2f2f7;
+            transition: all 0.2s ease;
+        }
+
+        .reminder-item:last-child {
+            border-bottom: none;
+        }
+
+        .reminder-item:hover {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #c7c7cc;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .checkbox.completed {
+            background: #34c759;
+            border-color: #34c759;
+        }
+
+        .checkbox.completed::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .reminder-text {
+            flex: 1;
+            font-size: 16px;
+            color: #1d1d1f;
+            transition: all 0.2s ease;
+        }
+
+        .reminder-text.completed {
+            text-decoration: line-through;
+            color: #8e8e93;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ff3b30;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            opacity: 0;
+            transition: all 0.2s ease;
+            font-size: 16px;
+        }
+
+        .reminder-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .markdown-view {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 15px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        .export-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .export-btn {
+            background: #5856d6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .export-btn:hover {
+            background: #4c46d6;
+            transform: translateY(-1px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8e8e93;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state-subtext {
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+
+            .controls {
+                justify-content: center;
+            }
+
+            .input-container {
+                flex-direction: column;
+            }
+
+            .new-list-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">📝 Reminders</h1>
+            <div class="controls">
+                <button class="toggle-btn" onclick="toggleMarkdownView()">
+                    <span id="toggle-text">View Markdown</span>
+                </button>
+                <button class="clear-btn" onclick="clearAllData()">Clear All</button>
+            </div>
+        </div>
+
+        <div id="app-view">
+            <div class="input-section">
+                <div class="list-selector">
+                    <select id="list-select" onchange="switchList()">
+                        <option value="default">📋 My Reminders</option>
+                    </select>
+                    <div class="new-list-container">
+                        <input type="text" class="new-list-input" id="new-list-input" placeholder="New list name...">
+                        <button class="create-list-btn" onclick="createNewList()">Create List</button>
+                    </div>
+                </div>
+                <div class="input-container">
+                    <input type="text" class="reminder-input" id="reminder-input" placeholder="Add a new reminder..."
+                        onkeypress="handleKeyPress(event)">
+                    <button class="add-btn" onclick="addReminder()">Add</button>
+                </div>
+            </div>
+
+            <div class="lists-container" id="lists-container">
+                <!-- Lists will be rendered here -->
+            </div>
+        </div>
+
+        <div id="markdown-view" class="markdown-view" style="display: none;">
+            <!-- Markdown content will be shown here -->
+        </div>
+
+        <div class="export-controls">
+            <button class="export-btn" onclick="exportToFile()">📄 Export JSON</button>
+            <button class="export-btn" onclick="importFromFile()">📁 Import JSON</button>
+            <input type="file" id="file-input" accept=".json" style="display: none;" onchange="handleFileImport(event)">
+        </div>
+    </div>
+
+    <script>
+        class RemindersApp {
+            constructor() {
+                this.lists = this.loadData();
+                this.currentList = 'default';
+                this.isMarkdownView = false;
+                this.init();
+            }
+
+            init() {
+                this.renderLists();
+                this.updateListSelector();
+                this.focusInput();
+            }
+
+            loadData() {
+                const saved = localStorage.getItem('reminders-app-data');
+                if (saved) {
+                    try {
+                        return JSON.parse(saved);
+                    } catch (e) {
+                        console.error('Error loading data:', e);
+                    }
+                }
+                return {
+                    'default': {
+                        name: '📋 My Reminders',
+                        items: []
+                    }
+                };
+            }
+
+            saveData() {
+                localStorage.setItem('reminders-app-data', JSON.stringify(this.lists));
+            }
+
+            generateId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            }
+
+            addReminder(text = null) {
+                const input = document.getElementById('reminder-input');
+                const reminderText = text || input.value.trim();
+
+                if (!reminderText) return;
+
+                const reminder = {
+                    id: this.generateId(),
+                    text: reminderText,
+                    completed: false,
+                    createdAt: new Date().toISOString()
+                };
+
+                this.lists[this.currentList].items.unshift(reminder);
+                this.saveData();
+                this.renderLists();
+
+                if (!text) {
+                    input.value = '';
+                    input.focus();
+                }
+            }
+
+            toggleReminder(id) {
+                const reminder = this.lists[this.currentList].items.find(item => item.id === id);
+                if (reminder) {
+                    reminder.completed = !reminder.completed;
+                    reminder.completedAt = reminder.completed ? new Date().toISOString() : null;
+                    this.saveData();
+                    this.renderLists();
+                }
+            }
+
+            deleteReminder(id) {
+                this.lists[this.currentList].items = this.lists[this.currentList].items.filter(item => item.id !== id);
+                this.saveData();
+                this.renderLists();
+            }
+
+            createNewList() {
+                const input = document.getElementById('new-list-input');
+                const listName = input.value.trim();
+
+                if (!listName) return;
+
+                const listId = this.generateId();
+                this.lists[listId] = {
+                    name: listName,
+                    items: []
+                };
+
+                this.currentList = listId;
+                this.saveData();
+                this.updateListSelector();
+                this.renderLists();
+
+                input.value = '';
+            }
+
+            switchList() {
+                const select = document.getElementById('list-select');
+                this.currentList = select.value;
+                this.renderLists();
+            }
+
+            updateListSelector() {
+                const select = document.getElementById('list-select');
+                select.innerHTML = '';
+
+                Object.entries(this.lists).forEach(([id, list]) => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = list.name;
+                    if (id === this.currentList) option.selected = true;
+                    select.appendChild(option);
+                });
+            }
+
+            renderLists() {
+                const container = document.getElementById('lists-container');
+                container.innerHTML = '';
+
+                Object.entries(this.lists).forEach(([listId, list]) => {
+                    if (listId !== this.currentList) return;
+
+                    const listSection = document.createElement('div');
+                    listSection.className = 'list-section';
+
+                    const activeItems = list.items.filter(item => !item.completed);
+                    const completedItems = list.items.filter(item => item.completed);
+
+                    listSection.innerHTML = `
+                        <div class="list-header">
+                            <h2 class="list-title">${list.name}</h2>
+                            <span class="list-count">${list.items.length} items</span>
+                        </div>
+                        ${list.items.length === 0 ? this.renderEmptyState() : ''}
+                        ${activeItems.map(item => this.renderReminderItem(item)).join('')}
+                        ${completedItems.length > 0 ? '<div style="margin: 20px 0; border-top: 1px solid #f2f2f7; padding-top: 15px;"><h3 style="color: #8e8e93; font-size: 14px; margin-bottom: 10px;">COMPLETED</h3></div>' : ''}
+                        ${completedItems.map(item => this.renderReminderItem(item)).join('')}
+                    `;
+
+                    container.appendChild(listSection);
+                });
+            }
+
+            renderEmptyState() {
+                return `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div class="empty-state-text">No reminders yet</div>
+                        <div class="empty-state-subtext">Add your first reminder above</div>
+                    </div>
+                `;
+            }
+
+            renderReminderItem(item) {
+                return `
+                    <div class="reminder-item">
+                        <div class="checkbox ${item.completed ? 'completed' : ''}" 
+                             onclick="app.toggleReminder('${item.id}')"></div>
+                        <span class="reminder-text ${item.completed ? 'completed' : ''}">${this.escapeHtml(item.text)}</span>
+                        <button class="delete-btn" onclick="app.deleteReminder('${item.id}')" title="Delete">🗑️</button>
+                    </div>
+                `;
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            generateMarkdown() {
+                let markdown = '# Reminders\n\n';
+
+                Object.entries(this.lists).forEach(([listId, list]) => {
+                    markdown += `## ${list.name}\n\n`;
+
+                    const activeItems = list.items.filter(item => !item.completed);
+                    const completedItems = list.items.filter(item => item.completed);
+
+                    if (activeItems.length === 0 && completedItems.length === 0) {
+                        markdown += '*No items in this list*\n\n';
+                        return;
+                    }
+
+                    if (activeItems.length > 0) {
+                        markdown += '### Active\n\n';
+                        activeItems.forEach(item => {
+                            markdown += `- [ ] ${item.text}\n`;
+                        });
+                        markdown += '\n';
+                    }
+
+                    if (completedItems.length > 0) {
+                        markdown += '### Completed\n\n';
+                        completedItems.forEach(item => {
+                            markdown += `- [x] ${item.text}\n`;
+                        });
+                        markdown += '\n';
+                    }
+                });
+
+                markdown += `\n---\n*Generated on ${new Date().toLocaleString()}*`;
+                return markdown;
+            }
+
+            toggleMarkdownView() {
+                this.isMarkdownView = !this.isMarkdownView;
+                const appView = document.getElementById('app-view');
+                const markdownView = document.getElementById('markdown-view');
+                const toggleText = document.getElementById('toggle-text');
+
+                if (this.isMarkdownView) {
+                    appView.style.display = 'none';
+                    markdownView.style.display = 'block';
+                    markdownView.textContent = this.generateMarkdown();
+                    toggleText.textContent = 'View App';
+                } else {
+                    appView.style.display = 'block';
+                    markdownView.style.display = 'none';
+                    toggleText.textContent = 'View Markdown';
+                }
+            }
+
+            exportToFile() {
+                const data = {
+                    lists: this.lists,
+                    exportDate: new Date().toISOString(),
+                    version: '1.0'
+                };
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `reminders-backup-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            importFromFile() {
+                document.getElementById('file-input').click();
+            }
+
+            handleFileImport(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (data.lists) {
+                            if (confirm('This will replace all current data. Continue?')) {
+                                this.lists = data.lists;
+                                this.currentList = Object.keys(this.lists)[0] || 'default';
+                                this.saveData();
+                                this.updateListSelector();
+                                this.renderLists();
+                                alert('Data imported successfully!');
+                            }
+                        } else {
+                            alert('Invalid file format');
+                        }
+                    } catch (error) {
+                        alert('Error reading file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = '';
+            }
+
+            clearAllData() {
+                if (confirm('Are you sure you want to clear all reminders? This cannot be undone.')) {
+                    localStorage.removeItem('reminders-app-data');
+                    this.lists = {
+                        'default': {
+                            name: '📋 My Reminders',
+                            items: []
+                        }
+                    };
+                    this.currentList = 'default';
+                    this.updateListSelector();
+                    this.renderLists();
+                }
+            }
+
+            focusInput() {
+                const input = document.getElementById('reminder-input');
+                input.focus();
+            }
+        }
+
+        // Global functions for HTML event handlers
+        let app;
+
+        function initApp() {
+            app = new RemindersApp();
+        }
+
+        function addReminder() {
+            app.addReminder();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                addReminder();
+            }
+        }
+
+        function createNewList() {
+            app.createNewList();
+        }
+
+        function switchList() {
+            app.switchList();
+        }
+
+        function toggleMarkdownView() {
+            app.toggleMarkdownView();
+        }
+
+        function exportToFile() {
+            app.exportToFile();
+        }
+
+        function importFromFile() {
+            app.importFromFile();
+        }
+
+        function handleFileImport(event) {
+            app.handleFileImport(event);
+        }
+
+        function clearAllData() {
+            app.clearAllData();
+        }
+
+        // Initialize app when page loads
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+
+</html>
