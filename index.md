@@ -39,6 +39,7 @@ Inspired by similar tiny apps from [Jeremy Howard](https://github.com/jph00/apps
 - [Weekly availability](availability.html) - Enter and visualize weekly availability for scheduling.
 - [Checklist filters](md-checklist-filters.html) - Filter checklist items in markdown format.
 - [Reminders](reminders.html) - Simple reminders app that stores reminders in local storage. Option to convert to tasks in markdown format and import/export reminders as Markdown.
+- [Bookmark bundle manager](bookmarkbundle.html) - Manage and view bookmark bundles in HTML format.
  
 ---
 

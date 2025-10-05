@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmark Bundle Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .input-group textarea {
+            font-family: 'Courier New', monospace;
+            min-height: 200px;
+            resize: vertical;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .bundles-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .bundle-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bundle-info h3 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .bundle-info p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .bundle-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .bundle-actions button {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked+.toggle-slider {
+            background-color: #667eea;
+        }
+
+        input:checked+.toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .markdown-help {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .markdown-help code {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .share-url {
+            background: #edf2f7;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #48bb78;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .preview {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .preview h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .preview a {
+            color: #667eea;
+            text-decoration: none;
+            display: block;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .preview a:hover {
+            color: #5568d3;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Bookmark Bundle Manager</h1>
+            <p>Create, save, and share collections of links with markdown support</p>
+        </div>
+
+        <div class="card">
+            <div class="input-group">
+                <label>Bundle Name</label>
+                <input type="text" id="bundleName" placeholder="My Awesome Links">
+            </div>
+
+            <div class="input-group">
+                <label style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Links</span>
+                    <label class="toggle-label">
+                        <span>Markdown mode</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="markdownToggle" onchange="toggleMarkdownMode()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </label>
+                </label>
+                <textarea id="bundleContent" placeholder="https://google.com
+https://github.com
+https://youtube.com
+
+One URL per line. Add notes after URLs:
+https://developer.mozilla.org Mozilla docs
+https://stackoverflow.com Ask questions here"></textarea>
+            </div>
+
+            <div class="markdown-help" id="plainHelp">
+                <strong>Tips:</strong> Enter one URL per line. You can add text after the URL for notes.
+                Use blank lines to separate groups. Non-URL lines are treated as section headers.
+            </div>
+
+            <div class="markdown-help" id="markdownHelp" style="display: none;">
+                <strong>Markdown Mode:</strong> Use <code>[Link Text](URL)</code> for links.
+                Add <code># Headings</code> to organize sections. Plain text and empty lines are preserved.
+            </div>
+
+            <div class="button-group" style="margin-top: 20px;">
+                <button class="btn-primary" onclick="saveBundle()">💾 Save Bundle</button>
+                <button class="btn-secondary" onclick="generateShareLink()">🔗 Generate Share Link</button>
+                <button class="btn-outline" onclick="openAllLinks()">🚀 Open All Links</button>
+                <button class="btn-outline" onclick="fetchTitles()">✨ Fetch Titles</button>
+                <button class="btn-danger" onclick="clearForm()">🗑️ Clear</button>
+            </div>
+
+            <div id="shareLinkContainer"></div>
+            <div id="previewContainer"></div>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">📂 Saved Bundles</h2>
+            <div id="bundlesList" class="bundles-list"></div>
+        </div>
+    </div>
+
+    <script>
+        // Load bundle from URL on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromURL();
+            displayBundles();
+        });
+
+        function saveBundle() {
+            const name = document.getElementById('bundleName').value.trim();
+            const content = document.getElementById('bundleContent').value.trim();
+
+            if (!name || !content) {
+                showNotification('Please enter both name and content', 'error');
+                return;
+            }
+
+            const bundles = getBundles();
+            bundles[name] = {
+                content: content,
+                created: new Date().toISOString()
+            };
+
+            localStorage.setItem('bookmarkBundles', JSON.stringify(bundles));
+            showNotification('Bundle saved successfully!');
+            displayBundles();
+        }
+
+        function getBundles() {
+            const data = localStorage.getItem('bookmarkBundles');
+            return data ? JSON.parse(data) : {};
+        }
+
+        function displayBundles() {
+            const bundles = getBundles();
+            const container = document.getElementById('bundlesList');
+
+            if (Object.keys(bundles).length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999;">No saved bundles yet. Create your first one above!</p>';
+                return;
+            }
+
+            container.innerHTML = Object.entries(bundles).map(([name, data]) => `
+                <div class="bundle-item">
+                    <div class="bundle-info">
+                        <h3>${name}</h3>
+                        <p>Created: ${new Date(data.created).toLocaleDateString()} • ${extractLinks(data.content).length} links</p>
+                    </div>
+                    <div class="bundle-actions">
+                        <button class="btn-primary" onclick="openBundleLinks('${name}')">🚀 Open</button>
+                        <button class="btn-outline" onclick="loadBundle('${name}')">Edit</button>
+                        <button class="btn-secondary" onclick="shareBundle('${name}')">Share</button>
+                        <button class="btn-danger" onclick="deleteBundle('${name}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadBundle(name) {
+            const bundles = getBundles();
+            const bundle = bundles[name];
+
+            if (bundle) {
+                document.getElementById('bundleName').value = name;
+                document.getElementById('bundleContent').value = bundle.content;
+                showNotification('Bundle loaded!');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function openBundleLinks(name) {
+            const bundles = getBundles();
+            const bundle = bundles[name];
+
+            if (bundle) {
+                const links = extractLinks(bundle.content);
+                if (links.length === 0) {
+                    showNotification('No valid links found in this bundle', 'error');
+                    return;
+                }
+
+                if (confirm(`Open ${links.length} links from "${name}" in new tabs?`)) {
+                    links.forEach(link => {
+                        window.open(link.url, '_blank');
+                    });
+                    showNotification(`Opened ${links.length} links!`);
+                }
+            }
+        }
+
+        function deleteBundle(name) {
+            if (confirm(`Delete bundle "${name}"?`)) {
+                const bundles = getBundles();
+                delete bundles[name];
+                localStorage.setItem('bookmarkBundles', JSON.stringify(bundles));
+                showNotification('Bundle deleted');
+                displayBundles();
+            }
+        }
+
+        function generateShareLink() {
+            const name = document.getElementById('bundleName').value.trim();
+            const content = document.getElementById('bundleContent').value.trim();
+
+            if (!name || !content) {
+                showNotification('Please enter both name and content', 'error');
+                return;
+            }
+
+            const data = btoa(encodeURIComponent(JSON.stringify({ name, content })));
+            const shareUrl = `${window.location.origin}${window.location.pathname}?bundle=${data}`;
+
+            const container = document.getElementById('shareLinkContainer');
+            container.innerHTML = `
+                <div class="share-url">
+                    <strong>Share this link:</strong><br>
+                    <a href="${shareUrl}" target="_blank">${shareUrl}</a>
+                    <div style="margin-top: 10px;">
+                        <button class="btn-secondary" onclick="copyToClipboard('${shareUrl}')">📋 Copy Link</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function shareBundle(name) {
+            const bundles = getBundles();
+            const bundle = bundles[name];
+
+            if (bundle) {
+                const data = btoa(encodeURIComponent(JSON.stringify({ name, content: bundle.content })));
+                const shareUrl = `${window.location.origin}${window.location.pathname}?bundle=${data}`;
+                copyToClipboard(shareUrl);
+                showNotification('Share link copied to clipboard!');
+            }
+        }
+
+        function loadFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const bundleData = urlParams.get('bundle');
+
+            if (bundleData) {
+                try {
+                    const decoded = JSON.parse(decodeURIComponent(atob(bundleData)));
+                    document.getElementById('bundleName').value = decoded.name;
+                    document.getElementById('bundleContent').value = decoded.content;
+                    showNotification('Bundle loaded from shared link!');
+                } catch (e) {
+                    console.error('Failed to load bundle from URL');
+                }
+            }
+        }
+
+        function extractLinks(content) {
+            const isMarkdown = document.getElementById('markdownToggle').checked;
+
+            if (isMarkdown) {
+                // Extract markdown links
+                const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+                const links = [];
+                let match;
+
+                while ((match = linkRegex.exec(content)) !== null) {
+                    links.push({ text: match[1], url: match[2] });
+                }
+
+                return links;
+            } else {
+                // Extract plain URLs (with or without text after them)
+                const lines = content.split('\n');
+                const links = [];
+                const urlRegex = /^(https?:\/\/[^\s]+)(?:\s+(.*))?/i;
+
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (trimmed) {
+                        const match = trimmed.match(urlRegex);
+                        if (match) {
+                            links.push({
+                                url: match[1],
+                                text: match[2] || match[1]
+                            });
+                        }
+                    }
+                }
+
+                return links;
+            }
+        }
+
+        function toggleMarkdownMode() {
+            const isMarkdown = document.getElementById('markdownToggle').checked;
+            const plainHelp = document.getElementById('plainHelp');
+            const markdownHelp = document.getElementById('markdownHelp');
+
+            if (isMarkdown) {
+                plainHelp.style.display = 'none';
+                markdownHelp.style.display = 'block';
+                document.getElementById('bundleContent').placeholder = `[Google](https://google.com)
+[GitHub](https://github.com)
+[YouTube](https://youtube.com)
+
+# Development Resources
+[MDN Web Docs](https://developer.mozilla.org)
+[Stack Overflow](https://stackoverflow.com)`;
+            } else {
+                plainHelp.style.display = 'block';
+                markdownHelp.style.display = 'none';
+                document.getElementById('bundleContent').placeholder = `https://google.com
+https://github.com
+https://youtube.com
+
+One URL per line. Add notes after URLs:
+https://developer.mozilla.org Mozilla docs
+https://stackoverflow.com Ask questions here`;
+            }
+        }
+
+        async function fetchTitles() {
+            const content = document.getElementById('bundleContent').value.trim();
+            const isMarkdown = document.getElementById('markdownToggle').checked;
+
+            if (!content) {
+                showNotification('No links to process', 'error');
+                return;
+            }
+
+            if (isMarkdown) {
+                showNotification('Title fetching works in plaintext mode only', 'error');
+                return;
+            }
+
+            const lines = content.split('\n');
+            const urlRegex = /^(https?:\/\/[^\s]+)(?:\s+(.*))?/i;
+            const updatedLines = [];
+            let fetchedCount = 0;
+
+            showNotification('Fetching titles... This may take a moment');
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+
+                if (!trimmed) {
+                    updatedLines.push('');
+                    continue;
+                }
+
+                const match = trimmed.match(urlRegex);
+
+                if (match && !match[2]) {
+                    // URL without text - fetch title
+                    try {
+                        const title = await fetchPageTitle(match[1]);
+                        if (title) {
+                            updatedLines.push(`${match[1]} ${title}`);
+                            fetchedCount++;
+                        } else {
+                            updatedLines.push(line);
+                        }
+                    } catch (e) {
+                        updatedLines.push(line);
+                    }
+                } else {
+                    // Keep line as is (already has text or not a URL)
+                    updatedLines.push(line);
+                }
+            }
+
+            document.getElementById('bundleContent').value = updatedLines.join('\n');
+            showNotification(`Fetched ${fetchedCount} page titles!`);
+        }
+
+        async function fetchPageTitle(url) {
+            try {
+                // Use a CORS proxy for fetching titles
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+
+                if (data.contents) {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data.contents, 'text/html');
+                    const title = doc.querySelector('title');
+
+                    if (title && title.textContent.trim()) {
+                        return title.textContent.trim();
+                    }
+                }
+
+                // Fallback: extract domain name
+                const urlObj = new URL(url);
+                return urlObj.hostname.replace('www.', '');
+            } catch (e) {
+                // Fallback: extract domain name
+                try {
+                    const urlObj = new URL(url);
+                    return urlObj.hostname.replace('www.', '');
+                } catch {
+                    return null;
+                }
+            }
+        }
+
+        function openAllLinks() {
+            const content = document.getElementById('bundleContent').value.trim();
+            if (!content) {
+                showNotification('No links to open', 'error');
+                return;
+            }
+
+            const links = extractLinks(content);
+            if (links.length === 0) {
+                showNotification('No valid links found', 'error');
+                return;
+            }
+
+            if (confirm(`Open ${links.length} links in new tabs?`)) {
+                links.forEach(link => {
+                    window.open(link.url, '_blank');
+                });
+                showNotification(`Opened ${links.length} links!`);
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('bundleName').value = '';
+            document.getElementById('bundleContent').value = '';
+            document.getElementById('shareLinkContainer').innerHTML = '';
+            document.getElementById('previewContainer').innerHTML = '';
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('Copied to clipboard!');
+            }).catch(err => {
+                showNotification('Failed to copy', 'error');
+            });
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            notification.style.background = type === 'error' ? '#f56565' : '#48bb78';
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+
+</html>
