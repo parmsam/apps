@@ -407,11 +407,23 @@ https://stackoverflow.com Ask questions here"></textarea>
                 return;
             }
 
-            container.innerHTML = Object.entries(bundles).map(([name, data]) => `
+            container.innerHTML = Object.entries(bundles).map(([name, data]) => {
+                // Detect if bundle uses markdown format
+                const hasMarkdownLinks = /\[([^\]]+)\]\(([^)]+)\)/.test(data.content);
+                const originalToggleState = document.getElementById('markdownToggle').checked;
+
+                // Temporarily set toggle to match bundle format
+                document.getElementById('markdownToggle').checked = hasMarkdownLinks;
+                const linkCount = extractLinks(data.content).length;
+
+                // Restore toggle state
+                document.getElementById('markdownToggle').checked = originalToggleState;
+
+                return `
                 <div class="bundle-item">
                     <div class="bundle-info">
                         <h3>${name}</h3>
-                        <p>Created: ${new Date(data.created).toLocaleDateString()} • ${extractLinks(data.content).length} links</p>
+                        <p>Created: ${new Date(data.created).toLocaleDateString()} • ${linkCount} links</p>
                     </div>
                     <div class="bundle-actions">
                         <button class="btn-primary" onclick="openBundleLinks('${name}')">🚀 Open</button>
@@ -420,7 +432,7 @@ https://stackoverflow.com Ask questions here"></textarea>
                         <button class="btn-danger" onclick="deleteBundle('${name}')">Delete</button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function loadBundle(name) {
@@ -440,7 +452,21 @@ https://stackoverflow.com Ask questions here"></textarea>
             const bundle = bundles[name];
 
             if (bundle) {
+                // Temporarily set the markdown toggle state based on bundle content
+                const hasMarkdownLinks = /\[([^\]]+)\]\(([^)]+)\)/.test(bundle.content);
+                const originalToggleState = document.getElementById('markdownToggle').checked;
+
+                if (hasMarkdownLinks) {
+                    document.getElementById('markdownToggle').checked = true;
+                } else {
+                    document.getElementById('markdownToggle').checked = false;
+                }
+
                 const links = extractLinks(bundle.content);
+
+                // Restore original toggle state
+                document.getElementById('markdownToggle').checked = originalToggleState;
+
                 if (links.length === 0) {
                     showNotification('No valid links found in this bundle', 'error');
                     return;
@@ -591,13 +617,14 @@ https://stackoverflow.com Ask questions here`;
                 return;
             }
 
-            if (isMarkdown) {
-                showNotification('Title fetching works in plaintext mode only', 'error');
+            if (!isMarkdown) {
+                showNotification('Title fetching works in markdown mode only', 'error');
                 return;
             }
 
             const lines = content.split('\n');
-            const urlRegex = /^(https?:\/\/[^\s]+)(?:\s+(.*))?/i;
+            const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/;
+            const plainUrlRegex = /^(https?:\/\/[^\s]+)/i;
             const updatedLines = [];
             let fetchedCount = 0;
 
@@ -611,29 +638,36 @@ https://stackoverflow.com Ask questions here`;
                     continue;
                 }
 
-                const match = trimmed.match(urlRegex);
+                // Check if it's already a markdown link
+                if (markdownLinkRegex.test(trimmed)) {
+                    updatedLines.push(line);
+                    continue;
+                }
 
-                if (match && !match[2]) {
-                    // URL without text - fetch title
+                // Check if it's a plain URL
+                const match = trimmed.match(plainUrlRegex);
+
+                if (match) {
+                    // Plain URL - fetch title and convert to markdown
                     try {
                         const title = await fetchPageTitle(match[1]);
                         if (title) {
-                            updatedLines.push(`${match[1]} ${title}`);
+                            updatedLines.push(`[${title}](${match[1]})`);
                             fetchedCount++;
                         } else {
-                            updatedLines.push(line);
+                            updatedLines.push(`[${match[1]}](${match[1]})`);
                         }
                     } catch (e) {
-                        updatedLines.push(line);
+                        updatedLines.push(`[${match[1]}](${match[1]})`);
                     }
                 } else {
-                    // Keep line as is (already has text or not a URL)
+                    // Not a URL - keep as section header
                     updatedLines.push(line);
                 }
             }
 
             document.getElementById('bundleContent').value = updatedLines.join('\n');
-            showNotification(`Fetched ${fetchedCount} page titles!`);
+            showNotification(`Converted ${fetchedCount} URLs to markdown with titles!`);
         }
 
         async function fetchPageTitle(url) {
