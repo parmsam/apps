@@ -310,6 +310,11 @@
         <div class="header">
             <h1>📚 Bookmark Bundle Manager</h1>
             <p>Create, save, and share collections of links with markdown support</p>
+            <div
+                style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; margin-top: 15px; font-size: 0.9em;">
+                <strong>⚠️ Important:</strong> To open multiple links, please allow pop-ups for this site in your
+                browser settings.
+            </div>
         </div>
 
         <div class="card">
@@ -473,10 +478,19 @@ https://stackoverflow.com Ask questions here"></textarea>
                 }
 
                 if (confirm(`Open ${links.length} links from "${name}" in new tabs?`)) {
+                    let opened = 0;
                     links.forEach(link => {
-                        window.open(link.url, '_blank');
+                        const newWindow = window.open(link.url, '_blank');
+                        if (newWindow) opened++;
                     });
-                    showNotification(`Opened ${links.length} links!`);
+
+                    if (opened === 0) {
+                        showNotification('Pop-ups blocked! Please allow pop-ups for this site in your browser settings.', 'error');
+                    } else if (opened < links.length) {
+                        showNotification(`Opened ${opened}/${links.length} links. Some may have been blocked by pop-up blocker.`, 'error');
+                    } else {
+                        showNotification(`Opened ${links.length} links!`);
+                    }
                 }
             }
         }
@@ -715,10 +729,19 @@ https://stackoverflow.com Ask questions here`;
             }
 
             if (confirm(`Open ${links.length} links in new tabs?`)) {
+                let opened = 0;
                 links.forEach(link => {
-                    window.open(link.url, '_blank');
+                    const newWindow = window.open(link.url, '_blank');
+                    if (newWindow) opened++;
                 });
-                showNotification(`Opened ${links.length} links!`);
+
+                if (opened === 0) {
+                    showNotification('Pop-ups blocked! Please allow pop-ups for this site in your browser settings.', 'error');
+                } else if (opened < links.length) {
+                    showNotification(`Opened ${opened}/${links.length} links. Some may have been blocked by pop-up blocker.`, 'error');
+                } else {
+                    showNotification(`Opened ${links.length} links!`);
+                }
             }
         }
 
