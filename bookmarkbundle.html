@@ -350,7 +350,8 @@ https://stackoverflow.com Ask questions here"></textarea>
 
             <div class="markdown-help" id="markdownHelp" style="display: none;">
                 <strong>Markdown Mode:</strong> Use <code>[Link Text](URL)</code> for links.
-                Add <code># Headings</code> to organize sections. Plain text and empty lines are preserved.
+                Add <code># Headings</code> to organize sections. Add notes after links:
+                <code>[Link](URL) My notes here</code>
             </div>
 
             <div class="button-group" style="margin-top: 20px;">
@@ -561,13 +562,23 @@ https://stackoverflow.com Ask questions here"></textarea>
             const isMarkdown = document.getElementById('markdownToggle').checked;
 
             if (isMarkdown) {
-                // Extract markdown links
-                const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+                // Extract markdown links, with optional text after
+                const lines = content.split('\n');
                 const links = [];
-                let match;
+                const linkRegex = /\[([^\]]+)\]\(([^)]+)\)(?:\s+(.*))?/;
 
-                while ((match = linkRegex.exec(content)) !== null) {
-                    links.push({ text: match[1], url: match[2] });
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (trimmed) {
+                        const match = trimmed.match(linkRegex);
+                        if (match) {
+                            links.push({
+                                text: match[1],
+                                url: match[2],
+                                note: match[3] || ''
+                            });
+                        }
+                    }
                 }
 
                 return links;
@@ -584,7 +595,8 @@ https://stackoverflow.com Ask questions here"></textarea>
                         if (match) {
                             links.push({
                                 url: match[1],
-                                text: match[2] || match[1]
+                                text: match[2] || match[1],
+                                note: match[2] || ''
                             });
                         }
                     }
@@ -607,8 +619,8 @@ https://stackoverflow.com Ask questions here"></textarea>
 [YouTube](https://youtube.com)
 
 # Development Resources
-[MDN Web Docs](https://developer.mozilla.org)
-[Stack Overflow](https://stackoverflow.com)`;
+[MDN Web Docs](https://developer.mozilla.org) Great reference
+[Stack Overflow](https://stackoverflow.com) Ask questions here`;
             } else {
                 plainHelp.style.display = 'block';
                 markdownHelp.style.display = 'none';
