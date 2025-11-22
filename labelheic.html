@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>HEIC Watermark Label → JPG/PNG/WEBP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- heic2any for HEIC → Image conversion -->
+  <script src="https://cdn.jsdelivr.net/npm/heic2any/dist/heic2any.min.js"></script>
+  <!-- JSZip for ZIP downloads -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-elevated: #020617;
+      --panel: #020617;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.15);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1e293b;
+      --danger: #f97373;
+      --radius-lg: 1rem;
+      --radius-md: 0.75rem;
+      --radius-sm: 0.5rem;
+      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.75);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #0f172a, #020617 55%);
+      color: var(--text);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 1120px;
+      background: radial-gradient(circle at top left, #020617, #000000 60%);
+      border-radius: 1.5rem;
+      border: 1px solid #1f2937;
+      box-shadow: var(--shadow-soft);
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.15fr);
+      gap: 1.75rem;
+      padding: 1.75rem;
+    }
+
+    @media (max-width: 900px) {
+      .app-shell {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 1.25rem;
+      }
+    }
+
+    .panel {
+      background: radial-gradient(circle at top left, #020617, #020617 55%);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      padding: 1rem 1.25rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: -80px;
+      background: radial-gradient(circle at top left,
+          rgba(56, 189, 248, 0.08),
+          transparent 55%);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .panel>* {
+      position: relative;
+      z-index: 1;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    .hint {
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .upload-zone {
+      border-radius: var(--radius-md);
+      border: 1px dashed rgba(148, 163, 184, 0.4);
+      padding: 0.9rem;
+      background: radial-gradient(circle at top left, #020617, #020617 62%);
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .upload-row {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .upload-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .file-input {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      padding: 0.25rem 0.6rem;
+      font-size: 0.8rem;
+      background: radial-gradient(circle at top left, #020617, #020617 70%);
+      cursor: pointer;
+    }
+
+    .file-input span {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .file-input input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .pill {
+      font-size: 0.7rem;
+      border-radius: 999px;
+      padding: 0.15rem 0.6rem;
+      border: 1px solid rgba(56, 189, 248, 0.7);
+      background: rgba(15, 23, 42, 0.7);
+      color: var(--accent);
+    }
+
+    .file-list {
+      margin-top: 0.5rem;
+      max-height: 140px;
+      overflow: auto;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(30, 64, 175, 0.5);
+      background: radial-gradient(circle at top left, #020617, #020617 72%);
+      padding: 0.3rem;
+      font-size: 0.76rem;
+    }
+
+    .file-list.empty {
+      border-style: dashed;
+      border-color: rgba(148, 163, 184, 0.4);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.4rem;
+      padding: 0.3rem 0.45rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .file-item span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+    }
+
+    .file-item small {
+      color: var(--muted);
+      opacity: 0.8;
+    }
+
+    .file-item:hover {
+      background: rgba(15, 23, 42, 0.6);
+      border-color: rgba(148, 163, 184, 0.4);
+    }
+
+    .file-item.active {
+      background: rgba(15, 23, 42, 0.95);
+      border-color: rgba(56, 189, 248, 0.8);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3);
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 600px) {
+      .controls-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      font-size: 0.8rem;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .field input[type="text"],
+    .field input[type="number"],
+    .field select {
+      background: radial-gradient(circle at top left, #020617, #020617 70%);
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      padding: 0.3rem 0.45rem;
+      font-size: 0.8rem;
+      color: var(--text);
+      outline: none;
+    }
+
+    .field input[type="text"]:focus,
+    .field input[type="number"]:focus,
+    .field select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
+    }
+
+    .field input[type="color"] {
+      padding: 0;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: transparent;
+      height: 1.9rem;
+    }
+
+    .field-inline {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .field-inline small {
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-top: 0.4rem;
+    }
+
+    .toggle-row label {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .toggle-row input[type="checkbox"] {
+      accent-color: var(--accent);
+      transform: scale(1.1);
+    }
+
+    .divider {
+      height: 1px;
+      border-radius: 999px;
+      background: radial-gradient(circle at center,
+          rgba(148, 163, 184, 0.7),
+          transparent 60%);
+      margin-block: 0.4rem 0.2rem;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.4rem;
+      align-items: center;
+    }
+
+    .btn {
+      font-size: 0.8rem;
+      border-radius: 999px;
+      padding: 0.35rem 0.9rem;
+      border: 1px solid transparent;
+      background: radial-gradient(circle at top left, var(--accent), #0ea5e9);
+      color: #0b1120;
+      cursor: pointer;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border-color: rgba(148, 163, 184, 0.7);
+      color: var(--muted);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    .btn span {
+      font-size: 0.8rem;
+    }
+
+    .batch-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 0.25rem;
+    }
+
+    .batch-select {
+      min-width: 130px;
+    }
+
+    .canvas-wrapper {
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: radial-gradient(circle at center, #020617, #020617 60%);
+      padding: 0.5rem;
+      min-height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .canvas-placeholder {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
+      max-width: 14rem;
+    }
+
+    canvas {
+      max-width: 100%;
+      max-height: 70vh;
+      border-radius: 0.75rem;
+      display: none;
+    }
+
+    .status-bar {
+      font-size: 0.7rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-top: 0.3rem;
+    }
+
+    .status-pill {
+      padding: 0.1rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.65);
+    }
+
+    .status-pill.ok {
+      border-color: rgba(56, 189, 248, 0.8);
+      color: var(--accent);
+    }
+
+    .status-pill.warn {
+      border-color: rgba(248, 113, 113, 0.9);
+      color: #fecaca;
+    }
+
+    .status-text {
+      opacity: 0.95;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app-shell">
+    <!-- Left panel: controls -->
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="title">
+            HEIC → Watermarked Image
+            <span class="badge">Client-Side</span>
+          </div>
+          <p class="subtitle">
+            Add a text label as a watermark, then export as JPG, PNG, or WEBP.
+            Now supports multiple HEIC files + ZIP export.
+          </p>
+        </div>
+        <span class="pill">No upload — all in browser</span>
+      </div>
+
+      <div class="upload-zone">
+        <div class="upload-row">
+          <div class="upload-label">
+            1. Load one or more <strong>HEIC</strong> images
+            <div class="hint">Drag &amp; drop or use the picker.</div>
+          </div>
+          <label class="file-input">
+            <span>Choose HEIC files…</span>
+            <input id="fileInput" type="file" accept=".heic,image/heic" multiple />
+          </label>
+        </div>
+        <div id="fileList" class="file-list empty">
+          No files loaded yet. Drop HEIC files here.
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="field">
+        <label for="labelText">2. Label / watermark text</label>
+        <input id="labelText" type="text" placeholder="e.g. © Sam · Draft · Do not share" value="Sample Watermark" />
+      </div>
+
+      <div class="controls-grid">
+        <div class="field">
+          <label for="fontFamily">Font family</label>
+          <select id="fontFamily">
+            <option value="system-ui">System UI</option>
+            <option value="Inter, system-ui, -apple-system, BlinkMacSystemFont">Inter</option>
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="Helvetica, Arial, sans-serif">Helvetica</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="'Times New Roman', serif">Times New Roman</option>
+            <option value="'Courier New', monospace">Courier New</option>
+            <option value="monospace">Monospace</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="fontSize">Font size (px)</label>
+          <input id="fontSize" type="number" min="8" max="240" value="40" />
+        </div>
+
+        <div class="field">
+          <label for="fontColor">Text color</label>
+          <input id="fontColor" type="color" value="#ffffff" />
+        </div>
+
+        <div class="field">
+          <label for="opacity">Opacity (0–1)</label>
+          <div class="field-inline">
+            <input id="opacity" type="number" min="0" max="1" step="0.05" value="0.35" />
+            <small>Lower = more transparent</small>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="position">Position preset</label>
+          <select id="position">
+            <option value="bottom-right">Bottom right</option>
+            <option value="bottom-left">Bottom left</option>
+            <option value="top-right">Top right</option>
+            <option value="top-left">Top left</option>
+            <option value="center">Center</option>
+            <option value="custom">Custom (X/Y)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Custom offset (px)</label>
+          <div class="field-inline">
+            <input id="offsetX" type="number" placeholder="X" style="width: 50%;" value="40" />
+            <input id="offsetY" type="number" placeholder="Y" style="width: 50%;" value="40" />
+          </div>
+          <small class="hint">Used for corners &amp; custom position</small>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <label for="repeatDiagonal">Repeat diagonally across image</label>
+        <input id="repeatDiagonal" type="checkbox" />
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="btn-row">
+        <button id="applyBtn" class="btn" disabled>
+          <span>Apply watermark</span>
+        </button>
+        <button id="downloadPng" class="btn btn-secondary" disabled>
+          <span>Download PNG</span>
+        </button>
+        <button id="downloadJpg" class="btn btn-secondary" disabled>
+          <span>Download JPG</span>
+        </button>
+        <button id="downloadWebp" class="btn btn-secondary" disabled>
+          <span>Download WEBP</span>
+        </button>
+      </div>
+
+      <div class="batch-controls">
+        <div class="field batch-select">
+          <label for="batchFormat">ZIP format</label>
+          <select id="batchFormat">
+            <option value="png">PNG</option>
+            <option value="jpg">JPG</option>
+            <option value="webp">WEBP</option>
+          </select>
+        </div>
+        <button id="downloadZip" class="btn btn-secondary" disabled>
+          <span>Download all as ZIP</span>
+        </button>
+      </div>
+
+      <div class="status-bar">
+        <span id="status" class="status-pill">Waiting for HEIC…</span>
+        <span class="status-text" id="statusDetail">
+          Tip: select a file from the list, tweak label, then re-apply.
+        </span>
+      </div>
+    </section>
+
+    <!-- Right panel: canvas preview -->
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="title">
+            Preview
+          </div>
+          <p class="subtitle">
+            The canvas shows the currently selected image with your watermark.
+          </p>
+        </div>
+      </div>
+
+      <div class="canvas-wrapper">
+        <div id="placeholder" class="canvas-placeholder">
+          Load one or more HEIC images to begin.<br />
+          Your images stay in your browser — nothing is uploaded.
+        </div>
+        <canvas id="canvas"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const fileInput = document.getElementById("fileInput");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const placeholder = document.getElementById("placeholder");
+    const fileListEl = document.getElementById("fileList");
+    const statusEl = document.getElementById("status");
+    const statusDetailEl = document.getElementById("statusDetail");
+
+    const labelTextInput = document.getElementById("labelText");
+    const fontFamilySelect = document.getElementById("fontFamily");
+    const fontSizeInput = document.getElementById("fontSize");
+    const fontColorInput = document.getElementById("fontColor");
+    const opacityInput = document.getElementById("opacity");
+    const positionSelect = document.getElementById("position");
+    const offsetXInput = document.getElementById("offsetX");
+    const offsetYInput = document.getElementById("offsetY");
+    const repeatDiagonalCheckbox = document.getElementById("repeatDiagonal");
+
+    const applyBtn = document.getElementById("applyBtn");
+    const downloadPngBtn = document.getElementById("downloadPng");
+    const downloadJpgBtn = document.getElementById("downloadJpg");
+    const downloadWebpBtn = document.getElementById("downloadWebp");
+    const batchFormatSelect = document.getElementById("batchFormat");
+    const downloadZipBtn = document.getElementById("downloadZip");
+
+    // Store multiple images: { name, img }
+    let images = [];
+    let currentIndex = -1;
+    let baseImage = null; // currently active base image (no watermark)
+
+    function setStatus(text, mode = "neutral", detail = "") {
+      statusEl.textContent = text;
+      statusEl.classList.remove("ok", "warn");
+      if (mode === "ok") statusEl.classList.add("ok");
+      if (mode === "warn") statusEl.classList.add("warn");
+      if (detail) statusDetailEl.textContent = detail;
+    }
+
+    function enableButtons(enabled) {
+      applyBtn.disabled = !enabled;
+      downloadPngBtn.disabled = !enabled;
+      downloadJpgBtn.disabled = !enabled;
+      downloadWebpBtn.disabled = !enabled;
+      downloadZipBtn.disabled = !enabled;
+    }
+
+    function renderFileList() {
+      fileListEl.innerHTML = "";
+      if (!images.length) {
+        fileListEl.classList.add("empty");
+        fileListEl.textContent = "No files loaded yet. Drop HEIC files here.";
+        return;
+      }
+      fileListEl.classList.remove("empty");
+
+      images.forEach((imgObj, idx) => {
+        const item = document.createElement("div");
+        item.className = "file-item" + (idx === currentIndex ? " active" : "");
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = imgObj.name || `Image ${idx + 1}`;
+        const meta = document.createElement("small");
+        if (imgObj.img) {
+          meta.textContent = `${imgObj.img.width}×${imgObj.img.height}`;
+        } else {
+          meta.textContent = "loading…";
+        }
+        item.appendChild(nameSpan);
+        item.appendChild(meta);
+
+        item.addEventListener("click", () => {
+          if (imgObj.img) {
+            setCurrentIndex(idx);
+          }
+        });
+
+        fileListEl.appendChild(item);
+      });
+    }
+
+    function setCurrentIndex(idx) {
+      if (idx < 0 || idx >= images.length) return;
+      currentIndex = idx;
+      baseImage = images[idx].img;
+
+      canvas.width = baseImage.width;
+      canvas.height = baseImage.height;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(baseImage, 0, 0);
+
+      canvas.style.display = "block";
+      placeholder.style.display = "none";
+
+      enableButtons(true);
+      renderFileList();
+
+      setStatus(
+        `Viewing ${images[idx].name || "image"} (${idx + 1}/${images.length})`,
+        "ok"
+      );
+      statusDetailEl.textContent =
+        "Adjust watermark settings and click “Apply watermark”, then download.";
+    }
+
+    async function decodeHeicFile(file) {
+      const name = file.name || "image.heic";
+      const result = await heic2any({
+        blob: file,
+        toType: "image/png",
+        multiple: false,
+      });
+      const blob = result instanceof Blob ? result : result[0];
+      const url = URL.createObjectURL(blob);
+
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          resolve({ name, img });
+        };
+        img.onerror = (e) => {
+          console.error("Image load error", e);
+          URL.revokeObjectURL(url);
+          reject(new Error("Failed to load decoded image"));
+        };
+        img.src = url;
+      });
+    }
+
+    async function loadHeicFiles(fileList) {
+      if (!fileList || !fileList.length) return;
+
+      const files = Array.from(fileList).filter((f) =>
+        /\.heic$/i.test(f.name) || f.type === "image/heic"
+      );
+
+      if (!files.length) {
+        setStatus("No HEIC files detected in selection.", "warn");
+        return;
+      }
+
+      setStatus("Decoding HEIC files in browser…", "ok");
+      enableButtons(false);
+
+      const newlyLoaded = [];
+      for (const file of files) {
+        try {
+          const decoded = await decodeHeicFile(file);
+          newlyLoaded.push(decoded);
+        } catch (err) {
+          console.error("Failed to decode HEIC:", file.name, err);
+        }
+      }
+
+      if (!newlyLoaded.length && !images.length) {
+        setStatus("Failed to decode the selected HEIC files.", "warn");
+        return;
+      }
+
+      images = images.concat(newlyLoaded);
+      renderFileList();
+
+      if (currentIndex === -1 && images.length) {
+        setCurrentIndex(0);
+      } else if (images.length) {
+        enableButtons(true);
+        setStatus(
+          `${images.length} image(s) loaded. Viewing ${currentIndex + 1}/${images.length}.`,
+          "ok"
+        );
+      }
+    }
+
+    fileInput.addEventListener("change", (e) => {
+      const files = e.target.files;
+      loadHeicFiles(files);
+    });
+
+    // Drag & drop support on whole window
+    window.addEventListener("dragover", (e) => {
+      e.preventDefault();
+    });
+    window.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const files = e.dataTransfer.files;
+      if (files && files.length) {
+        loadHeicFiles(files);
+      }
+    });
+
+    function getWatermarkSettings() {
+      const text = labelTextInput.value.trim();
+      if (!text) {
+        return null;
+      }
+
+      const fontSize = parseInt(fontSizeInput.value, 10) || 40;
+      const color = fontColorInput.value || "#ffffff";
+      const opacityRaw = parseFloat(opacityInput.value);
+      const opacity = Math.min(
+        1,
+        Math.max(0, isNaN(opacityRaw) ? 0.35 : opacityRaw)
+      );
+      const position = positionSelect.value;
+      const offsetX = parseInt(offsetXInput.value, 10) || 40;
+      const offsetY = parseInt(offsetYInput.value, 10) || 40;
+      const repeatDiagonal = repeatDiagonalCheckbox.checked;
+      const fontFamily = fontFamilySelect.value || "system-ui";
+
+      return {
+        text,
+        fontSize,
+        color,
+        opacity,
+        position,
+        offsetX,
+        offsetY,
+        repeatDiagonal,
+        fontFamily,
+      };
+    }
+
+    function buildWatermarkedCanvas(img, settings) {
+      const s = settings || getWatermarkSettings();
+      if (!s) return null;
+
+      const c = document.createElement("canvas");
+      c.width = img.width;
+      c.height = img.height;
+      const cctx = c.getContext("2d");
+
+      // draw base
+      cctx.drawImage(img, 0, 0);
+
+      // Apply watermark
+      cctx.font = `${s.fontSize}px ${s.fontFamily}`;
+      cctx.textBaseline = "middle";
+
+      cctx.save();
+      cctx.globalAlpha = s.opacity;
+      cctx.fillStyle = s.color;
+      cctx.shadowColor = "rgba(15, 23, 42, 0.9)";
+      cctx.shadowBlur = 4;
+      cctx.shadowOffsetX = 1;
+      cctx.shadowOffsetY = 1;
+
+      const textMetrics = cctx.measureText(s.text);
+      const textWidth = textMetrics.width;
+      const textHeight =
+        textMetrics.actualBoundingBoxAscent +
+        textMetrics.actualBoundingBoxDescent || s.fontSize;
+
+      function drawAt(x, y) {
+        cctx.fillText(s.text, x, y);
+      }
+
+      if (s.repeatDiagonal) {
+        const stepX = textWidth * 2;
+        const stepY = textHeight * 2;
+        for (let y = -c.height; y < c.height * 2; y += stepY) {
+          for (let x = -c.width; x < c.width * 2; x += stepX) {
+            const dx = x + y * 0.2;
+            const dy = y;
+            drawAt(dx, dy);
+          }
+        }
+      } else {
+        let x = c.width - textWidth - s.offsetX;
+        let y = c.height - s.offsetY;
+
+        if (s.position === "bottom-left") {
+          x = s.offsetX;
+          y = c.height - s.offsetY;
+        } else if (s.position === "top-right") {
+          x = c.width - textWidth - s.offsetX;
+          y = s.offsetY;
+        } else if (s.position === "top-left") {
+          x = s.offsetX;
+          y = s.offsetY;
+        } else if (s.position === "center") {
+          x = (c.width - textWidth) / 2;
+          y = c.height / 2;
+        } else if (s.position === "custom") {
+          x = s.offsetX;
+          y = s.offsetY;
+        }
+
+        drawAt(x, y);
+      }
+
+      cctx.restore();
+      return c;
+    }
+
+    function applyWatermark() {
+      if (!baseImage) return;
+
+      const settings = getWatermarkSettings();
+      if (!settings) {
+        setStatus("Please enter label / watermark text first.", "warn");
+        return;
+      }
+
+      const rendered = buildWatermarkedCanvas(baseImage, settings);
+      if (!rendered) return;
+
+      canvas.width = rendered.width;
+      canvas.height = rendered.height;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(rendered, 0, 0);
+
+      if (currentIndex >= 0 && images[currentIndex]) {
+        setStatus(
+          `Watermark applied to ${images[currentIndex].name || "image"}.`,
+          "ok"
+        );
+      } else {
+        setStatus("Watermark applied.", "ok");
+      }
+      statusDetailEl.textContent = "Now download as PNG, JPG, or WEBP for this image.";
+    }
+
+    applyBtn.addEventListener("click", () => {
+      applyWatermark();
+    });
+
+    function downloadSingle(format) {
+      if (!baseImage || currentIndex === -1) {
+        setStatus("Load and select an image before downloading.", "warn");
+        return;
+      }
+
+      const settings = getWatermarkSettings();
+      if (!settings) {
+        setStatus("Please enter label / watermark text first.", "warn");
+        return;
+      }
+
+      const mime =
+        format === "png"
+          ? "image/png"
+          : format === "jpg"
+            ? "image/jpeg"
+            : "image/webp";
+      const ext = format === "jpg" ? "jpg" : format;
+
+      const filenameBase =
+        (images[currentIndex] && images[currentIndex].name || "image")
+          .replace(/\.heic$/i, "")
+          .replace(/\.[a-zA-Z0-9]+$/, "");
+
+      const wmCanvas = buildWatermarkedCanvas(baseImage, settings);
+      if (!wmCanvas) return;
+
+      wmCanvas.toBlob(
+        (blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `${filenameBase || "watermarked"}.${ext}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        },
+        mime,
+        format === "jpg" ? 0.92 : 0.98
+      );
+    }
+
+    downloadPngBtn.addEventListener("click", () => downloadSingle("png"));
+    downloadJpgBtn.addEventListener("click", () => downloadSingle("jpg"));
+    downloadWebpBtn.addEventListener("click", () => downloadSingle("webp"));
+
+    async function downloadAllAsZip() {
+      if (!images.length) {
+        setStatus("No images loaded to include in ZIP.", "warn");
+        return;
+      }
+
+      const settings = getWatermarkSettings();
+      if (!settings) {
+        setStatus("Please enter label / watermark text first.", "warn");
+        return;
+      }
+
+      const format = batchFormatSelect.value || "png";
+      const mime =
+        format === "png"
+          ? "image/png"
+          : format === "jpg"
+            ? "image/jpeg"
+            : "image/webp";
+      const ext = format === "jpg" ? "jpg" : format;
+
+      const zip = new JSZip();
+      setStatus("Building ZIP with watermarked images…", "ok");
+      statusDetailEl.textContent = "Processing images one by one in your browser.";
+
+      for (let i = 0; i < images.length; i++) {
+        const imgObj = images[i];
+        if (!imgObj.img) continue;
+
+        const wmCanvas = buildWatermarkedCanvas(imgObj.img, settings);
+        if (!wmCanvas) continue;
+
+        // Wrap toBlob in a promise for await
+        const blob = await new Promise((resolve) =>
+          wmCanvas.toBlob(
+            (b) => resolve(b),
+            mime,
+            format === "jpg" ? 0.92 : 0.98
+          )
+        );
+        if (!blob) continue;
+
+        const baseName =
+          (imgObj.name || `image${i + 1}`)
+            .replace(/\.heic$/i, "")
+            .replace(/\.[a-zA-Z0-9]+$/, "") || `image${i + 1}`;
+
+        zip.file(`${baseName}_wm.${ext}`, blob);
+
+        setStatus(
+          `Building ZIP… (${i + 1}/${images.length})`,
+          "ok",
+          "Still running locally in your browser."
+        );
+      }
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `watermarked_images_${Date.now()}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setStatus("ZIP download ready with all watermarked images.", "ok");
+      statusDetailEl.textContent = `Exported ${images.length} image(s) as .${ext} inside a ZIP.`;
+    }
+
+    downloadZipBtn.addEventListener("click", () => {
+      downloadAllAsZip();
+    });
+  </script>
+</body>
+
+</html>

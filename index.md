@@ -41,6 +41,7 @@ Inspired by similar tiny apps from [Jeremy Howard](https://github.com/jph00/apps
 - [Reminders](reminders.html) - Simple reminders app that stores reminders in local storage. Option to convert to tasks in markdown format and import/export reminders as Markdown.
 - [Bookmark bundle manager](bookmarkbundle.html) - Manage and view bookmark bundles in HTML format.
 - [Rd to HTML converter](rd2html.html) - Convert R documentation (Rd) format to HTML with a simple UI for rendering and sharing purposes.
+- [Label HEIC images](labelheic.html) - Add text labels or watermarks to HEIC images before converting them to other formats like JPG, PNG, and WEBP.
  
 ---
 
