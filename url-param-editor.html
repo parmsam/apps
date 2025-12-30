@@ -124,13 +124,42 @@
 
         .param-row {
             display: grid;
-            grid-template-columns: 1fr 2fr auto;
+            grid-template-columns: auto 1fr 2fr auto;
             gap: 10px;
             margin-bottom: 12px;
             padding: 12px;
             background: #f9f9f9;
             border-radius: 8px;
             align-items: center;
+            cursor: move;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .param-row.dragging {
+            opacity: 0.5;
+            transform: scale(0.98);
+        }
+
+        .param-row.drag-over {
+            border-top: 3px solid #667eea;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            color: #999;
+            display: flex;
+            align-items: center;
+            padding: 4px;
+            user-select: none;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .drag-handle svg {
+            width: 20px;
+            height: 20px;
         }
 
         .param-row input {
@@ -243,7 +272,24 @@
 
         @media (max-width: 640px) {
             .param-row {
-                grid-template-columns: 1fr;
+                grid-template-columns: auto 1fr;
+                grid-template-rows: auto auto;
+            }
+
+            .param-row .drag-handle {
+                grid-row: 1 / 3;
+            }
+
+            .param-row input:first-of-type {
+                grid-column: 2;
+            }
+
+            .param-row input:nth-of-type(2) {
+                grid-column: 2;
+            }
+
+            .param-row button {
+                grid-column: 2;
             }
 
             .url-input-wrapper {
@@ -393,7 +439,15 @@
             params.forEach((param, index) => {
                 const row = document.createElement('div');
                 row.className = 'param-row';
+                row.draggable = true;
+                row.dataset.index = index;
                 row.innerHTML = `
+                    <div class="drag-handle" title="Drag to reorder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="18 15 12 9 6 15"></polyline>
+                            <polyline points="18 20 12 14 6 20"></polyline>
+                        </svg>
+                    </div>
                     <input
                         type="text"
                         placeholder="Parameter name"
@@ -408,6 +462,14 @@
                     >
                     <button onclick="removeParam(${index})">Remove</button>
                 `;
+
+                // Add drag event listeners
+                row.addEventListener('dragstart', handleDragStart);
+                row.addEventListener('dragover', handleDragOver);
+                row.addEventListener('drop', handleDrop);
+                row.addEventListener('dragend', handleDragEnd);
+                row.addEventListener('dragleave', handleDragLeave);
+
                 container.appendChild(row);
             });
         }
@@ -546,6 +608,71 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // Drag and drop functionality
+        let draggedIndex = null;
+
+        function handleDragStart(e) {
+            draggedIndex = parseInt(e.currentTarget.dataset.index);
+            e.currentTarget.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.currentTarget.innerHTML);
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+
+            // Add visual feedback
+            const dropTarget = e.currentTarget;
+            if (dropTarget.classList.contains('param-row')) {
+                dropTarget.classList.add('drag-over');
+            }
+
+            return false;
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            const dropIndex = parseInt(e.currentTarget.dataset.index);
+
+            if (draggedIndex !== null && draggedIndex !== dropIndex) {
+                // Remove the dragged item from its original position
+                const draggedItem = params[draggedIndex];
+                params.splice(draggedIndex, 1);
+
+                // Insert it at the new position
+                // If we're moving down, we need to adjust the index
+                const newIndex = draggedIndex < dropIndex ? dropIndex - 1 : dropIndex;
+                params.splice(newIndex, 0, draggedItem);
+
+                // Re-render and update
+                renderParams();
+                updateOutput();
+            }
+
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+
+            // Remove drag-over class from all rows
+            document.querySelectorAll('.param-row').forEach(row => {
+                row.classList.remove('drag-over');
+            });
+
+            draggedIndex = null;
         }
     </script>
 </body>
