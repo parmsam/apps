@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Parameter Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 30px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .url-input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"], input[type="url"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus, input[type="url"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .base-url {
+            background: #f5f5f5;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            word-break: break-all;
+            color: #555;
+        }
+
+        .base-url strong {
+            color: #333;
+            display: block;
+            margin-bottom: 5px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .params-container {
+            margin-bottom: 20px;
+        }
+
+        .param-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr auto;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            align-items: center;
+        }
+
+        .param-row input {
+            margin: 0;
+        }
+
+        .param-row button {
+            padding: 8px 16px;
+            background: #ff4757;
+            font-size: 12px;
+        }
+
+        .param-row button:hover {
+            background: #ee5a6f;
+        }
+
+        .add-param-btn {
+            background: #2ecc71;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .add-param-btn:hover {
+            background: #27ae60;
+        }
+
+        .output-url {
+            background: #f0f7ff;
+            padding: 16px;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+            margin-bottom: 20px;
+        }
+
+        .output-url strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .output-url .url-text {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            word-break: break-all;
+            color: #667eea;
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons button {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .copy-btn {
+            background: #3498db;
+        }
+
+        .copy-btn:hover {
+            background: #2980b9;
+        }
+
+        .clear-btn {
+            background: #95a5a6;
+        }
+
+        .clear-btn:hover {
+            background: #7f8c8d;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #2ecc71;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 640px) {
+            .param-row {
+                grid-template-columns: 1fr;
+            }
+
+            .url-input-wrapper {
+                flex-direction: column;
+            }
+
+            .action-buttons button {
+                flex: 1 1 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>URL Parameter Editor</h1>
+            <p>Paste a URL to view, edit, add, or remove query parameters</p>
+        </div>
+
+        <div class="content">
+            <div class="input-group">
+                <label for="urlInput">Enter URL:</label>
+                <div class="url-input-wrapper">
+                    <input
+                        type="url"
+                        id="urlInput"
+                        placeholder="https://example.com/path?param1=value1&param2=value2"
+                        autocomplete="off"
+                    >
+                    <button onclick="parseURL()">Parse URL</button>
+                </div>
+            </div>
+
+            <div id="baseUrl" class="base-url" style="display: none;">
+                <strong>Base URL:</strong>
+                <span id="baseUrlText"></span>
+            </div>
+
+            <div id="paramsSection" style="display: none;">
+                <div class="input-group">
+                    <label>Parameters:</label>
+                    <div id="paramsContainer" class="params-container"></div>
+                    <button class="add-param-btn" onclick="addParamRow()">+ Add Parameter</button>
+                </div>
+
+                <div class="output-url">
+                    <strong>Updated URL:</strong>
+                    <div class="url-text" id="outputUrl"></div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="copy-btn" onclick="copyURL()">Copy URL</button>
+                    <button onclick="openURL()">Open URL</button>
+                    <button class="clear-btn" onclick="clearAll()">Clear All</button>
+                </div>
+            </div>
+
+            <div id="emptyState" class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+                <p>Enter a URL above to get started</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        let baseURL = '';
+        let params = [];
+
+        // Parse URL on Enter key
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                parseURL();
+            }
+        });
+
+        // Load URL from query string or localStorage on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlToEdit = urlParams.get('url');
+
+            if (urlToEdit) {
+                // Priority 1: URL from query string
+                document.getElementById('urlInput').value = decodeURIComponent(urlToEdit);
+                parseURL();
+            } else {
+                // Priority 2: Load from localStorage
+                loadFromLocalStorage();
+            }
+        });
+
+        function parseURL() {
+            const input = document.getElementById('urlInput').value.trim();
+
+            if (!input) {
+                showToast('Please enter a URL', 'error');
+                return;
+            }
+
+            try {
+                // Handle URLs without protocol
+                let urlToParse = input;
+                if (!input.match(/^https?:\/\//i)) {
+                    urlToParse = 'https://' + input;
+                }
+
+                const url = new URL(urlToParse);
+
+                // Extract base URL (protocol + host + pathname)
+                baseURL = url.origin + url.pathname;
+
+                // Extract parameters
+                params = [];
+                url.searchParams.forEach((value, key) => {
+                    params.push({ key, value });
+                });
+
+                // If no params, add an empty one for user to start
+                if (params.length === 0) {
+                    params.push({ key: '', value: '' });
+                }
+
+                renderParams();
+                updateOutput();
+
+                document.getElementById('emptyState').style.display = 'none';
+                document.getElementById('paramsSection').style.display = 'block';
+                document.getElementById('baseUrl').style.display = 'block';
+                document.getElementById('baseUrlText').textContent = baseURL;
+
+                // Save to localStorage
+                saveToLocalStorage(input);
+
+            } catch (error) {
+                showToast('Invalid URL format', 'error');
+            }
+        }
+
+        function renderParams() {
+            const container = document.getElementById('paramsContainer');
+            container.innerHTML = '';
+
+            params.forEach((param, index) => {
+                const row = document.createElement('div');
+                row.className = 'param-row';
+                row.innerHTML = `
+                    <input
+                        type="text"
+                        placeholder="Parameter name"
+                        value="${escapeHtml(param.key)}"
+                        oninput="updateParam(${index}, 'key', this.value)"
+                    >
+                    <input
+                        type="text"
+                        placeholder="Parameter value"
+                        value="${escapeHtml(param.value)}"
+                        oninput="updateParam(${index}, 'value', this.value)"
+                    >
+                    <button onclick="removeParam(${index})">Remove</button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function updateParam(index, field, value) {
+            params[index][field] = value;
+            updateOutput();
+        }
+
+        function addParamRow() {
+            params.push({ key: '', value: '' });
+            renderParams();
+            updateOutput();
+        }
+
+        function removeParam(index) {
+            params.splice(index, 1);
+            renderParams();
+            updateOutput();
+        }
+
+        function updateOutput() {
+            // Filter out empty params
+            const validParams = params.filter(p => p.key.trim() !== '');
+
+            // Build query string
+            let queryString = '';
+            if (validParams.length > 0) {
+                const searchParams = new URLSearchParams();
+                validParams.forEach(p => {
+                    searchParams.append(p.key, p.value);
+                });
+                queryString = '?' + searchParams.toString();
+            }
+
+            const finalURL = baseURL + queryString;
+            document.getElementById('outputUrl').textContent = finalURL;
+
+            // Save current state to localStorage
+            saveStateToLocalStorage();
+        }
+
+        function copyURL() {
+            const url = document.getElementById('outputUrl').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('URL copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy URL', 'error');
+            });
+        }
+
+        function openURL() {
+            const url = document.getElementById('outputUrl').textContent;
+            window.open(url, '_blank');
+        }
+
+        function clearAll() {
+            if (confirm('Are you sure you want to clear everything?')) {
+                document.getElementById('urlInput').value = '';
+                baseURL = '';
+                params = [];
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('paramsSection').style.display = 'none';
+                document.getElementById('baseUrl').style.display = 'none';
+
+                // Clear localStorage
+                localStorage.removeItem('urlParamEditor_originalURL');
+                localStorage.removeItem('urlParamEditor_state');
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.background = type === 'error' ? '#e74c3c' : '#2ecc71';
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function saveToLocalStorage(originalURL) {
+            try {
+                localStorage.setItem('urlParamEditor_originalURL', originalURL);
+            } catch (e) {
+                console.error('Failed to save to localStorage:', e);
+            }
+        }
+
+        function saveStateToLocalStorage() {
+            try {
+                const state = {
+                    baseURL: baseURL,
+                    params: params
+                };
+                localStorage.setItem('urlParamEditor_state', JSON.stringify(state));
+            } catch (e) {
+                console.error('Failed to save state to localStorage:', e);
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const savedURL = localStorage.getItem('urlParamEditor_originalURL');
+                const savedState = localStorage.getItem('urlParamEditor_state');
+
+                if (savedState) {
+                    // Load saved state (edited parameters)
+                    const state = JSON.parse(savedState);
+                    baseURL = state.baseURL;
+                    params = state.params;
+
+                    if (savedURL) {
+                        document.getElementById('urlInput').value = savedURL;
+                    }
+
+                    renderParams();
+                    updateOutput();
+
+                    document.getElementById('emptyState').style.display = 'none';
+                    document.getElementById('paramsSection').style.display = 'block';
+                    document.getElementById('baseUrl').style.display = 'block';
+                    document.getElementById('baseUrlText').textContent = baseURL;
+                } else if (savedURL) {
+                    // Just load the URL without state
+                    document.getElementById('urlInput').value = savedURL;
+                    parseURL();
+                }
+            } catch (e) {
+                console.error('Failed to load from localStorage:', e);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
