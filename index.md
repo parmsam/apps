@@ -42,6 +42,7 @@ Inspired by similar tiny apps from [Jeremy Howard](https://github.com/jph00/apps
 - [Bookmark bundle manager](bookmarkbundle.html) - Manage and view bookmark bundles in HTML format.
 - [Rd to HTML converter](rd2html.html) - Convert R documentation (Rd) format to HTML with a simple UI for rendering and sharing purposes.
 - [Label HEIC images](labelheic.html) - Add text labels or watermarks to HEIC images before converting them to other formats like JPG, PNG, and WEBP.
+- [URL Parameter editor](url-param-editor.html) - View and edit URL query parameters easily with a simple UI based on a URL.
  
 ---
 
