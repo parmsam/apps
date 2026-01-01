@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Gujarati Writing Practice Generator</title>
+
+  <!-- Gujarati-capable font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Optional: PNG export -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <style>
+    :root{
+      --bg: #0b1220;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.08);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.68);
+      --hair: rgba(255,255,255,0.12);
+      --accent: #69a7ff;
+      --accent2: #7bf0c1;
+      --danger: #ff6b6b;
+
+      --paper: #ffffff;
+      --ink: #0e1726;
+      --grid: rgba(10, 20, 36, 0.20);
+      --guide: rgba(10, 20, 36, 0.13);
+      --dash: rgba(10, 20, 36, 0.18);
+    }
+
+    * { box-sizing: border-box; }
+    body{
+      margin:0;
+      background: radial-gradient(1200px 700px at 20% -20%, rgba(105,167,255,0.22), transparent 55%),
+                  radial-gradient(1000px 600px at 90% 10%, rgba(123,240,193,0.16), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      line-height: 1.35;
+    }
+
+    header{
+      padding: 22px 22px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 16px;
+      max-width: 1250px;
+      margin: 0 auto;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:4px;
+    }
+    .title h1{
+      margin:0;
+      font-size: 22px;
+      letter-spacing: 0.2px;
+    }
+    .title p{
+      margin:0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .pillrow{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .pill{
+      border: 1px solid var(--hair);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      user-select:none;
+    }
+
+    .app{
+      max-width: 1250px;
+      margin: 0 auto;
+      padding: 0 22px 28px;
+      display:grid;
+      grid-template-columns: 420px 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 980px){
+      .app{ grid-template-columns: 1fr; }
+      header{ align-items:flex-start; flex-direction:column; }
+      .pillrow{ justify-content:flex-start; }
+    }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.05));
+      border: 1px solid var(--hair);
+      border-radius: 18px;
+      overflow:hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    .panel .panelHeader{
+      padding: 14px 14px 10px;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 10px;
+      border-bottom: 1px solid var(--hair);
+      background: rgba(0,0,0,0.15);
+    }
+    .panelHeader h2{
+      margin:0;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+    }
+    .panelHeader span{
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .panelBody{ padding: 14px; }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      .grid2, .grid3 { grid-template-columns: 1fr; }
+    }
+
+    label{
+      display:block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    textarea, input, select{
+      width:100%;
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 12px;
+      padding: 10px 10px;
+      outline:none;
+      transition: border-color 120ms ease, background 120ms ease;
+      font-size: 13px;
+    }
+    textarea{ min-height: 108px; resize: vertical; }
+    input[type="number"]{ padding-right: 6px; }
+    textarea:focus, input:focus, select:focus{
+      border-color: rgba(105,167,255,0.55);
+      background: rgba(255,255,255,0.075);
+    }
+
+    .hint{
+      margin-top: 7px;
+      color: rgba(255,255,255,0.55);
+      font-size: 12px;
+    }
+
+    .btnrow{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    button{
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor:pointer;
+      transition: transform 80ms ease, background 120ms ease, border-color 120ms ease, opacity 120ms ease;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      user-select:none;
+    }
+    button:hover{
+      background: rgba(255,255,255,0.085);
+      border-color: rgba(255,255,255,0.22);
+    }
+    button:active{ transform: translateY(1px); }
+    .primary{
+      background: linear-gradient(90deg, rgba(105,167,255,0.95), rgba(123,240,193,0.8));
+      border-color: rgba(255,255,255,0.35);
+      color: #0b1220;
+    }
+    .primary:hover{ background: linear-gradient(90deg, rgba(105,167,255,1), rgba(123,240,193,0.95)); }
+    .ghost{
+      background: transparent;
+    }
+    .danger{
+      border-color: rgba(255,107,107,0.35);
+      background: rgba(255,107,107,0.10);
+    }
+
+    /* Sheet (paper) */
+    .sheetWrap{
+      padding: 14px;
+    }
+    .sheet{
+      background: var(--paper);
+      color: var(--ink);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.16);
+      overflow:hidden;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.30);
+    }
+    .sheetInner{
+      padding: 18px 18px 20px;
+    }
+    .sheetTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .sheetTop .left h3{
+      margin:0;
+      font-size: 18px;
+      letter-spacing: 0.2px;
+    }
+    .sheetTop .left p{
+      margin: 3px 0 0;
+      font-size: 12px;
+      opacity: 0.75;
+    }
+    .sheetTop .right{
+      font-size: 12px;
+      opacity: 0.75;
+      text-align:right;
+    }
+
+    .section{
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(14, 23, 38, 0.12);
+    }
+    .sectionHeader{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .glyphLabel{
+      display:flex;
+      align-items:baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .glyphLabel .glyph{
+      font-family: "Noto Sans Gujarati", Inter, sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+    .glyphLabel .roman{
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0.7;
+    }
+    .mini{
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .grid{
+      display:grid;
+      gap: 8px;
+    }
+
+    .cell{
+      position:relative;
+      border: 1.6px solid var(--grid);
+      border-radius: 10px;
+      overflow:hidden;
+      background: #fff;
+      aspect-ratio: 1 / 1;
+    }
+
+    /* Midline + baseline */
+    .cell::before,
+    .cell::after{
+      content:"";
+      position:absolute;
+      left:0; right:0;
+      border-top: 1px dashed var(--dash);
+      opacity: 1;
+      pointer-events:none;
+    }
+    .cell::before{ top: 44%; }
+    .cell::after{ top: 70%; }
+
+    .guideGlyph{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: "Noto Sans Gujarati", Inter, sans-serif;
+      font-weight: 700;
+      color: var(--guide);
+      transform: translateY(1%);
+      user-select:none;
+    }
+
+    .sheetFooter{
+      margin-top: 16px;
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      align-items:center;
+      font-size: 11px;
+      opacity: 0.7;
+      border-top: 1px solid rgba(14, 23, 38, 0.10);
+      padding-top: 10px;
+    }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 11px;
+      background: rgba(14,23,38,0.07);
+      border: 1px solid rgba(14,23,38,0.10);
+      padding: 2px 6px;
+      border-radius: 7px;
+      display:inline-block;
+      margin-left: 4px;
+    }
+
+    /* Print styling */
+    @media print{
+      body{ background: #fff; }
+      header, .panel{ display:none !important; }
+      .app{ display:block; padding:0; margin:0; }
+      .sheetWrap{ padding:0; }
+      .sheet{
+        box-shadow:none;
+        border:none;
+        border-radius:0;
+      }
+      .sheetInner{ padding: 0.5in; }
+      .section{ break-inside: avoid; page-break-inside: avoid; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="title">
+      <h1>Gujarati Writing Practice Generator</h1>
+      <p>Generate clean, print-ready practice sheets for Gujarati letters (with optional romanization).</p>
+    </div>
+    <div class="pillrow">
+      <div class="pill">Standalone HTML</div>
+      <div class="pill">Print → Save as PDF</div>
+      <div class="pill">PNG export</div>
+      <div class="pill">URL sharing</div>
+    </div>
+  </header>
+
+  <main class="app">
+    <!-- Controls -->
+    <section class="panel">
+      <div class="panelHeader">
+        <div>
+          <h2>Setup</h2>
+          <span>Paste characters, choose layout, generate.</span>
+        </div>
+        <span id="statusText">Ready</span>
+      </div>
+
+      <div class="panelBody">
+        <div class="grid2">
+          <div>
+            <label for="gujaratiInput">Gujarati letters</label>
+            <textarea id="gujaratiInput" placeholder="Example: જ, ઝ&#10;અ, આ, ઇ"></textarea>
+            <div class="hint">Comma or newline separated. You can also write pairs like: <span class="kbd">જ (ja)</span></div>
+          </div>
+          <div>
+            <label for="romanInput">Romanization (optional)</label>
+            <textarea id="romanInput" placeholder="Example: ja, jha&#10;a, aa, i"></textarea>
+            <div class="hint">If you use <span class="kbd">જ (ja)</span> style, this can be left blank.</div>
+          </div>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="grid3">
+          <div>
+            <label for="cols">Columns per section</label>
+            <input id="cols" type="number" min="1" max="12" value="6">
+            <div class="hint">Controls how many boxes across for each letter.</div>
+          </div>
+          <div>
+            <label for="boxes">Boxes per letter</label>
+            <input id="boxes" type="number" min="1" max="60" value="18">
+            <div class="hint">Total boxes under each letter.</div>
+          </div>
+          <div>
+            <label for="guideMode">Guide glyph</label>
+            <select id="guideMode">
+              <option value="first">First box only</option>
+              <option value="every">Every box (faint)</option>
+              <option value="none">Off</option>
+            </select>
+            <div class="hint">A faint reference glyph for tracing.</div>
+          </div>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="grid3">
+          <div>
+            <label for="cellSize">Box size</label>
+            <select id="cellSize">
+              <option value="52">Compact</option>
+              <option value="64" selected>Standard</option>
+              <option value="78">Large</option>
+            </select>
+            <div class="hint">Affects print density.</div>
+          </div>
+          <div>
+            <label for="showTitle">Sheet title</label>
+            <input id="showTitle" type="text" value="Gujarati Writing Practice">
+            <div class="hint">Shown at the top of the page.</div>
+          </div>
+          <div>
+            <label for="showDate">Header right text</label>
+            <input id="showDate" type="text" placeholder="Name: ______   Date: ______">
+            <div class="hint">Leave blank to hide.</div>
+          </div>
+        </div>
+
+        <div class="btnrow">
+          <button class="primary" id="generateBtn">✨ Generate</button>
+          <button id="printBtn">🖨️ Print / Save PDF</button>
+          <button id="pngBtn">🖼️ Download PNG</button>
+          <button class="ghost" id="shareBtn">🔗 Copy share link</button>
+          <button class="ghost" id="clearBtn">Reset</button>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="panel" style="background: rgba(255,255,255,0.03); border-radius: 14px;">
+          <div class="panelBody" style="padding: 12px;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+              <div style="font-weight:700; font-size:13px;">Presets</div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="ghost" id="presetVowels">Vowels</button>
+                <button class="ghost" id="presetConsonants">Consonants</button>
+                <button class="ghost" id="presetJaJha">જ / ઝ</button>
+              </div>
+            </div>
+            <div class="hint" style="margin-top:8px;">
+              Tip: You can also paste mixed content like <span class="kbd">ક (ka), ખ (kha)</span> and it will auto-split.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Output -->
+    <section class="sheetWrap">
+      <div class="sheet" id="sheet">
+        <div class="sheetInner" id="sheetInner">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+  // ---------- Helpers ----------
+  const $ = (id) => document.getElementById(id);
+
+  function setStatus(msg){
+    $("statusText").textContent = msg;
+    window.clearTimeout(setStatus._t);
+    setStatus._t = window.setTimeout(() => $("statusText").textContent = "Ready", 1400);
+  }
+
+  function normalizeList(text){
+    // Split by commas OR newlines, trim, drop empties.
+    return text
+      .split(/[\n,]+/g)
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
+  function parsePairs(guText, roText){
+    // Supports:
+    // 1) Gujarati list in one box, roman list in another (aligned by index)
+    // 2) Inline pairs like "જ (ja)" in Gujarati box
+    const guRaw = normalizeList(guText);
+    const roRaw = normalizeList(roText);
+
+    const out = [];
+    for (let i=0; i<guRaw.length; i++){
+      const token = guRaw[i];
+
+      // Match "X (roman)" OR "X [roman]" OR "X - roman"
+      const m = token.match(/^(.+?)\s*(?:\(|\[|\-)\s*([a-zA-Zāīūṛṅñṭḍṇśṣḥ’' .]+)\s*(?:\)|\])?\s*$/);
+      if (m){
+        out.push({ gu: m[1].trim(), ro: m[2].trim() });
+      } else {
+        out.push({ gu: token, ro: roRaw[i] ?? "" });
+      }
+    }
+
+    // If Gujarati empty but roman has pairs (rare), ignore.
+    return out.filter(x => x.gu.length > 0);
+  }
+
+  function safeText(s){ return (s ?? "").toString(); }
+
+  function saveState(){
+    const state = {
+      gujaratiInput: $("gujaratiInput").value,
+      romanInput: $("romanInput").value,
+      cols: $("cols").value,
+      boxes: $("boxes").value,
+      guideMode: $("guideMode").value,
+      cellSize: $("cellSize").value,
+      showTitle: $("showTitle").value,
+      showDate: $("showDate").value,
+    };
+    localStorage.setItem("gj_practice_state_v1", JSON.stringify(state));
+  }
+
+  function loadState(){
+    const raw = localStorage.getItem("gj_practice_state_v1");
+    if (!raw) return;
+    try{
+      const s = JSON.parse(raw);
+      for (const k of Object.keys(s)){
+        if ($(k)) $(k).value = s[k];
+      }
+    }catch(e){}
+  }
+
+  function encodeStateToURL(){
+    const params = new URLSearchParams();
+    params.set("gu", $("gujaratiInput").value.trim());
+    params.set("ro", $("romanInput").value.trim());
+    params.set("c", $("cols").value);
+    params.set("b", $("boxes").value);
+    params.set("g", $("guideMode").value);
+    params.set("s", $("cellSize").value);
+    params.set("t", $("showTitle").value.trim());
+    params.set("h", $("showDate").value.trim());
+    const url = new URL(window.location.href);
+    url.search = params.toString();
+    return url.toString();
+  }
+
+  function loadStateFromURL(){
+    const p = new URLSearchParams(window.location.search);
+    if (![...p.keys()].length) return false;
+
+    if (p.has("gu")) $("gujaratiInput").value = p.get("gu");
+    if (p.has("ro")) $("romanInput").value = p.get("ro");
+    if (p.has("c")) $("cols").value = p.get("c");
+    if (p.has("b")) $("boxes").value = p.get("b");
+    if (p.has("g")) $("guideMode").value = p.get("g");
+    if (p.has("s")) $("cellSize").value = p.get("s");
+    if (p.has("t")) $("showTitle").value = p.get("t");
+    if (p.has("h")) $("showDate").value = p.get("h");
+    return true;
+  }
+
+  // ---------- Rendering ----------
+  function render(){
+    saveState();
+
+    const items = parsePairs($("gujaratiInput").value, $("romanInput").value);
+    const cols = Math.max(1, Math.min(12, parseInt($("cols").value || "6", 10)));
+    const boxes = Math.max(1, Math.min(60, parseInt($("boxes").value || "18", 10)));
+    const guideMode = $("guideMode").value;
+    const cellPx = parseInt($("cellSize").value || "64", 10);
+
+    const title = $("showTitle").value.trim();
+    const headerRight = $("showDate").value.trim();
+
+    const inner = $("sheetInner");
+    inner.innerHTML = "";
+
+    // Top header
+    const top = document.createElement("div");
+    top.className = "sheetTop";
+    top.innerHTML = `
+      <div class="left">
+        <h3>${title ? escapeHTML(title) : "Gujarati Writing Practice"}</h3>
+        <p>Trace the guide glyph(s), then write independently.</p>
+      </div>
+      <div class="right">${headerRight ? escapeHTML(headerRight) : ""}</div>
+    `;
+    inner.appendChild(top);
+
+    if (!items.length){
+      const empty = document.createElement("div");
+      empty.style.padding = "12px";
+      empty.style.border = "1px dashed rgba(14,23,38,0.25)";
+      empty.style.borderRadius = "12px";
+      empty.style.opacity = "0.85";
+      empty.innerHTML = `
+        <div style="font-weight:700; margin-bottom:6px;">Add some letters to get started</div>
+        <div style="font-size:12px;">
+          Try: <span style="font-family:'Noto Sans Gujarati',sans-serif; font-weight:700;">જ, ઝ</span>
+          and romanization <span style="font-weight:700;">ja, jha</span>.
+        </div>
+      `;
+      inner.appendChild(empty);
+      footer(inner);
+      setStatus("Waiting for input");
+      return;
+    }
+
+    // Sections
+    items.forEach((it, idx) => {
+      const section = document.createElement("div");
+      section.className = "section";
+
+      const ro = safeText(it.ro).trim();
+      const header = document.createElement("div");
+      header.className = "sectionHeader";
+      header.innerHTML = `
+        <div class="glyphLabel">
+          <div class="glyph">${escapeHTML(it.gu)}</div>
+          ${ro ? `<div class="roman">(${escapeHTML(ro)})</div>` : ""}
+        </div>
+        <div class="mini">${boxes} boxes</div>
+      `;
+      section.appendChild(header);
+
+      const grid = document.createElement("div");
+      grid.className = "grid";
+      grid.style.gridTemplateColumns = `repeat(${cols}, ${cellPx}px)`;
+
+      for (let i=0; i<boxes; i++){
+        const cell = document.createElement("div");
+        cell.className = "cell";
+
+        // faint guide glyph
+        const shouldGuide =
+          (guideMode === "every") ||
+          (guideMode === "first" && i === 0);
+
+        if (shouldGuide){
+          const g = document.createElement("div");
+          g.className = "guideGlyph";
+          g.style.fontSize = Math.round(cellPx * 0.68) + "px";
+          g.textContent = it.gu;
+          cell.appendChild(g);
+        }
+
+        grid.appendChild(cell);
+      }
+
+      section.appendChild(grid);
+      inner.appendChild(section);
+    });
+
+    footer(inner);
+    setStatus("Generated ✓");
+  }
+
+  function footer(parent){
+    const f = document.createElement("div");
+    f.className = "sheetFooter";
+    f.innerHTML = `
+      <div>Tip: Print → “Save as PDF” for a clean worksheet.</div>
+      <div>Shortcut: <span class="kbd">Ctrl</span> + <span class="kbd">P</span> / <span class="kbd">⌘</span> + <span class="kbd">P</span></div>
+    `;
+    parent.appendChild(f);
+  }
+
+  function escapeHTML(str){
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // ---------- Buttons ----------
+  $("generateBtn").addEventListener("click", render);
+
+  $("printBtn").addEventListener("click", () => {
+    render();
+    window.print();
+  });
+
+  $("pngBtn").addEventListener("click", async () => {
+    render();
+    setStatus("Rendering PNG…");
+    const target = $("sheet");
+    const canvas = await html2canvas(target, {
+      backgroundColor: "#ffffff",
+      scale: 2,
+      useCORS: true
+    });
+    const a = document.createElement("a");
+    a.download = "gujarati-practice.png";
+    a.href = canvas.toDataURL("image/png");
+    a.click();
+    setStatus("PNG downloaded ✓");
+  });
+
+  $("shareBtn").addEventListener("click", async () => {
+    render();
+    const url = encodeStateToURL();
+    try{
+      await navigator.clipboard.writeText(url);
+      setStatus("Link copied ✓");
+    }catch(e){
+      // fallback
+      prompt("Copy this link:", url);
+      setStatus("Copy link shown");
+    }
+  });
+
+  $("clearBtn").addEventListener("click", () => {
+    localStorage.removeItem("gj_practice_state_v1");
+    window.history.replaceState({}, document.title, window.location.pathname);
+    $("gujaratiInput").value = "";
+    $("romanInput").value = "";
+    $("cols").value = 6;
+    $("boxes").value = 18;
+    $("guideMode").value = "first";
+    $("cellSize").value = "64";
+    $("showTitle").value = "Gujarati Writing Practice";
+    $("showDate").value = "";
+    render();
+    setStatus("Reset ✓");
+  });
+
+  // Presets
+  $("presetVowels").addEventListener("click", () => {
+    $("gujaratiInput").value = "અ, આ, ઇ, ઈ, ઉ, ઊ, ઋ, એ, ઐ, ઓ, ઔ, અં, અઃ";
+    $("romanInput").value = "a, aa, i, ii, u, uu, ru, e, ai, o, au, am, ah";
+    render();
+  });
+
+  $("presetConsonants").addEventListener("click", () => {
+    $("gujaratiInput").value =
+      "ક, ખ, ગ, ઘ, ઙ\nચ, છ, જ, ઝ, ઞ\nટ, ઠ, ડ, ઢ, ણ\nત, થ, દ, ધ, ન\nપ, ફ, બ, ભ, મ\nય, ર, લ, વ\nશ, ષ, સ, હ\nળ, ક્ષ, જ્ઞ";
+    $("romanInput").value =
+      "ka, kha, ga, gha, nga\ncha, chha, ja, jha, nya\nta, tha, da, dha, na\nta, tha, da, dha, na\npa, pha, ba, bha, ma\nya, ra, la, va\nsha, ṣha, sa, ha\nḷa, kṣa, jña";
+    render();
+  });
+
+  $("presetJaJha").addEventListener("click", () => {
+    $("gujaratiInput").value = "જ, ઝ";
+    $("romanInput").value = "ja, jha";
+    $("boxes").value = 18;
+    $("cols").value = 6;
+    $("guideMode").value = "first";
+    render();
+  });
+
+  // Auto-generate on changes (debounced)
+  let t = null;
+  function debounceRender(){
+    window.clearTimeout(t);
+    t = window.setTimeout(render, 220);
+  }
+  ["gujaratiInput","romanInput","cols","boxes","guideMode","cellSize","showTitle","showDate"]
+    .forEach(id => $(id).addEventListener("input", debounceRender));
+
+  // ---------- Init ----------
+  loadStateFromURL();
+  loadState();
+  render();
+</script>
+</body>
+</html>

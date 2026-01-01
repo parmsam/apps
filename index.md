@@ -43,7 +43,8 @@ Inspired by similar tiny apps from [Jeremy Howard](https://github.com/jph00/apps
 - [Rd to HTML converter](rd2html.html) - Convert R documentation (Rd) format to HTML with a simple UI for rendering and sharing purposes.
 - [Label HEIC images](labelheic.html) - Add text labels or watermarks to HEIC images before converting them to other formats like JPG, PNG, and WEBP.
 - [URL Parameter editor](url-param-editor.html) - View and edit URL query parameters easily with a simple UI based on a URL.
- 
+- [Gujarati writing practice](writing-practice.html) - Generate customizable, print-ready practice sheets for Gujarati letters with optional romanization, configurable layouts, and PNG/PDF export.
+
 ---
 
 By [Sam Parmar](https://parmsam.github.io/quarto-site/) (Github repo is [here](https://www.github.com/parmsam/apps))
