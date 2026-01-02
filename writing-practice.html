@@ -309,6 +309,16 @@
     .cell::before{ top: 44%; }
     .cell::after{ top: 70%; }
 
+    /* Third line (top) */
+    .dashLine{
+      position:absolute;
+      left:0; right:0;
+      top: 18%;
+      border-top: 1px dashed var(--dash);
+      opacity: 1;
+      pointer-events:none;
+    }
+
     .guideGlyph{
       position:absolute;
       inset:0;
@@ -658,6 +668,11 @@
       for (let i=0; i<boxes; i++){
         const cell = document.createElement("div");
         cell.className = "cell";
+
+        // Add third dash line
+        const dashLine = document.createElement("span");
+        dashLine.className = "dashLine";
+        cell.appendChild(dashLine);
 
         // faint guide glyph
         const shouldGuide =
