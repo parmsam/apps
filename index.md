@@ -44,6 +44,7 @@ Inspired by similar tiny apps from [Jeremy Howard](https://github.com/jph00/apps
 - [Label HEIC images](labelheic.html) - Add text labels or watermarks to HEIC images before converting them to other formats like JPG, PNG, and WEBP.
 - [URL Parameter editor](url-param-editor.html) - View and edit URL query parameters easily with a simple UI based on a URL.
 - [Gujarati writing practice](writing-practice.html) - Generate customizable, print-ready practice sheets for Gujarati letters with optional romanization, configurable layouts, and PNG/PDF export.
+- [Twitter Advanced Search Builder](x-search-builder.html) - Generate advanced X (Twitter) search URLs using a simple form interface.
 
 ---
 

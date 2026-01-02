@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>X Search URL Builder</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            margin: 24px;
+            max-width: 920px;
+        }
+
+        h1 {
+            font-size: 20px;
+            margin: 0 0 14px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        textarea {
+            min-height: 70px;
+            resize: vertical;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btns {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        button {
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            background: #fff;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        button.primary {
+            border-color: #111;
+        }
+
+        .out {
+            margin-top: 12px;
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 760px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>X (Twitter) Search URL Builder</h1>
+
+    <div class="grid">
+        <div class="card">
+            <h2 style="font-size:14px;margin:0 0 10px;">Words</h2>
+
+            <label>All of these words</label>
+            <input id="allWords" placeholder="cats dogs" />
+
+            <label style="margin-top:10px;">This exact phrase</label>
+            <input id="exactPhrase" placeholder="happy hour" />
+
+            <label style="margin-top:10px;">Any of these words (OR)</label>
+            <input id="anyWords" placeholder="cats dogs (will become: cats OR dogs)" />
+
+            <label style="margin-top:10px;">None of these words</label>
+            <input id="noneWords" placeholder="spam ads" />
+
+            <label style="margin-top:10px;">These hashtags</label>
+            <input id="hashtags" placeholder="#ThrowbackThursday #datascience" />
+        </div>
+
+        <div class="card">
+            <h2 style="font-size:14px;margin:0 0 10px;">Accounts + Filters</h2>
+
+            <div class="row">
+                <div>
+                    <label>From these accounts (comma-separated)</label>
+                    <input id="fromAccounts" placeholder="parmsam_" />
+                </div>
+                <div>
+                    <label>To these accounts (comma-separated)</label>
+                    <input id="toAccounts" placeholder="elonmusk" />
+                </div>
+            </div>
+
+            <label style="margin-top:10px;">Mentioning these accounts (comma-separated)</label>
+            <input id="mentions" placeholder="nytimes, nasa" />
+
+            <div class="row" style="margin-top:10px;">
+                <div>
+                    <label>Since (YYYY-MM-DD)</label>
+                    <input id="since" placeholder="2025-01-01" />
+                </div>
+                <div>
+                    <label>Until (YYYY-MM-DD)</label>
+                    <input id="until" placeholder="2025-02-01" />
+                </div>
+            </div>
+
+            <div class="row" style="margin-top:10px;">
+                <div>
+                    <label>Tab</label>
+                    <select id="tab">
+                        <option value="top">Top</option>
+                        <option value="live">Latest</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Language (optional)</label>
+                    <input id="lang" placeholder="en" />
+                </div>
+            </div>
+
+            <div class="hint">
+                URL format matches X conventions: <span
+                    class="mono">/search?q=...&amp;src=typed_query&amp;f=top|live</span><br />
+                Queries use operators like <span class="mono">from:</span>, <span class="mono">to:</span>, <span
+                    class="mono">since:</span>, <span class="mono">until:</span>, and <span
+                    class="mono">#hashtag</span>.
+            </div>
+        </div>
+    </div>
+
+    <div class="card out">
+        <label>Generated query (what goes in q=)</label>
+        <textarea id="query" class="mono" readonly></textarea>
+
+        <label style="margin-top:10px;">Generated URL</label>
+        <textarea id="url" class="mono" readonly></textarea>
+
+        <div class="btns">
+            <button class="primary" id="copyUrl">Copy URL</button>
+            <button id="copyQuery">Copy query</button>
+            <button id="openX">Open in X</button>
+            <button id="reset">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        const $ = (id) => document.getElementById(id);
+
+        function splitList(v) {
+            return v.split(",").map(s => s.trim()).filter(Boolean);
+        }
+
+        // Build the raw X query string (unencoded)
+        function buildQuery() {
+            const parts = [];
+
+            const allWords = $("allWords").value.trim();
+            if (allWords) parts.push(allWords);
+
+            const exact = $("exactPhrase").value.trim();
+            if (exact) parts.push(`"${exact.replaceAll('"', '\\"')}"`);
+
+            const any = $("anyWords").value.trim();
+            if (any) {
+                // If user already typed OR, keep it. Otherwise OR-join whitespace tokens.
+                if (any.toUpperCase().includes(" OR ")) {
+                    parts.push(any);
+                } else {
+                    const toks = any.split(/\s+/).filter(Boolean);
+                    if (toks.length === 1) parts.push(toks[0]);
+                    else if (toks.length > 1) parts.push(toks.join(" OR "));
+                }
+            }
+
+            const none = $("noneWords").value.trim();
+            if (none) {
+                none.split(/\s+/).filter(Boolean).forEach(w => parts.push(`-${w}`));
+            }
+
+            const hashtags = $("hashtags").value.trim();
+            if (hashtags) {
+                hashtags.split(/\s+/).filter(Boolean).forEach(h => {
+                    const tag = h.startsWith("#") ? h.slice(1) : h;
+                    if (tag) parts.push(`#${tag}`);
+                });
+            }
+
+            splitList($("fromAccounts").value).forEach(a => parts.push(`from:${a.replace(/^@/, '')}`));
+            splitList($("toAccounts").value).forEach(a => parts.push(`to:${a.replace(/^@/, '')}`));
+            splitList($("mentions").value).forEach(a => parts.push(`@${a.replace(/^@/, '')}`));
+
+            const since = $("since").value.trim();
+            if (since) parts.push(`since:${since}`);
+
+            const until = $("until").value.trim();
+            if (until) parts.push(`until:${until}`);
+
+            const lang = $("lang").value.trim();
+            if (lang) parts.push(`lang:${lang}`);
+
+            const q = parts.filter(Boolean).join(" ").trim();
+
+            // Match your example style: wrap the whole query in parentheses
+            // (X accepts this; it's nice for grouping)
+            return q ? `(${q})` : "";
+        }
+
+        // Build URL in the exact convention you showed:
+        // https://x.com/search?q=(from%3Auser)&src=typed_query&f=top
+        function buildUrl(rawQuery) {
+            const base = "https://x.com/search";
+            const f = $("tab").value || "top";
+
+            // Use encodeURIComponent so spaces become %20 (not +), like typical X links.
+            const qEncoded = encodeURIComponent(rawQuery);
+
+            // If query is empty, still return a valid search page (no q=)
+            if (!rawQuery) return `${base}?src=typed_query&f=${f}`;
+
+            return `${base}?q=${qEncoded}&src=typed_query&f=${f}`;
+        }
+
+        function refresh() {
+            const raw = buildQuery();
+            $("query").value = raw;
+            $("url").value = buildUrl(raw);
+        }
+
+        [
+            "allWords", "exactPhrase", "anyWords", "noneWords", "hashtags",
+            "fromAccounts", "toAccounts", "mentions", "since", "until", "tab", "lang"
+        ].forEach(id => $(id).addEventListener("input", refresh));
+
+        $("copyUrl").addEventListener("click", async () => {
+            await navigator.clipboard.writeText($("url").value);
+            $("copyUrl").textContent = "Copied!";
+            setTimeout(() => $("copyUrl").textContent = "Copy URL", 900);
+        });
+
+        $("copyQuery").addEventListener("click", async () => {
+            await navigator.clipboard.writeText($("query").value);
+            $("copyQuery").textContent = "Copied!";
+            setTimeout(() => $("copyQuery").textContent = "Copy query", 900);
+        });
+
+        $("openX").addEventListener("click", () => {
+            const u = $("url").value;
+            if (u) window.open(u, "_blank", "noopener,noreferrer");
+        });
+
+        $("reset").addEventListener("click", () => {
+            document.querySelectorAll("input").forEach(i => i.value = "");
+            $("tab").value = "top";
+            refresh();
+        });
+
+        refresh();
+    </script>
+</body>
+
+</html>
