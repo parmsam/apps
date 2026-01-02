@@ -9,7 +9,7 @@
         body {
             font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
             margin: 24px;
-            max-width: 920px;
+            max-width: 1020px;
         }
 
         h1 {
@@ -58,6 +58,12 @@
             gap: 12px;
         }
 
+        .row3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
         .btns {
             display: flex;
             gap: 10px;
@@ -92,8 +98,50 @@
             line-height: 1.4;
         }
 
-        @media (max-width: 760px) {
+        .subhead {
+            font-size: 14px;
+            margin: 0 0 10px;
+        }
+
+        fieldset {
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin: 12px 0 0;
+        }
+
+        legend {
+            font-size: 12px;
+            color: #333;
+            padding: 0 6px;
+        }
+
+        .radioRow {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .radio {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .radio input {
+            width: auto;
+        }
+
+        @media (max-width: 900px) {
             .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .row3 {
                 grid-template-columns: 1fr;
             }
         }
@@ -105,7 +153,7 @@
 
     <div class="grid">
         <div class="card">
-            <h2 style="font-size:14px;margin:0 0 10px;">Words</h2>
+            <h2 class="subhead">Words</h2>
 
             <label>All of these words</label>
             <input id="allWords" placeholder="cats dogs" />
@@ -114,17 +162,37 @@
             <input id="exactPhrase" placeholder="happy hour" />
 
             <label style="margin-top:10px;">Any of these words (OR)</label>
-            <input id="anyWords" placeholder="cats dogs (will become: cats OR dogs)" />
+            <input id="anyWords" placeholder="cats dogs (becomes: cats OR dogs)" />
 
             <label style="margin-top:10px;">None of these words</label>
             <input id="noneWords" placeholder="spam ads" />
 
             <label style="margin-top:10px;">These hashtags</label>
             <input id="hashtags" placeholder="#ThrowbackThursday #datascience" />
+
+            <fieldset>
+                <legend>Filters</legend>
+
+                <div style="margin-top:2px;font-size:12px;color:#555;">Replies</div>
+                <div class="radioRow">
+                    <label class="radio"><input type="radio" name="replyFilter" id="replyInclude" value="include"
+                            checked> Include replies and original posts</label>
+                    <label class="radio"><input type="radio" name="replyFilter" id="replyOnly" value="only"> Only show
+                        replies</label>
+                </div>
+
+                <div style="margin-top:10px;font-size:12px;color:#555;">Links</div>
+                <div class="radioRow">
+                    <label class="radio"><input type="radio" name="linkFilter" id="linkInclude" value="include" checked>
+                        Include posts with links</label>
+                    <label class="radio"><input type="radio" name="linkFilter" id="linkOnly" value="only"> Only show
+                        posts with links</label>
+                </div>
+            </fieldset>
         </div>
 
         <div class="card">
-            <h2 style="font-size:14px;margin:0 0 10px;">Accounts + Filters</h2>
+            <h2 class="subhead">Accounts + Dates + Engagement</h2>
 
             <div class="row">
                 <div>
@@ -161,16 +229,46 @@
                 </div>
                 <div>
                     <label>Language (optional)</label>
-                    <input id="lang" placeholder="en" />
+                    <input id="lang" placeholder="en" list="langList" />
+                    <datalist id="langList">
+                        <option value="en"></option>
+                        <option value="es"></option>
+                        <option value="fr"></option>
+                        <option value="de"></option>
+                        <option value="it"></option>
+                        <option value="pt"></option>
+                        <option value="ja"></option>
+                        <option value="ko"></option>
+                        <option value="zh"></option>
+                        <option value="hi"></option>
+                        <option value="gu"></option>
+                        <option value="ar"></option>
+                        <option value="ru"></option>
+                    </datalist>
+                </div>
+            </div>
+
+            <div class="row3" style="margin-top:10px;">
+                <div>
+                    <label>Minimum replies</label>
+                    <input id="minReplies" type="number" min="0" step="1" placeholder="e.g., 280" />
+                </div>
+                <div>
+                    <label>Minimum likes</label>
+                    <input id="minLikes" type="number" min="0" step="1" placeholder="e.g., 280" />
+                </div>
+                <div>
+                    <label>Minimum reposts</label>
+                    <input id="minReposts" type="number" min="0" step="1" placeholder="e.g., 280" />
                 </div>
             </div>
 
             <div class="hint">
-                URL format matches X conventions: <span
-                    class="mono">/search?q=...&amp;src=typed_query&amp;f=top|live</span><br />
-                Queries use operators like <span class="mono">from:</span>, <span class="mono">to:</span>, <span
-                    class="mono">since:</span>, <span class="mono">until:</span>, and <span
-                    class="mono">#hashtag</span>.
+                URL format: <span
+                    class="mono">https://x.com/search?q=...&amp;src=typed_query&amp;f=top|live</span><br />
+                Adds operators like <span class="mono">filter:replies</span>, <span class="mono">filter:links</span>,
+                <span class="mono">min_replies:</span>, <span class="mono">min_faves:</span>, <span
+                    class="mono">min_retweets:</span>.
             </div>
         </div>
     </div>
@@ -197,10 +295,17 @@
             return v.split(",").map(s => s.trim()).filter(Boolean);
         }
 
-        // Build the raw X query string (unencoded)
+        function safeInt(v) {
+            if (v === "" || v === null || v === undefined) return null;
+            const n = Number(v);
+            if (!Number.isFinite(n) || n < 0) return null;
+            return Math.floor(n);
+        }
+
         function buildQuery() {
             const parts = [];
 
+            // Words
             const allWords = $("allWords").value.trim();
             if (allWords) parts.push(allWords);
 
@@ -209,7 +314,6 @@
 
             const any = $("anyWords").value.trim();
             if (any) {
-                // If user already typed OR, keep it. Otherwise OR-join whitespace tokens.
                 if (any.toUpperCase().includes(" OR ")) {
                     parts.push(any);
                 } else {
@@ -232,38 +336,51 @@
                 });
             }
 
+            // Accounts
             splitList($("fromAccounts").value).forEach(a => parts.push(`from:${a.replace(/^@/, '')}`));
             splitList($("toAccounts").value).forEach(a => parts.push(`to:${a.replace(/^@/, '')}`));
             splitList($("mentions").value).forEach(a => parts.push(`@${a.replace(/^@/, '')}`));
 
+            // Dates
             const since = $("since").value.trim();
             if (since) parts.push(`since:${since}`);
 
             const until = $("until").value.trim();
             if (until) parts.push(`until:${until}`);
 
+            // Language
             const lang = $("lang").value.trim();
             if (lang) parts.push(`lang:${lang}`);
 
-            const q = parts.filter(Boolean).join(" ").trim();
+            // Filters: Replies
+            const replyOnly = $("replyOnly").checked;
+            if (replyOnly) parts.push(`filter:replies`);
 
-            // Match your example style: wrap the whole query in parentheses
-            // (X accepts this; it's nice for grouping)
+            // Filters: Links
+            const linkOnly = $("linkOnly").checked;
+            if (linkOnly) parts.push(`filter:links`);
+
+            // Engagement
+            const minReplies = safeInt($("minReplies").value);
+            if (minReplies !== null) parts.push(`min_replies:${minReplies}`);
+
+            const minLikes = safeInt($("minLikes").value);
+            if (minLikes !== null) parts.push(`min_faves:${minLikes}`);
+
+            const minReposts = safeInt($("minReposts").value);
+            if (minReposts !== null) parts.push(`min_retweets:${minReposts}`);
+
+            const q = parts.filter(Boolean).join(" ").trim();
             return q ? `(${q})` : "";
         }
 
-        // Build URL in the exact convention you showed:
-        // https://x.com/search?q=(from%3Auser)&src=typed_query&f=top
         function buildUrl(rawQuery) {
             const base = "https://x.com/search";
             const f = $("tab").value || "top";
 
-            // Use encodeURIComponent so spaces become %20 (not +), like typical X links.
-            const qEncoded = encodeURIComponent(rawQuery);
-
-            // If query is empty, still return a valid search page (no q=)
             if (!rawQuery) return `${base}?src=typed_query&f=${f}`;
 
+            const qEncoded = encodeURIComponent(rawQuery);
             return `${base}?q=${qEncoded}&src=typed_query&f=${f}`;
         }
 
@@ -273,10 +390,18 @@
             $("url").value = buildUrl(raw);
         }
 
-        [
+        const inputIds = [
             "allWords", "exactPhrase", "anyWords", "noneWords", "hashtags",
-            "fromAccounts", "toAccounts", "mentions", "since", "until", "tab", "lang"
-        ].forEach(id => $(id).addEventListener("input", refresh));
+            "fromAccounts", "toAccounts", "mentions", "since", "until", "tab", "lang",
+            "minReplies", "minLikes", "minReposts"
+        ];
+
+        inputIds.forEach(id => $(id).addEventListener("input", refresh));
+
+        // Radios need change listeners
+        ["replyInclude", "replyOnly", "linkInclude", "linkOnly"].forEach(id => {
+            $(id).addEventListener("change", refresh);
+        });
 
         $("copyUrl").addEventListener("click", async () => {
             await navigator.clipboard.writeText($("url").value);
@@ -298,6 +423,11 @@
         $("reset").addEventListener("click", () => {
             document.querySelectorAll("input").forEach(i => i.value = "");
             $("tab").value = "top";
+
+            // Reset radios to defaults
+            $("replyInclude").checked = true;
+            $("linkInclude").checked = true;
+
             refresh();
         });
 
