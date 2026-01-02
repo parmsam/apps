@@ -175,18 +175,26 @@
 
                 <div style="margin-top:2px;font-size:12px;color:#555;">Replies</div>
                 <div class="radioRow">
-                    <label class="radio"><input type="radio" name="replyFilter" id="replyInclude" value="include"
-                            checked> Include replies and original posts</label>
-                    <label class="radio"><input type="radio" name="replyFilter" id="replyOnly" value="only"> Only show
-                        replies</label>
+                    <label class="radio">
+                        <input type="radio" name="replyFilter" id="replyInclude" value="include" checked>
+                        Include replies and original posts
+                    </label>
+                    <label class="radio">
+                        <input type="radio" name="replyFilter" id="replyOnly" value="only">
+                        Only show replies
+                    </label>
                 </div>
 
                 <div style="margin-top:10px;font-size:12px;color:#555;">Links</div>
                 <div class="radioRow">
-                    <label class="radio"><input type="radio" name="linkFilter" id="linkInclude" value="include" checked>
-                        Include posts with links</label>
-                    <label class="radio"><input type="radio" name="linkFilter" id="linkOnly" value="only"> Only show
-                        posts with links</label>
+                    <label class="radio">
+                        <input type="radio" name="linkFilter" id="linkInclude" value="include" checked>
+                        Include posts with links
+                    </label>
+                    <label class="radio">
+                        <input type="radio" name="linkFilter" id="linkOnly" value="only">
+                        Only show posts with links
+                    </label>
                 </div>
             </fieldset>
         </div>
@@ -302,6 +310,14 @@
             return Math.floor(n);
         }
 
+        // Wrap multiple items as an OR-group; single item stays unwrapped.
+        function orGroup(items, mapper) {
+            const mapped = items.map(mapper).filter(Boolean);
+            if (mapped.length === 0) return "";
+            if (mapped.length === 1) return mapped[0];
+            return `(${mapped.join(" OR ")})`;
+        }
+
         function buildQuery() {
             const parts = [];
 
@@ -315,11 +331,13 @@
             const any = $("anyWords").value.trim();
             if (any) {
                 if (any.toUpperCase().includes(" OR ")) {
-                    parts.push(any);
+                    // If user typed OR themselves, respect it; wrap only if multiple terms are present
+                    const needsWrap = /\s+OR\s+/i.test(any.trim());
+                    parts.push(needsWrap ? `(${any.trim()})` : any.trim());
                 } else {
                     const toks = any.split(/\s+/).filter(Boolean);
                     if (toks.length === 1) parts.push(toks[0]);
-                    else if (toks.length > 1) parts.push(toks.join(" OR "));
+                    else if (toks.length > 1) parts.push(`(${toks.join(" OR ")})`);
                 }
             }
 
@@ -336,10 +354,19 @@
                 });
             }
 
-            // Accounts
-            splitList($("fromAccounts").value).forEach(a => parts.push(`from:${a.replace(/^@/, '')}`));
-            splitList($("toAccounts").value).forEach(a => parts.push(`to:${a.replace(/^@/, '')}`));
-            splitList($("mentions").value).forEach(a => parts.push(`@${a.replace(/^@/, '')}`));
+            // Accounts (IMPORTANT: multiple accounts should be OR, not AND)
+            const froms = splitList($("fromAccounts").value);
+            const tos = splitList($("toAccounts").value);
+            const mentions = splitList($("mentions").value);
+
+            const fromClause = orGroup(froms, a => `from:${a.replace(/^@/, "")}`);
+            if (fromClause) parts.push(fromClause);
+
+            const toClause = orGroup(tos, a => `to:${a.replace(/^@/, "")}`);
+            if (toClause) parts.push(toClause);
+
+            const mentionClause = orGroup(mentions, a => `@${a.replace(/^@/, "")}`);
+            if (mentionClause) parts.push(mentionClause);
 
             // Dates
             const since = $("since").value.trim();
@@ -353,12 +380,10 @@
             if (lang) parts.push(`lang:${lang}`);
 
             // Filters: Replies
-            const replyOnly = $("replyOnly").checked;
-            if (replyOnly) parts.push(`filter:replies`);
+            if ($("replyOnly").checked) parts.push(`filter:replies`);
 
             // Filters: Links
-            const linkOnly = $("linkOnly").checked;
-            if (linkOnly) parts.push(`filter:links`);
+            if ($("linkOnly").checked) parts.push(`filter:links`);
 
             // Engagement
             const minReplies = safeInt($("minReplies").value);
@@ -370,18 +395,15 @@
             const minReposts = safeInt($("minReposts").value);
             if (minReposts !== null) parts.push(`min_retweets:${minReposts}`);
 
-            const q = parts.filter(Boolean).join(" ").trim();
-            return q ? `(${q})` : "";
+            // NOTE: Do NOT wrap the whole query in parentheses.
+            return parts.filter(Boolean).join(" ").trim();
         }
 
         function buildUrl(rawQuery) {
             const base = "https://x.com/search";
             const f = $("tab").value || "top";
-
             if (!rawQuery) return `${base}?src=typed_query&f=${f}`;
-
-            const qEncoded = encodeURIComponent(rawQuery);
-            return `${base}?q=${qEncoded}&src=typed_query&f=${f}`;
+            return `${base}?q=${encodeURIComponent(rawQuery)}&src=typed_query&f=${f}`;
         }
 
         function refresh() {
@@ -392,11 +414,14 @@
 
         const inputIds = [
             "allWords", "exactPhrase", "anyWords", "noneWords", "hashtags",
-            "fromAccounts", "toAccounts", "mentions", "since", "until", "tab", "lang",
+            "fromAccounts", "toAccounts", "mentions", "since", "until", "lang",
             "minReplies", "minLikes", "minReposts"
         ];
 
         inputIds.forEach(id => $(id).addEventListener("input", refresh));
+
+        // Select should use change for reliability
+        $("tab").addEventListener("change", refresh);
 
         // Radios need change listeners
         ["replyInclude", "replyOnly", "linkInclude", "linkOnly"].forEach(id => {
@@ -421,7 +446,8 @@
         });
 
         $("reset").addEventListener("click", () => {
-            document.querySelectorAll("input").forEach(i => i.value = "");
+            // Clear only text/number inputs (don’t mess with radio values)
+            document.querySelectorAll('input[type="text"], input[type="number"], input:not([type])').forEach(i => i.value = "");
             $("tab").value = "top";
 
             // Reset radios to defaults
