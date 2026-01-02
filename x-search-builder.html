@@ -292,12 +292,113 @@
             <button class="primary" id="copyUrl">Copy URL</button>
             <button id="copyQuery">Copy query</button>
             <button id="openX">Open in X</button>
+            <button id="share">Share</button>
             <button id="reset">Reset</button>
         </div>
     </div>
 
     <script>
         const $ = (id) => document.getElementById(id);
+
+        // ---------- localStorage ----------
+        const STORAGE_KEY = "x-search-builder:v1";
+
+        function saveState() {
+            const state = {};
+
+            document.querySelectorAll("input, select").forEach(el => {
+                if (!el.id && el.type !== "radio") return;
+
+                if (el.type === "radio") {
+                    // save selected radio per group name
+                    if (el.checked) state[el.name] = el.id;
+                } else {
+                    state[el.id] = el.value;
+                }
+            });
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        function loadState() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+
+            try {
+                const state = JSON.parse(raw);
+
+                Object.entries(state).forEach(([key, value]) => {
+                    const el = document.getElementById(key);
+
+                    if (el) {
+                        el.value = value;
+                        return;
+                    }
+
+                    // radio groups saved by name → value is the checked radio id
+                    const radio = document.getElementById(value);
+                    if (radio && radio.type === "radio") radio.checked = true;
+                });
+            } catch {
+                localStorage.removeItem(STORAGE_KEY);
+            }
+        }
+
+        function clearState() {
+            localStorage.removeItem(STORAGE_KEY);
+        }
+
+        // ---------- URL sharing ----------
+        function getStateFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const state = {};
+            
+            for (const [key, value] of params.entries()) {
+                state[key] = value;
+            }
+            
+            return Object.keys(state).length > 0 ? state : null;
+        }
+
+        function applyStateFromUrl() {
+            const state = getStateFromUrl();
+            if (!state) return false;
+
+            Object.entries(state).forEach(([key, value]) => {
+                const el = document.getElementById(key);
+
+                if (el) {
+                    if (el.type === "radio") {
+                        el.checked = true;
+                    } else {
+                        el.value = value;
+                    }
+                }
+            });
+
+            return true;
+        }
+
+        function buildShareUrl() {
+            const state = {};
+            
+            document.querySelectorAll("input, select").forEach(el => {
+                if (!el.id) return;
+                
+                if (el.type === "radio") {
+                    if (el.checked) state[el.id] = "true";
+                } else if (el.value.trim()) {
+                    state[el.id] = el.value;
+                }
+            });
+
+            const params = new URLSearchParams(state);
+            const url = new URL(window.location.href);
+            url.search = params.toString();
+            
+            return url.toString();
+        }
+        // -------------------------------
 
         function splitList(v) {
             return v.split(",").map(s => s.trim()).filter(Boolean);
@@ -331,7 +432,6 @@
             const any = $("anyWords").value.trim();
             if (any) {
                 if (any.toUpperCase().includes(" OR ")) {
-                    // If user typed OR themselves, respect it; wrap only if multiple terms are present
                     const needsWrap = /\s+OR\s+/i.test(any.trim());
                     parts.push(needsWrap ? `(${any.trim()})` : any.trim());
                 } else {
@@ -354,7 +454,7 @@
                 });
             }
 
-            // Accounts (IMPORTANT: multiple accounts should be OR, not AND)
+            // Accounts (multiple should be OR, not AND)
             const froms = splitList($("fromAccounts").value);
             const tos = splitList($("toAccounts").value);
             const mentions = splitList($("mentions").value);
@@ -395,7 +495,6 @@
             const minReposts = safeInt($("minReposts").value);
             if (minReposts !== null) parts.push(`min_retweets:${minReposts}`);
 
-            // NOTE: Do NOT wrap the whole query in parentheses.
             return parts.filter(Boolean).join(" ").trim();
         }
 
@@ -410,6 +509,7 @@
             const raw = buildQuery();
             $("query").value = raw;
             $("url").value = buildUrl(raw);
+            saveState();
         }
 
         const inputIds = [
@@ -445,18 +545,37 @@
             if (u) window.open(u, "_blank", "noopener,noreferrer");
         });
 
+        $("share").addEventListener("click", async () => {
+            const shareUrl = buildShareUrl();
+            await navigator.clipboard.writeText(shareUrl);
+            $("share").textContent = "Copied!";
+            setTimeout(() => $("share").textContent = "Share", 900);
+        });
+
         $("reset").addEventListener("click", () => {
-            // Clear only text/number inputs (don’t mess with radio values)
-            document.querySelectorAll('input[type="text"], input[type="number"], input:not([type])').forEach(i => i.value = "");
+            document
+                .querySelectorAll('input[type="text"], input[type="number"], input:not([type])')
+                .forEach(i => i.value = "");
+
             $("tab").value = "top";
 
             // Reset radios to defaults
             $("replyInclude").checked = true;
             $("linkInclude").checked = true;
 
+            clearState();
+            
+            // Clear URL parameters
+            window.history.replaceState({}, "", window.location.pathname);
+            
             refresh();
         });
 
+        // Restore state: URL params take precedence over localStorage
+        const hasUrlState = applyStateFromUrl();
+        if (!hasUrlState) {
+            loadState();
+        }
         refresh();
     </script>
 </body>
