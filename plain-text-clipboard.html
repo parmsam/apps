@@ -121,7 +121,7 @@
     </div>
 
     <div class="hint">
-      Tip: <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>V</kbd> anywhere on the page uses the same plain-text paste flow. Browser security rules still prevent automatic paste on page load.
+      Tip: <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>V</kbd> anywhere on the page uses the same plain-text paste flow. On Safari, automatic copy after paste may still be blocked by browser security, so the app also selects the cleaned text for quick manual copying.
     </div>
   </main>
 
@@ -136,23 +136,64 @@
       statusEl.textContent = message;
     }
 
-    async function copyPlainText(text) {
+    function fallbackCopy(text) {
+      const temp = document.createElement('textarea');
+      temp.value = text;
+      temp.setAttribute('readonly', '');
+      temp.style.position = 'fixed';
+      temp.style.opacity = '0';
+      temp.style.pointerEvents = 'none';
+      document.body.appendChild(temp);
+      temp.focus();
+      temp.select();
+
+      let copied = false;
+      try {
+        copied = document.execCommand('copy');
+      } catch (error) {
+        copied = false;
+      }
+
+      document.body.removeChild(temp);
+      document.body.focus();
+      return copied;
+    }
+
+    async function copyPlainText(text, options = {}) {
+      const { afterPaste = false } = options;
+
       try {
         await navigator.clipboard.writeText(text);
         setStatus(`Plain text copied back to clipboard (${text.length} chars).`);
+        return true;
       } catch (error) {
-        setStatus('Plain text captured, but clipboard write was blocked. Use "Copy plain text again".');
+        const fallbackWorked = fallbackCopy(text);
+
+        if (fallbackWorked) {
+          setStatus(`Plain text copied back to clipboard (${text.length} chars).`);
+          return true;
+        }
+
+        if (afterPaste) {
+          setStatus('Paste complete. Safari may block automatic clipboard writes after paste. Click "Copy plain text again" or press Cmd/Ctrl+C.');
+        } else {
+          setStatus('Clipboard write was blocked. Click "Copy plain text again" or press Cmd/Ctrl+C.');
+        }
+
+        return false;
       }
     }
 
     function showPlainText(text) {
       textArea.value = text;
       textArea.scrollTop = 0;
+      textArea.focus();
+      textArea.select();
     }
 
-    function processPlainText(text) {
+    function processPlainText(text, options = {}) {
       showPlainText(text);
-      copyPlainText(text);
+      copyPlainText(text, options);
     }
 
     function handlePasteEvent(event) {
@@ -160,7 +201,19 @@
       if (typeof plainText !== 'string') return;
 
       event.preventDefault();
-      processPlainText(plainText);
+      showPlainText(plainText);
+
+      navigator.clipboard.writeText(plainText).then(() => {
+        setStatus(`Plain text copied back to clipboard (${plainText.length} chars).`);
+      }).catch(() => {
+        const fallbackWorked = fallbackCopy(plainText);
+
+        if (fallbackWorked) {
+          setStatus(`Plain text copied back to clipboard (${plainText.length} chars).`);
+        } else {
+          setStatus('Paste complete. Safari may block automatic clipboard writes after paste. Click "Copy plain text again" or press Cmd/Ctrl+C.');
+        }
+      });
     }
 
     document.addEventListener('paste', handlePasteEvent);
