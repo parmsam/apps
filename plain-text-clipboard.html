@@ -104,24 +104,24 @@
     }
   </style>
 </head>
-<body>
+<body tabindex="0">
   <main class="card">
     <h1>Plain Text Clipboard Cleaner</h1>
     <p>
-      Paste anything below. The app strips rich formatting and immediately copies the plain text back to your clipboard.
+      Paste anywhere on the page. The app strips rich formatting and immediately copies the plain text back to your clipboard.
     </p>
 
-    <textarea id="text" placeholder="Paste here with Ctrl/Cmd+V..."></textarea>
+    <textarea id="text" placeholder="Paste anywhere on the page with Ctrl/Cmd+V..."></textarea>
 
     <div class="row">
       <button id="pasteBtn" type="button">Paste from clipboard</button>
       <button id="copyBtn" class="secondary" type="button">Copy plain text again</button>
       <button id="clearBtn" class="secondary" type="button">Clear</button>
-      <span id="status" class="status">Waiting for paste...</span>
+      <span id="status" class="status">Ready. Paste anywhere on the page.</span>
     </div>
 
     <div class="hint">
-      Tip: rich text is removed by reading only <kbd>text/plain</kbd> from the clipboard.
+      Tip: <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>V</kbd> anywhere on the page uses the same plain-text paste flow. Browser security rules still prevent automatic paste on page load.
     </div>
   </main>
 
@@ -141,28 +141,36 @@
         await navigator.clipboard.writeText(text);
         setStatus(`Plain text copied back to clipboard (${text.length} chars).`);
       } catch (error) {
-        setStatus('Plain text shown below. Browser blocked clipboard write, so use Copy plain text again.');
+        setStatus('Plain text captured, but clipboard write was blocked. Use "Copy plain text again".');
       }
     }
 
-    function handlePlainText(text) {
+    function showPlainText(text) {
       textArea.value = text;
+      textArea.scrollTop = 0;
+    }
+
+    function processPlainText(text) {
+      showPlainText(text);
       copyPlainText(text);
     }
 
-    textArea.addEventListener('paste', async (event) => {
+    function handlePasteEvent(event) {
+      const plainText = event.clipboardData?.getData('text/plain');
+      if (typeof plainText !== 'string') return;
+
       event.preventDefault();
-      const plainText = event.clipboardData.getData('text/plain');
-      handlePlainText(plainText);
-    });
+      processPlainText(plainText);
+    }
+
+    document.addEventListener('paste', handlePasteEvent);
 
     pasteBtn.addEventListener('click', async () => {
       try {
         const plainText = await navigator.clipboard.readText();
-        handlePlainText(plainText);
+        processPlainText(plainText);
       } catch (error) {
-        setStatus('Clipboard read was blocked. Click in the box and paste with Ctrl/Cmd+V.');
-        textArea.focus();
+        setStatus('Clipboard read was blocked. Press Ctrl/Cmd+V anywhere on the page.');
       }
     });
 
@@ -172,11 +180,17 @@
 
     clearBtn.addEventListener('click', () => {
       textArea.value = '';
-      setStatus('Cleared.');
-      textArea.focus();
+      setStatus('Cleared. Paste anywhere on the page.');
+      document.body.focus();
     });
 
-    textArea.focus();
+    window.addEventListener('load', () => {
+      document.body.focus();
+    });
+
+    document.addEventListener('click', () => {
+      document.body.focus();
+    });
   </script>
 </body>
 </html>
