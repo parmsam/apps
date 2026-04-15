@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plain Text Clipboard Cleaner</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: canvas;
+      --fg: canvastext;
+      --muted: color-mix(in srgb, canvastext 60%, canvas 40%);
+      --border: color-mix(in srgb, canvastext 18%, canvas 82%);
+      --accent: #2563eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: min(700px, 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      background: color-mix(in srgb, canvas 96%, canvastext 4%);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.35rem;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      font: inherit;
+      resize: vertical;
+      background: canvas;
+      color: canvastext;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      align-items: center;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font: inherit;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+    }
+
+    button.secondary {
+      background: transparent;
+      color: var(--fg);
+      border: 1px solid var(--border);
+    }
+
+    .status {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .hint {
+      margin-top: 14px;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    kbd {
+      border: 1px solid var(--border);
+      border-bottom-width: 2px;
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-family: inherit;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Plain Text Clipboard Cleaner</h1>
+    <p>
+      Paste anything below. The app strips rich formatting and immediately copies the plain text back to your clipboard.
+    </p>
+
+    <textarea id="text" placeholder="Paste here with Ctrl/Cmd+V..."></textarea>
+
+    <div class="row">
+      <button id="pasteBtn" type="button">Paste from clipboard</button>
+      <button id="copyBtn" class="secondary" type="button">Copy plain text again</button>
+      <button id="clearBtn" class="secondary" type="button">Clear</button>
+      <span id="status" class="status">Waiting for paste...</span>
+    </div>
+
+    <div class="hint">
+      Tip: rich text is removed by reading only <kbd>text/plain</kbd> from the clipboard.
+    </div>
+  </main>
+
+  <script>
+    const textArea = document.getElementById('text');
+    const statusEl = document.getElementById('status');
+    const pasteBtn = document.getElementById('pasteBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    function setStatus(message) {
+      statusEl.textContent = message;
+    }
+
+    async function copyPlainText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus(`Plain text copied back to clipboard (${text.length} chars).`);
+      } catch (error) {
+        setStatus('Plain text shown below. Browser blocked clipboard write, so use Copy plain text again.');
+      }
+    }
+
+    function handlePlainText(text) {
+      textArea.value = text;
+      copyPlainText(text);
+    }
+
+    textArea.addEventListener('paste', async (event) => {
+      event.preventDefault();
+      const plainText = event.clipboardData.getData('text/plain');
+      handlePlainText(plainText);
+    });
+
+    pasteBtn.addEventListener('click', async () => {
+      try {
+        const plainText = await navigator.clipboard.readText();
+        handlePlainText(plainText);
+      } catch (error) {
+        setStatus('Clipboard read was blocked. Click in the box and paste with Ctrl/Cmd+V.');
+        textArea.focus();
+      }
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      await copyPlainText(textArea.value);
+    });
+
+    clearBtn.addEventListener('click', () => {
+      textArea.value = '';
+      setStatus('Cleared.');
+      textArea.focus();
+    });
+
+    textArea.focus();
+  </script>
+</body>
+</html>
